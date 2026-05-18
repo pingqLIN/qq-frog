@@ -1,5 +1,5 @@
 export function protectSelectAllShadowRoot(shadowHost: HTMLElement, wrapper: HTMLElement) {
-  // ① 追踪鼠标是否在组件上
+  // ① 追蹤鼠標是否在組件上
   let pointerInside = false
   shadowHost.addEventListener("pointerenter", () => {
     pointerInside = true
@@ -11,41 +11,41 @@ export function protectSelectAllShadowRoot(shadowHost: HTMLElement, wrapper: HTM
   window.addEventListener(
     "keydown",
     (e) => {
-      // 只处理 Ctrl+A (Windows/Linux) 或 Cmd+A (Mac)
-      // metaKey 是 Mac 的 Command 键
-      // ctrlKey 是 Windows 的 Ctrl 键
+      // 只處理 Ctrl+A (Windows/Linux) 或 Cmd+A (Mac)
+      // metaKey 是 Mac 的 Command 鍵
+      // ctrlKey 是 Windows 的 Ctrl 鍵
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a" && !e.shiftKey) {
         const active = document.activeElement
 
-        /* --- 分四种情况 --- */
+        /* --- 分四種情況 --- */
         if (shadowHost.contains(active)) {
-          // A. 焦点已经在组件里 → 放行默认行为
+          // A. 焦點已經在組件裡 → 放行默認行為
           return
         }
 
         if (isEditableElement(active)) {
-          // B. 焦点在可编辑元素中（输入框、文本区域等）→ 放行默认行为
+          // B. 焦點在可編輯元素中（輸入框、文本區域等）→ 放行默認行為
           return
         }
 
-        // C. 当焦点在其他 shadow root 内（active 是其他 shadow host）→ 放行默认行为
+        // C. 當焦點在其他 shadow root 內（active 是其他 shadow host）→ 放行默認行為
         if (active && (active as HTMLElement).shadowRoot) {
           return
         }
 
         if (pointerInside) {
-          // D. 鼠标悬停在组件里 → 自定义"组件专选"
+          // D. 鼠標懸停在組件裡 → 自定義"組件專選"
           e.preventDefault()
           e.stopPropagation()
           requestAnimationFrame(() => selectAllInside(wrapper))
           return
         }
 
-        // E. 其它情况（宿主页面全选，但排除组件）
-        // 没有任何交互时 → active = document.body
-        // 只有当焦点在 body 或无焦点时，才执行"排除组件的全选"
-        // 如果焦点在其他元素上（如 canvas 等），可能有应用自己的处理逻辑，不应干预
-        // 点击了 canvas（如 Excalidraw） → <canvas> 元素
+        // E. 其它情況（宿主頁面全選，但排除組件）
+        // 沒有任何交互時 → active = document.body
+        // 只有當焦點在 body 或無焦點時，才執行"排除組件的全選"
+        // 如果焦點在其他元素上（如 canvas 等），可能有應用自己的處理邏輯，不應幹預
+        // 點擊了 canvas（如 Excalidraw） → <canvas> 元素
         if (active === document.body || !active) {
           e.preventDefault()
           e.stopPropagation()
@@ -57,26 +57,26 @@ export function protectSelectAllShadowRoot(shadowHost: HTMLElement, wrapper: HTM
   )
 }
 
-/* 检查元素是否可编辑 */
+/* 檢查元素是否可編輯 */
 function isEditableElement(element: Element | null): boolean {
   if (!element)
     return false
 
   const tagName = element.tagName.toLowerCase()
 
-  // 检查 input 元素（排除非文本类型）
+  // 檢查 input 元素（排除非文本類型）
   if (tagName === "input") {
     const inputType = (element as HTMLInputElement).type.toLowerCase()
     const textInputTypes = ["text", "password", "search", "tel", "url", "email"]
     return textInputTypes.includes(inputType)
   }
 
-  // 检查 textarea
+  // 檢查 textarea
   if (tagName === "textarea") {
     return true
   }
 
-  // 检查 contenteditable
+  // 檢查 contenteditable
   const contentEditable = element.getAttribute("contenteditable")
   if (contentEditable === "true" || contentEditable === "") {
     return true
@@ -85,7 +85,7 @@ function isEditableElement(element: Element | null): boolean {
   return false
 }
 
-/* 全选组件内部（只需 1 个 Range） */
+/* 全選組件內部（只需 1 個 Range） */
 function selectAllInside(root: HTMLElement) {
   const sel = window.getSelection()
   if (!sel)
@@ -93,11 +93,11 @@ function selectAllInside(root: HTMLElement) {
   sel.removeAllRanges()
 
   const range = document.createRange()
-  range.selectNodeContents(root) // 选中整个 wrapper ⭐
-  sel.addRange(range) // 立即呈现高亮
+  range.selectNodeContents(root) // 選中整個 wrapper ⭐
+  sel.addRange(range) // 立即呈現高亮
 }
 
-// 选中整个页面，但跳过你的 shadow host 组件。
+// 選中整個頁面，但跳過你的 shadow host 組件。
 function rebuildSelectionWithoutHost(shadowHost: HTMLElement) {
   const sel = window.getSelection()
   if (!sel)

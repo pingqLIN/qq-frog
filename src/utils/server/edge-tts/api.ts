@@ -1,6 +1,6 @@
 /**
- * Edge TTS API 服务
- * 参考：docs/edge-tts 和 docs/tts 仓库
+ * Edge TTS API 服務
+ * 參考：docs/edge-tts 和 docs/tts 倉庫
  */
 
 import type { EdgeTTSRequestParams } from "./types"

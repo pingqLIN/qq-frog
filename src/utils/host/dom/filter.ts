@@ -133,13 +133,13 @@ export function isDontWalkIntoButTranslateAsChildElement(element: HTMLElement): 
 
   const dontWalkTag = DONT_WALK_BUT_TRANSLATE_TAGS.has(element.tagName)
 
-  // issue: https://github.com/mengxi-ream/read-frog/issues/459
+  // issue: upstream issue #459
   // const dontWalkAttr = element.getAttribute('translate') === 'no'
 
   return dontWalkClass || dontWalkTag
 }
 
-// https://github.com/mengxi-ream/read-frog/issues/940
+// upstream issue #940
 function isInsideContentContainer(element: HTMLElement): boolean {
   let current: HTMLElement | null = element.parentElement
   while (current) {

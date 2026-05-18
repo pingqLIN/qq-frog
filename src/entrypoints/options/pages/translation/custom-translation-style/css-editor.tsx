@@ -13,7 +13,6 @@ import { Activity, useMemo, useState } from "react"
 import { Button } from "@/components/ui/base-ui/button"
 import { Field, FieldLabel } from "@/components/ui/base-ui/field"
 import { CSSCodeEditor } from "@/components/ui/css-code-editor"
-import { env } from "@/env"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { MAX_CUSTOM_CSS_LENGTH } from "@/types/config/translate"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
@@ -63,14 +62,9 @@ export function CSSEditor() {
   return (
     <Activity mode={translationNodeStyle.isCustom ? "visible" : "hidden"}>
       <Field>
-        <div className="flex items-start justify-between">
-          <FieldLabel htmlFor="css-editor" data-invalid>
-            {i18n.t("options.translation.translationStyle.cssEditor")}
-          </FieldLabel>
-          <a href={`${env.WXT_WEBSITE_URL}/docs/custom-css`} className="text-xs text-link hover:opacity-90" target="_blank" rel="noreferrer">
-            {i18n.t("options.apiProviders.howToConfigure")}
-          </a>
-        </div>
+        <FieldLabel htmlFor="css-editor" data-invalid>
+          {i18n.t("options.translation.translationStyle.cssEditor")}
+        </FieldLabel>
         <CSSCodeEditor
           value={cssInput}
           onChange={setCssInput}

@@ -1,6 +1,5 @@
 import "@/utils/zod-config"
 import { browser, defineBackground } from "#imports"
-import { env } from "@/env"
 import { logger } from "@/utils/logger"
 import { onMessage } from "@/utils/message"
 import { openOptionsPage } from "@/utils/navigation"
@@ -16,13 +15,11 @@ import { setupEdgeTTSMessageHandlers } from "./edge-tts"
 import { setupIframeInjection } from "./iframe-injection"
 import { setupLLMGenerateTextMessageHandlers } from "./llm-generate-text"
 import { initMockData } from "./mock-data"
-import { newUserGuide } from "./new-user-guide"
 import { proxyFetch } from "./proxy-fetch"
 import { setupSidePanelMessageHandler } from "./side-panel"
 import { setUpSubtitlesTranslationQueue, setUpWebPageTranslationQueue } from "./translation-queues"
 import { translationMessage } from "./translation-signal"
 import { setupTTSPlaybackMessageHandlers } from "./tts-playback"
-import { setupUninstallSurvey } from "./uninstall-survey"
 
 export default defineBackground({
   type: "module",
@@ -31,13 +28,6 @@ export default defineBackground({
 
     browser.runtime.onInstalled.addListener(async (details) => {
       await ensureInitializedConfig()
-
-      // Open tutorial page when extension is installed
-      if (details.reason === "install") {
-        await browser.tabs.create({
-          url: `${env.WXT_WEBSITE_URL}/guide/step-1`,
-        })
-      }
 
       // Clear blog cache on extension update to fetch latest blog posts
       if (details.reason === "update") {
@@ -86,7 +76,6 @@ export default defineBackground({
       await cleanupAllAiSegmentationCache()
     })
 
-    newUserGuide()
     setupAnalyticsMessageHandlers()
     translationMessage()
 
@@ -101,7 +90,6 @@ export default defineBackground({
     void setUpSubtitlesTranslationQueue()
     void setUpDatabaseCleanup()
     setUpConfigBackup()
-    void setupUninstallSurvey()
 
     proxyFetch()
     setupEdgeTTSMessageHandlers()

@@ -2,7 +2,7 @@
 
 const isDev = import.meta.env.DEV
 
-/** ANSI 颜色码（Node 控制台） */
+/** ANSI 顏色碼（Node 控制檯） */
 const ansi = {
   reset: "\x1B[0m",
   gray: "\x1B[90m",
@@ -11,7 +11,7 @@ const ansi = {
   red: "\x1B[31m",
 }
 
-/** 浏览器 %c 样式 */
+/** 瀏覽器 %c 樣式 */
 const css = {
   gray: "color:#aaa",
   blue: "color:#2196f3",
@@ -28,7 +28,7 @@ function createLogger(level: Level) {
     return noop
   }
   const prefix = "[dev-log]"
-  // Node 环境 → 用 ANSI；否则用浏览器 %c
+  // Node 環境 → 用 ANSI；否則用瀏覽器 %c
   const useAnsi = typeof window === "undefined"
 
   const color = {

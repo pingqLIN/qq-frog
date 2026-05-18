@@ -1,5 +1,5 @@
 /**
- * Edge TTS 类型定义
+ * Edge TTS 類型定義
  */
 
 import { z } from "zod"

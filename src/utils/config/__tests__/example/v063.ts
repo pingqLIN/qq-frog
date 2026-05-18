@@ -894,18 +894,18 @@ Output:
 - Phonetic: /ˈblɒs.əm/
 - Part of Speech: noun
 - Context: The ephemeral beauty of cherry blossoms reminds us to cherish each moment.
-- Definition: 花；花朵（尤指果树的花）
-- Context Translation: 樱花短暂的美丽提醒我们珍惜每一刻。
+- Definition: 花；花朵（尤指果樹的花）
+- Context Translation: 櫻花短暫的美麗提醒我們珍惜每一刻。
 - Difficulty: B2
 
 ### Example 2
-Input: Selection="感動", Paragraphs="この映画はつまらないと思ったけど、最後は感動した。", Target language=English
+Input: Selection="感動", Paragraphs="この映畫はつまらないと思ったけど、最後は感動した。", Target language=English
 
 Output:
 - Term: 感動
 - Phonetic: kandou
 - Part of Speech: noun
-- Context: この映画はつまらないと思ったけど、最後は感動した。
+- Context: この映畫はつまらないと思ったけど、最後は感動した。
 - Definition: Being deeply moved; emotional touch
 - Context Translation: I thought this movie was boring, but the ending was moving.
 - Difficulty: B1`,

@@ -9,7 +9,7 @@ export function migrate(oldConfig: any): any {
     },
   }
 
-  // 添加 Ollama 翻译模型配置
+  // 添加 Ollama 翻譯模型配置
   const oldTranslateModels = oldConfig.translate.models
   const newTranslateModels = {
     ...oldTranslateModels,

@@ -276,7 +276,7 @@ export class PageTranslationManager implements IPageTranslationManager {
     document.addEventListener("touchend", onEnd, { passive: true })
     document.addEventListener("touchcancel", reset, { passive: true })
 
-    // 供调用方卸载
+    // 供調用方卸載
     return () => {
       document.removeEventListener("touchstart", onStart)
       document.removeEventListener("touchmove", onMove)

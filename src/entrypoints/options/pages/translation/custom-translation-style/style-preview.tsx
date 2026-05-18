@@ -15,7 +15,7 @@ export function StylePreview() {
   const blockContentRef = useRef<HTMLSpanElement>(null)
   const [language, setLanguage] = useState<string>("zh")
   const [dir, setDir] = useState<"ltr" | "rtl">("ltr")
-  const [translatedText, setTranslatedText] = useState("神谷先生不是在对抗世界，而是在对抗可能让世界为之侧目的事物。")
+  const [translatedText, setTranslatedText] = useState("神谷先生不是在對抗世界，而是在對抗可能讓世界為之側目的事物。")
 
   useEffect(() => {
     if (blockContentRef.current) {

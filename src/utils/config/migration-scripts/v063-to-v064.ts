@@ -75,20 +75,20 @@ function migrateDictionaryText(text: any): any {
     .replaceAll("- Context:", "- Paragraphs:")
     .replaceAll("- Context Translation:", "- Paragraphs Translation:")
     .replaceAll("\nContext: {{paragraphs}}", "\nParagraphs: {{paragraphs}}")
-    .replaceAll("根据给定的词语及其上下文，生成简洁的词典条目，匹配所需的输出对象。", "根据给定的词语及其周围段落，生成简洁的词典条目，匹配所需的输出对象。")
-    .replaceAll("聚焦于最匹配所提供上下文的含义。", "聚焦于最匹配所提供段落内容的含义。")
-    .replaceAll("保持语境简短，直接关联选中的文本。", "保持段落内容与提示词一致，不要改写。")
-    .replaceAll("- 语境：", "- 段落内容：")
-    .replaceAll("- 语境翻译：", "- 段落翻译：")
-    .replaceAll("\n上下文：{{paragraphs}}", "\n段落内容：{{paragraphs}}")
+    .replaceAll("根據給定的詞語及其上下文，生成簡潔的詞典條目，匹配所需的輸出對象。", "根據給定的詞語及其周圍段落，生成簡潔的詞典條目，匹配所需的輸出對象。")
+    .replaceAll("聚焦於最匹配所提供上下文的含義。", "聚焦於最匹配所提供段落內容的含義。")
+    .replaceAll("保持語境簡短，直接關聯選中的文本。", "保持段落內容與提示詞一致，不要改寫。")
+    .replaceAll("- 語境：", "- 段落內容：")
+    .replaceAll("- 語境翻譯：", "- 段落翻譯：")
+    .replaceAll("\n上下文：{{paragraphs}}", "\n段落內容：{{paragraphs}}")
 }
 
 function migrateDictionaryField(field: any): any {
   if (field?.id === "dictionary-context" || field?.id === "default-dictionary-context") {
     return {
       ...field,
-      name: field.name === "语境"
-        ? "段落内容"
+      name: field.name === "語境"
+        ? "段落內容"
         : field.name === "Context"
           ? "Paragraphs"
           : field.name,
@@ -96,8 +96,8 @@ function migrateDictionaryField(field: any): any {
         ? field.description
             .replaceAll("The context in the prompt above, don't change it.", "The paragraphs from the prompt above. Do not rewrite them.")
             .replaceAll("The paragraphs in the prompt above, don't change them.", "The paragraphs from the prompt above. Do not rewrite them.")
-            .replaceAll("上方提示词中的语境，请勿修改。", "使用上方提示词中的原始段落内容，不要改写。")
-            .replaceAll("上方提示词中的段落内容，请勿修改。", "使用上方提示词中的原始段落内容，不要改写。")
+            .replaceAll("上方提示詞中的語境，請勿修改。", "使用上方提示詞中的原始段落內容，不要改寫。")
+            .replaceAll("上方提示詞中的段落內容，請勿修改。", "使用上方提示詞中的原始段落內容，不要改寫。")
         : field.description,
     }
   }
@@ -105,15 +105,15 @@ function migrateDictionaryField(field: any): any {
   if (field?.id === "dictionary-context-translation" || field?.id === "default-dictionary-context-translation") {
     return {
       ...field,
-      name: field.name === "语境翻译"
-        ? "段落翻译"
+      name: field.name === "語境翻譯"
+        ? "段落翻譯"
         : field.name === "Context Translation"
           ? "Paragraphs Translation"
           : field.name,
       description: typeof field.description === "string"
         ? field.description
             .replaceAll("The translation of the context.", "The translation of the paragraphs.")
-            .replaceAll("语境的翻译。", "段落内容的翻译。")
+            .replaceAll("語境的翻譯。", "段落內容的翻譯。")
         : field.description,
     }
   }

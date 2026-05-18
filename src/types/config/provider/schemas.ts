@@ -225,7 +225,7 @@ export type CustomLLMProviderConfig = Extract<ProviderConfig, { provider: Custom
   unified llm model config helpers
   ────────────────────────────── */
 
-type ModelTuple = readonly [string, ...string[]] // 至少一个元素才能给 z.enum
+type ModelTuple = readonly [string, ...string[]] // 至少一個元素才能給 z.enum
 function providerConfigSchema<T extends ModelTuple>(models: T) {
   return z.object({
     model: z.enum(models),

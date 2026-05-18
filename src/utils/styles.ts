@@ -41,7 +41,7 @@ function isInternalStyleElement(node: Node) {
  * @param contentMatch - Optional text content to match within the style element
  */
 export function mirrorDynamicStyles(selector: string, shadowRoot: ShadowRoot, contentMatch?: string): () => void {
-  // TODO: 目前函数只会把找到的第一个 style 放进来，但是可能存在多个 style 匹配，那其实要全部放进来，并且对应不同的 mirrorSheet
+  // TODO: 目前函數只會把找到的第一個 style 放進來，但是可能存在多個 style 匹配，那其實要全部放進來，並且對應不同的 mirrorSheet
 
   // Check if adoptedStyleSheets is supported
   let supportsAdoptedStyleSheets = false

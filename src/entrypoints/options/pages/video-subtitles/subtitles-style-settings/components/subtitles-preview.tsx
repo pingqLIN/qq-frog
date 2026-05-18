@@ -12,7 +12,7 @@ export function SubtitlesPreview() {
   const { displayMode, translationPosition, container } = style
 
   const sampleOriginal = "Mr. Kamiya is not fighting against the world, but against things that could make the world take notice."
-  const sampleTranslation = "神谷先生不是在对抗世界，而是在对抗可能让世界为之侧目的事物。"
+  const sampleTranslation = "神谷先生不是在對抗世界，而是在對抗可能讓世界為之側目的事物。"
 
   const translationAbove = translationPosition === "above"
   const showMain = displayMode !== "translationOnly"

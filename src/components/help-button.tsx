@@ -1,3 +1,4 @@
+import { browser } from "#imports"
 import { Icon } from "@iconify/react"
 import { useCallback, useRef, useState } from "react"
 import { cn } from "@/utils/styles/utils"
@@ -62,7 +63,7 @@ export function HelpButton() {
         localStorage.setItem(STORAGE_KEY, newCorner)
       }
       else {
-        window.open("https://github.com/mengxi-ream/read-frog/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen", "_blank")
+        void browser.runtime.openOptionsPage()
       }
       hasDraggedRef.current = false
       setDragging(false)

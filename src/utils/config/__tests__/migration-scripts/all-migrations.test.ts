@@ -34,14 +34,14 @@ describe("all Config Migrations", () => {
     }
   })
 
-  // 自动测试从版本2到最新版本的所有迁移
+  // 自動測試從版本2到最新版本的所有遷移
   for (let version = 2; version <= LATEST_SCHEMA_VERSION; version++) {
     const fromVersion = version - 1
     const toVersion = version
 
     it(`should migrate config from v${fromVersion} to v${toVersion}`, async () => {
       try {
-        // 动态导入对应版本的配置示例（明确指定 .ts 扩展名）
+        // 動態導入對應版本的配置示例（明確指定 .ts 擴展名）
         const fromVersionStr = String(fromVersion).padStart(3, "0")
         const toVersionStr = String(toVersion).padStart(3, "0")
 
@@ -81,18 +81,18 @@ describe("all Config Migrations", () => {
         }
       }
       catch (error) {
-        // 如果找不到对应的示例文件，标记为跳过
+        // 如果找不到對應的示例文件，標記為跳過
         if (error instanceof Error && (
           error.message.includes("Cannot resolve module")
           || error.message.includes("Failed to resolve import")
         )) {
           console.warn(`⚠ Skipping migration test v${fromVersion} -> v${toVersion}: Missing example files`)
-          // 使用 skip 而不是直接 return，这样测试报告会显示跳过的测试
+          // 使用 skip 而不是直接 return，這樣測試報告會顯示跳過的測試
           expect(true).toBe(true) // placeholder assertion
           return
         }
 
-        // 其他错误重新抛出
+        // 其他錯誤重新拋出
         console.error(`❌ Migration test failed v${fromVersion} -> v${toVersion}:`, error)
         throw error
       }

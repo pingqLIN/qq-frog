@@ -1,7 +1,7 @@
 name: 陪讀蛙
 extName: 陪讀蛙 - 開源沉浸式翻譯
 extDescription: 陪讀蛙是一款開放源代碼的瀏覽器插件，旨在幫助您從任何網站深入學習語言。
-uninstallSurveyUrl: https://tally.so/r/3E9XDL
+uninstallSurveyUrl: ""
 dataTypes:
   string: 文字
   number: 數字
@@ -158,8 +158,8 @@ options:
         google: 具有先進推理能力的 Google 旗艦 AI 模型
         anthropic: 以安全性和推理能力著稱的 Claude 模型
         xai: 馬斯克的 AI 公司，提供具有即時數據存取能力的 Grok 模型
-        siliconflow: 面向中國和國際模型的高效能推理平台
-        tensdaq: 革命性競價 AI MaaS 平台，價格由市場供需決定，告別高成本固定定價
+        siliconflow: 面向中國和國際模型的高效能推理平臺
+        tensdaq: 革命性競價 AI MaaS 平臺，價格由市場供需決定，告別高成本固定定價
         ai302: 提供最新、全面的模型和按量付費 API
         openaiCompatible: OpenAI API 相容的第三方
         deeplx: 非官方 DeepL API
@@ -168,15 +168,15 @@ options:
         groq: 專注於超高速 LLM 推理速度的專用硬體
         deepinfra: 面向熱門開源模型的經濟高效雲端推理
         mistral: 專注於高效多語言模型的歐洲 AI 公司
-        togetherai: 用於運行和微調開源模型的協作平台
+        togetherai: 用於運行和微調開源模型的協作平臺
         cohere: 具有強大多語言和 RAG 能力的企業級 AI
-        fireworks: 面向開源模型的生產就緒推理平台
+        fireworks: 面向開源模型的生產就緒推理平臺
         cerebras: 超快速 AI 推理，適合快速翻譯和文本分析
         replicate: 存取多樣化開源模型，適合專業翻譯任務
         perplexity: 即時知識增強 AI，提供語境化翻譯和閱讀輔助
         vercel: 針對網頁內容翻譯和分析優化的 AI 模型
-        volcengine: 字節跳動旗下雲平台，提供豆包系列大模型
-        minimax: MiniMax AI平台，提供先進的MiniMax-M2系列大模型
+        volcengine: 字節跳動旗下雲平臺，提供豆包系列大模型
+        minimax: MiniMax AI平臺，提供先進的MiniMax-M2系列大模型
         alibaba: 阿里雲通義千問系列模型，具備先進的推理和多語言能力
         moonshotai: 月之暗面Kimi系列模型，具備強大的推理和長上下文能力
         huggingface: Hugging Face推理API，提供數千種開源模型存取
@@ -377,14 +377,14 @@ options:
             title: 筆記庫連線
             description: 將這個指令的結構化結果儲存到遠端筆記庫。
             loginRequiredTitle: 登入後才能設定筆記庫
-            loginRequiredDescription: 先到 readfrog.app 登入，再選擇筆記庫與編輯映射。
+            loginRequiredDescription: 先到 localhost 登入，再選擇筆記庫與編輯映射。
             loginAction: 前往登入
             tableLabel: 筆記庫
             tablePlaceholder: 選擇一個筆記庫
             tableClearOption: 不連接筆記庫
             refreshAction: 重新整理
             emptyTitle: 還沒有筆記庫
-            emptyDescription: 先到 readfrog.app 建立一個筆記庫，再回來映射欄位。
+            emptyDescription: 先到 localhost 建立一個筆記庫，再回來映射欄位。
             openNotebaseAction: 開啟筆記庫
             betaLockedTitle: 目前帳號尚未加入 Notebase Beta
             betaLockedDescription: 你可以保留目前的 action 設定，但選擇筆記庫與同步結果目前僅對部分 Beta 帳號開放。
@@ -465,7 +465,7 @@ options:
       title: 個人化 Prompt
       description: 自訂不同類型的 Prompt，可以在翻譯時自行調整 Prompt 類型。Prompt 表示以用戶身份發送給 LLM 的文字。
       communityPrompts: 獲取或分享社區 Prompt
-      communityPromptsUrl: https://github.com/mengxi-ream/read-frog/discussions/820
+      communityPromptsUrl: ""
       addPrompt: 添加 Prompt
       default: 通用
       importSuccess: 導入成功
@@ -486,7 +486,7 @@ options:
         save: 保存
         close: 取消
       deletePrompt:
-        title: 删除 Prompt
+        title: 刪除 Prompt
         description: 確定要刪除 Prompt 嗎
         confirm: 確定
         cancel: 取消
@@ -865,7 +865,7 @@ action:
   saveToNotebaseSaving: 儲存中...
   saveToNotebaseSuccess: 已儲存到筆記庫
   saveToNotebaseFailed: 儲存到筆記庫失敗
-  saveToNotebaseLoginRequired: 請先到 readfrog.app 登入後再儲存到筆記庫
+  saveToNotebaseLoginRequired: 請先到 localhost 登入後再儲存到筆記庫
   saveToNotebaseBetaRequired: 目前帳號尚未加入 Notebase Beta
   saveToNotebaseTableUnavailable: 選取的筆記庫已不可用
   saveToNotebaseConnectionInvalid: 目前的筆記庫連線已過期，請到 Custom AI Actions 重新整理並修復映射
@@ -962,11 +962,11 @@ languages:
   mal: 馬拉雅拉姆語
   pes: 波斯語
   mya: 緬甸語
-  swh: 史瓦希里語
+  swh: 史瓦希裡語
   sun: 巽他語
   ron: 羅馬尼亞語
   pan: 旁遮普語
-  bho: 博杰普爾語
+  bho: 博傑普爾語
   amh: 阿姆哈拉語
   hau: 豪薩語
   fuv: 富拉語
@@ -1052,9 +1052,9 @@ languages:
   mri: 毛利語
   nso: 北索托語
   oci: 奧克語
-  ori: 奧里亞語
+  ori: 奧裡亞語
   orm: 奧羅莫語
-  prs: 達里語
+  prs: 達裡語
   san: 梵語
   slk: 斯洛伐克語
   slv: 斯洛維尼亞語
@@ -1083,7 +1083,7 @@ languages:
   dzo: 宗卡語
   ewe: 埃維語
   kab: 卡比爾語
-  lug: 盧干達語
+  lug: 盧幹達語
   oss: 奧塞梯語
   ssw: 史瓦濟語
   ven: 文達語
@@ -1096,7 +1096,7 @@ languages:
   min: 米南卡保語
   ace: 亞齊語
   bug: 布吉語
-  ban: 峇里語
+  ban: 峇裡語
   bjn: 班查爾語
   mak: 望加錫語
   sas: 薩薩克語

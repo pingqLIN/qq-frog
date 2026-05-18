@@ -44,13 +44,13 @@ describe("extension env resolution", () => {
   it("lets explicit env vars override the selected defaults", () => {
     expect(resolveExtensionEnv({
       WXT_USE_LOCAL_PACKAGES: "true",
-      WXT_API_URL: "https://preview-api.readfrog.app",
-      WXT_AUTH_COOKIE_DOMAINS: "preview.readfrog.app",
+      WXT_API_URL: "https://api.example.test",
+      WXT_AUTH_COOKIE_DOMAINS: "example.test",
     })).toMatchObject({
       ...LOCAL_EXTENSION_ENV_DEFAULTS,
       WXT_USE_LOCAL_PACKAGES: "true",
-      WXT_API_URL: "https://preview-api.readfrog.app",
-      WXT_AUTH_COOKIE_DOMAINS: "preview.readfrog.app",
+      WXT_API_URL: "https://api.example.test",
+      WXT_AUTH_COOKIE_DOMAINS: "example.test",
     })
   })
 
@@ -69,14 +69,14 @@ describe("extension env resolution", () => {
 describe("extension env parsing", () => {
   it("accepts canonical urls, origins, and cookie domains", () => {
     expect(parseResolvedExtensionEnv({
-      WXT_WEBSITE_URL: "https://www.readfrog.app",
-      WXT_OFFICIAL_SITE_ORIGINS: "https://readfrog.app,https://www.readfrog.app",
-      WXT_AUTH_COOKIE_DOMAINS: "readfrog.app,localhost",
+      WXT_WEBSITE_URL: "https://www.example.test",
+      WXT_OFFICIAL_SITE_ORIGINS: "https://example.test,https://www.example.test",
+      WXT_AUTH_COOKIE_DOMAINS: "example.test,localhost",
     })).toEqual({
       WXT_API_URL: PRODUCTION_EXTENSION_ENV_DEFAULTS.WXT_API_URL,
-      WXT_WEBSITE_URL: "https://www.readfrog.app",
-      WXT_OFFICIAL_SITE_ORIGINS: ["https://readfrog.app", "https://www.readfrog.app"],
-      WXT_AUTH_COOKIE_DOMAINS: ["readfrog.app", "localhost"],
+      WXT_WEBSITE_URL: "https://www.example.test",
+      WXT_OFFICIAL_SITE_ORIGINS: ["https://example.test", "https://www.example.test"],
+      WXT_AUTH_COOKIE_DOMAINS: ["example.test", "localhost"],
       WXT_GOOGLE_CLIENT_ID: undefined,
       WXT_POSTHOG_HOST: undefined,
       WXT_POSTHOG_API_KEY: undefined,
@@ -86,29 +86,29 @@ describe("extension env parsing", () => {
 
   it("rejects urls with trailing slashes", () => {
     expect(() => parseResolvedExtensionEnv({
-      WXT_API_URL: "https://api.readfrog.app/",
+      WXT_API_URL: "https://api.example.test/",
     })).toThrowError("must not end with a trailing slash")
   })
 
   it("rejects origin entries that include a trailing slash or path", () => {
     expect(() => parseResolvedExtensionEnv({
-      WXT_OFFICIAL_SITE_ORIGINS: "https://readfrog.app/,https://www.readfrog.app",
+      WXT_OFFICIAL_SITE_ORIGINS: "https://example.test/,https://www.example.test",
     })).toThrowError("must be an origin without a trailing slash or path")
 
     expect(() => parseResolvedExtensionEnv({
-      WXT_OFFICIAL_SITE_ORIGINS: "https://readfrog.app/docs",
+      WXT_OFFICIAL_SITE_ORIGINS: "https://example.test/docs",
     })).toThrowError("must be an origin without a trailing slash or path")
   })
 
   it("rejects cookie domains with leading dots", () => {
     expect(() => parseResolvedExtensionEnv({
-      WXT_AUTH_COOKIE_DOMAINS: ".readfrog.app,localhost",
+      WXT_AUTH_COOKIE_DOMAINS: ".example.test,localhost",
     })).toThrowError("must not start with '.'")
   })
 
   it("rejects comma-separated entries with spaces", () => {
     expect(() => parseResolvedExtensionEnv({
-      WXT_OFFICIAL_SITE_ORIGINS: "https://readfrog.app, https://www.readfrog.app",
+      WXT_OFFICIAL_SITE_ORIGINS: "https://example.test, https://www.example.test",
     })).toThrowError("must not include leading or trailing whitespace")
   })
 
@@ -125,8 +125,8 @@ describe("extension env parsing", () => {
     }, true)).toEqual({
       WXT_API_URL: PRODUCTION_EXTENSION_ENV_DEFAULTS.WXT_API_URL,
       WXT_WEBSITE_URL: PRODUCTION_EXTENSION_ENV_DEFAULTS.WXT_WEBSITE_URL,
-      WXT_OFFICIAL_SITE_ORIGINS: ["https://readfrog.app", "https://www.readfrog.app"],
-      WXT_AUTH_COOKIE_DOMAINS: ["readfrog.app"],
+      WXT_OFFICIAL_SITE_ORIGINS: ["https://localhost:8877"],
+      WXT_AUTH_COOKIE_DOMAINS: ["localhost"],
       WXT_GOOGLE_CLIENT_ID: PRODUCTION_REQUIRED_ENV.WXT_GOOGLE_CLIENT_ID,
       WXT_POSTHOG_HOST: PRODUCTION_REQUIRED_ENV.WXT_POSTHOG_HOST,
       WXT_POSTHOG_API_KEY: PRODUCTION_REQUIRED_ENV.WXT_POSTHOG_API_KEY,
@@ -136,12 +136,12 @@ describe("extension env parsing", () => {
 
   it("lets production parsing skip only the required Google and PostHog env vars", () => {
     expect(parseResolvedExtensionEnv({
-      WXT_OFFICIAL_SITE_ORIGINS: "https://readfrog.app,https://www.readfrog.app",
+      WXT_OFFICIAL_SITE_ORIGINS: "https://example.test,https://www.example.test",
     }, true, true)).toEqual({
       WXT_API_URL: PRODUCTION_EXTENSION_ENV_DEFAULTS.WXT_API_URL,
       WXT_WEBSITE_URL: PRODUCTION_EXTENSION_ENV_DEFAULTS.WXT_WEBSITE_URL,
-      WXT_OFFICIAL_SITE_ORIGINS: ["https://readfrog.app", "https://www.readfrog.app"],
-      WXT_AUTH_COOKIE_DOMAINS: ["readfrog.app"],
+      WXT_OFFICIAL_SITE_ORIGINS: ["https://example.test", "https://www.example.test"],
+      WXT_AUTH_COOKIE_DOMAINS: ["localhost"],
       WXT_GOOGLE_CLIENT_ID: undefined,
       WXT_POSTHOG_HOST: undefined,
       WXT_POSTHOG_API_KEY: undefined,

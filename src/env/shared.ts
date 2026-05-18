@@ -1,10 +1,10 @@
 import { z } from "zod"
 
 export const PRODUCTION_EXTENSION_ENV_DEFAULTS = {
-  WXT_API_URL: "https://api.readfrog.app",
-  WXT_WEBSITE_URL: "https://www.readfrog.app",
-  WXT_OFFICIAL_SITE_ORIGINS: "https://readfrog.app,https://www.readfrog.app",
-  WXT_AUTH_COOKIE_DOMAINS: "readfrog.app",
+  WXT_API_URL: "https://localhost:4433",
+  WXT_WEBSITE_URL: "https://localhost:8877",
+  WXT_OFFICIAL_SITE_ORIGINS: "https://localhost:8877",
+  WXT_AUTH_COOKIE_DOMAINS: "localhost",
 } as const
 
 export const LOCAL_EXTENSION_ENV_DEFAULTS = {

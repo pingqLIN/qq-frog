@@ -198,9 +198,9 @@ describe("whatsNewFooter", () => {
 
     await waitFor(() => {
       expect(getLatestBlogDateMock).toHaveBeenCalledWith(
-        "https://www.readfrog.app/api/blog/latest",
+        "https://localhost:8877/api/blog/latest",
         "zh",
-        expect.stringMatching(/^\d+\.\d+\.\d+$/),
+        "1.33.6",
       )
     })
 

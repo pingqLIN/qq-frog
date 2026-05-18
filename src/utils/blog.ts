@@ -133,10 +133,10 @@ export function getBlogLocaleFromUILanguage(): BlogLocale {
 }
 
 /**
- * Fetches the latest blog post from the Read Frog blog API.
+ * Fetches the latest blog post from a configured blog API.
  * Uses background fetch with optional 1-day cache.
  *
- * @param apiUrl - The URL of the blog API endpoint (default: production URL)
+ * @param apiUrl - The URL of the blog API endpoint
  * @param locale - The locale to fetch the latest post for (default: 'en')
  * @param extensionVersion - The current extension version to filter compatible posts
  * @param useCache - Whether to use cache (default: true)
@@ -160,7 +160,7 @@ export function getBlogLocaleFromUILanguage(): BlogLocale {
  * ```
  */
 export async function getLatestBlogDate(
-  apiUrl: string = "https://readfrog.app/api/blog/latest",
+  apiUrl: string = "http://localhost:8888/api/blog/latest",
   locale: string = "en",
   extensionVersion?: string,
   useCache: boolean = true,

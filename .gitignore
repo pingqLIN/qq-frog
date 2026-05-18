@@ -40,6 +40,11 @@ coverage/
 tsconfig.local.json
 
 docs/
+!docs/
+docs/*
+!docs/project-structure.md
+!docs/audit/
+!docs/audit/**
 
 /repos
 

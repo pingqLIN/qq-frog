@@ -54,7 +54,7 @@ describe("youtube caption track listener", () => {
 
   it("treats the current subtitle summary as the baseline when the menu opens", async () => {
     renderSettingsMenu({
-      summary: "英语 >> 中文",
+      summary: "英語 >> 中文",
     })
 
     const onTrackChanged = vi.fn()
@@ -66,13 +66,13 @@ describe("youtube caption track listener", () => {
     listener.start()
     await flushObserver()
 
-    expect(listener.getCurrentTrackKey()).toBe("top-level-summary::0::英语 >> 中文")
+    expect(listener.getCurrentTrackKey()).toBe("top-level-summary::0::英語 >> 中文")
     expect(onTrackChanged).not.toHaveBeenCalled()
   })
 
   it("forwards changes when the subtitle summary text changes", async () => {
     renderSettingsMenu({
-      summary: "英语 >> 中文",
+      summary: "英語 >> 中文",
     })
 
     const onTrackChanged = vi.fn()
@@ -84,19 +84,19 @@ describe("youtube caption track listener", () => {
     listener.start()
     await flushObserver()
 
-    getSummaryNode()!.textContent = "英语 (自动生成) >> 阿拉伯语"
+    getSummaryNode()!.textContent = "英語 (自動生成) >> 阿拉伯語"
     await flushObserver()
 
     expect(onTrackChanged).toHaveBeenCalledTimes(1)
     expect(onTrackChanged.mock.calls[0]?.[0]).toEqual({
-      label: "英语 (自动生成) >> 阿拉伯语",
+      label: "英語 (自動生成) >> 阿拉伯語",
       menuHeading: "字幕",
-      trackKey: "top-level-summary::0::英语 (自动生成) >> 阿拉伯语",
+      trackKey: "top-level-summary::0::英語 (自動生成) >> 阿拉伯語",
     })
     expect(onTrackChanged.mock.calls[0]?.[1]).toEqual({
-      label: "英语 >> 中文",
+      label: "英語 >> 中文",
       menuHeading: "字幕",
-      trackKey: "top-level-summary::0::英语 >> 中文",
+      trackKey: "top-level-summary::0::英語 >> 中文",
     })
   })
 
@@ -133,7 +133,7 @@ describe("youtube caption track listener", () => {
 
   it("deduplicates repeated summary values", async () => {
     renderSettingsMenu({
-      summary: "英语 >> 中文",
+      summary: "英語 >> 中文",
     })
 
     const onTrackChanged = vi.fn()
@@ -145,9 +145,9 @@ describe("youtube caption track listener", () => {
     listener.start()
     await flushObserver()
 
-    getSummaryNode()!.textContent = "英语 (自动生成) >> 阿拉伯语"
+    getSummaryNode()!.textContent = "英語 (自動生成) >> 阿拉伯語"
     await flushObserver()
-    getSummaryNode()!.textContent = "英语 (自动生成) >> 阿拉伯语"
+    getSummaryNode()!.textContent = "英語 (自動生成) >> 阿拉伯語"
     await flushObserver()
 
     expect(onTrackChanged).toHaveBeenCalledTimes(1)
@@ -157,7 +157,7 @@ describe("youtube caption track listener", () => {
     vi.useFakeTimers()
 
     renderSettingsMenu({
-      summary: "英语 >> 中文",
+      summary: "英語 >> 中文",
     })
 
     const onTrackChanged = vi.fn()
@@ -171,25 +171,25 @@ describe("youtube caption track listener", () => {
 
     clickSummaryItem()
     document.querySelector<HTMLElement>(".ytp-settings-button")?.setAttribute("aria-expanded", "false")
-    getSummaryNode()!.textContent = "英语 (自动生成) >> 阿拉伯语"
+    getSummaryNode()!.textContent = "英語 (自動生成) >> 阿拉伯語"
     await vi.advanceTimersByTimeAsync(60)
 
     expect(onTrackChanged).toHaveBeenCalledTimes(1)
     expect(onTrackChanged.mock.calls[0]?.[0]).toEqual({
-      label: "英语 (自动生成) >> 阿拉伯语",
+      label: "英語 (自動生成) >> 阿拉伯語",
       menuHeading: "字幕",
-      trackKey: "top-level-summary::0::英语 (自动生成) >> 阿拉伯语",
+      trackKey: "top-level-summary::0::英語 (自動生成) >> 阿拉伯語",
     })
     expect(onTrackChanged.mock.calls[0]?.[1]).toEqual({
-      label: "英语 >> 中文",
+      label: "英語 >> 中文",
       menuHeading: "字幕",
-      trackKey: "top-level-summary::0::英语 >> 中文",
+      trackKey: "top-level-summary::0::英語 >> 中文",
     })
   })
 
   it("rebinds after YouTube navigation", async () => {
     renderSettingsMenu({
-      summary: "英语 >> 中文",
+      summary: "英語 >> 中文",
     })
 
     const onTrackChanged = vi.fn()
@@ -202,28 +202,28 @@ describe("youtube caption track listener", () => {
     await flushObserver()
 
     renderSettingsMenu({
-      summary: "德语 >> 中文",
+      summary: "德語 >> 中文",
     })
 
     window.dispatchEvent(new Event(YOUTUBE_NAVIGATE_FINISH_EVENT))
     await flushObserver()
 
-    expect(listener.getCurrentTrackKey()).toBe("top-level-summary::0::德语 >> 中文")
+    expect(listener.getCurrentTrackKey()).toBe("top-level-summary::0::德語 >> 中文")
     expect(onTrackChanged).not.toHaveBeenCalled()
 
-    getSummaryNode()!.textContent = "英语 >> 中文"
+    getSummaryNode()!.textContent = "英語 >> 中文"
     await flushObserver()
 
     expect(onTrackChanged).toHaveBeenCalledTimes(1)
     expect(onTrackChanged.mock.calls[0]?.[0]).toEqual({
-      label: "英语 >> 中文",
+      label: "英語 >> 中文",
       menuHeading: "字幕",
-      trackKey: "top-level-summary::0::英语 >> 中文",
+      trackKey: "top-level-summary::0::英語 >> 中文",
     })
     expect(onTrackChanged.mock.calls[0]?.[1]).toEqual({
-      label: "德语 >> 中文",
+      label: "德語 >> 中文",
       menuHeading: "字幕",
-      trackKey: "top-level-summary::0::德语 >> 中文",
+      trackKey: "top-level-summary::0::德語 >> 中文",
     })
   })
 })

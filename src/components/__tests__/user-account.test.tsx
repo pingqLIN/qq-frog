@@ -14,7 +14,7 @@ const { sessionState, useSessionMock } = vi.hoisted(() => ({
 
 vi.mock("@/env", () => ({
   env: {
-    WXT_WEBSITE_URL: "https://readfrog.app",
+    WXT_WEBSITE_URL: "https://localhost:8877",
   },
 }))
 

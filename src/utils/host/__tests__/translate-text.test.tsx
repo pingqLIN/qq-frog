@@ -102,7 +102,7 @@ describe("translate-text", () => {
     it("skips target-language text before sending a translation request by default", async () => {
       mockDetectLanguage.mockResolvedValueOnce(DEFAULT_CONFIG.language.targetCode)
 
-      const targetLanguageText = "这是一个已经使用目标语言写成的较长段落，用于触发翻译前目标语言检测并跳过请求，同时确保文本长度超过检测阈值。"
+      const targetLanguageText = "這是一個已經使用目標語言寫成的較長段落，用於觸發翻譯前目標語言檢測並跳過請求，同時確保文本長度超過檢測閾值。"
       const result = await translateTextForPage(targetLanguageText)
 
       expect(result).toBe("")
@@ -126,7 +126,7 @@ describe("translate-text", () => {
       mockGetConfigFromStorage.mockResolvedValue(config)
       mockSendMessage.mockResolvedValue("translated text")
 
-      const targetLanguageText = "这是一个已经使用目标语言写成的较长段落，但关闭预检测后仍然应该发送翻译请求，同时确保文本长度超过检测阈值。"
+      const targetLanguageText = "這是一個已經使用目標語言寫成的較長段落，但關閉預檢測後仍然應該發送翻譯請求，同時確保文本長度超過檢測閾值。"
       const result = await translateTextForPage(targetLanguageText)
 
       expect(result).toBe("translated text")
@@ -348,11 +348,11 @@ describe("translate-text", () => {
     })
 
     it("should trim translation result", async () => {
-      mockMicrosoftTranslate.mockResolvedValue("  测试结果  ")
+      mockMicrosoftTranslate.mockResolvedValue("  測試結果  ")
 
       const result = await executeTranslate("test input", langConfig, providerConfig, getTranslatePrompt)
 
-      expect(result).toBe("测试结果")
+      expect(result).toBe("測試結果")
     })
 
     it("should decode Google translateHtml entities", async () => {

@@ -1,7 +1,7 @@
 name: Read Frog
 extName: Read Frog - Traducción inmersiva de código abierto
 extDescription: Read Frog es una extensión de navegador de código abierto diseñada para ayudarte a aprender idiomas en profundidad desde cualquier sitio web.
-uninstallSurveyUrl: https://tally.so/r/nPK6Ob
+uninstallSurveyUrl: ""
 dataTypes:
   string: Texto
   number: Número
@@ -378,14 +378,14 @@ options:
             title: Conexión de Notebase
             description: Guarda los resultados estructurados de esta acción en una Notebase remota.
             loginRequiredTitle: Inicia sesión para configurar Notebase
-            loginRequiredDescription: Inicia sesión en readfrog.app antes de elegir una Notebase o editar asignaciones.
+            loginRequiredDescription: Inicia sesión en localhost antes de elegir una Notebase o editar asignaciones.
             loginAction: Iniciar sesión
             tableLabel: Notebase
             tablePlaceholder: Selecciona una Notebase
             tableClearOption: Desconectar Notebase
             refreshAction: Actualizar
             emptyTitle: Aún no hay Notebases
-            emptyDescription: Crea una Notebase en readfrog.app y vuelve aquí para asignar campos.
+            emptyDescription: Crea una Notebase en localhost y vuelve aquí para asignar campos.
             openNotebaseAction: Abrir Notebase
             betaLockedTitle: Esta cuenta no está en la beta de Notebase
             betaLockedDescription: Puedes mantener esta acción configurada, pero elegir Notebases y sincronizar resultados está limitado por ahora a cuentas beta seleccionadas.
@@ -580,7 +580,7 @@ options:
       title: Prompts personalizados
       description: Personalizar distintos tipos de Prompts te permite ajustar tú mismo el tipo de Prompt durante la traducción. Un Prompt representa el texto que el usuario envía al LLM.
       communityPrompts: Obtener o compartir prompts de la comunidad
-      communityPromptsUrl: https://github.com/mengxi-ream/read-frog/discussions/821
+      communityPromptsUrl: ""
       addPrompt: Añadir Prompt
       default: Predeterminado
       importSuccess: Importación correcta
@@ -980,7 +980,7 @@ action:
   saveToNotebaseSaving: Guardando...
   saveToNotebaseSuccess: Guardado en Notebase
   saveToNotebaseFailed: No se pudo guardar en Notebase
-  saveToNotebaseLoginRequired: Inicia sesión en readfrog.app para guardar en Notebase
+  saveToNotebaseLoginRequired: Inicia sesión en localhost para guardar en Notebase
   saveToNotebaseBetaRequired: Esta cuenta aún no está inscrita en la beta de Notebase
   saveToNotebaseTableUnavailable: La Notebase seleccionada ya no está disponible
   saveToNotebaseConnectionInvalid: Esta conexión de Notebase está desactualizada. Actualízala en Acciones AI personalizadas y corrige las asignaciones.

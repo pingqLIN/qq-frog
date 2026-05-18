@@ -250,7 +250,7 @@ describe("youTube Subtitle Parsers", () => {
             { utf8: "0°を超えた瞬間に" },
             { utf8: "氷が溶け始める", tOffsetMs: 500 },
             { utf8: "。", tOffsetMs: 800 },
-            { utf8: "今までの温度上昇", tOffsetMs: 1000 },
+            { utf8: "今までの溫度上昇", tOffsetMs: 1000 },
             { utf8: "。", tOffsetMs: 1500 },
           ],
         },
@@ -262,7 +262,7 @@ describe("youTube Subtitle Parsers", () => {
       expect(result).toHaveLength(2)
       expect(result[0].text).toBe("0°を超えた瞬間に氷が溶け始める。")
       expect(result[0].start).toBe(44840)
-      expect(result[1].text).toBe("今までの温度上昇。")
+      expect(result[1].text).toBe("今までの溫度上昇。")
       expect(result[1].end).toBe(55320) // separator end time for last fragment
     })
 
@@ -586,15 +586,15 @@ describe("youTube Subtitle Parsers", () => {
 
     it("should merge short non-English lines into target range", () => {
       const fragments = [
-        { text: "我们走吧。", start: 0, end: 500 },
-        { text: "现在开始。", start: 500, end: 1000 },
-        { text: "马上出发。", start: 1000, end: 1500 },
+        { text: "我們走吧。", start: 0, end: 500 },
+        { text: "現在開始。", start: 500, end: 1000 },
+        { text: "馬上出發。", start: 1000, end: 1500 },
       ]
 
       const result = optimizeSubtitles(fragments, "zh")
 
       expect(result).toHaveLength(1)
-      expect(result[0].text).toBe("我们走吧。现在开始。马上出发。")
+      expect(result[0].text).toBe("我們走吧。現在開始。馬上出發。")
     })
 
     it("should stop merging when exceeding English upper bound", () => {
@@ -662,13 +662,13 @@ describe("youTube Subtitle Parsers", () => {
     it("should split Chinese on timeout", () => {
       const fragments = [
         { text: "你好", start: 0, end: 500 },
-        { text: "很高兴认识你", start: 2000, end: 3000 }, // gap > 1000ms
+        { text: "很高興認識你", start: 2000, end: 3000 }, // gap > 1000ms
       ]
       const result = optimizeSubtitles(fragments, "zh")
 
       expect(result).toHaveLength(2)
       expect(result[0].text).toBe("你好")
-      expect(result[1].text).toBe("很高兴认识你")
+      expect(result[1].text).toBe("很高興認識你")
     })
 
     it("should return empty array for empty input", () => {

@@ -1,7 +1,7 @@
 name: Read Frog
 extName: Read Frog - Dịch Nhúng Mã Nguồn Mở
 extDescription: Read Frog là tiện ích mở rộng trình duyệt mã nguồn mở được thiết kế để giúp bạn học ngôn ngữ sâu từ bất kỳ trang web nào.
-uninstallSurveyUrl: https://tally.so/r/nPK6Ob
+uninstallSurveyUrl: ""
 dataTypes:
   string: Văn bản
   number: Số
@@ -377,14 +377,14 @@ options:
             title: Kết nối Notebase
             description: Lưu kết quả có cấu trúc của hành động này vào Notebase từ xa.
             loginRequiredTitle: Đăng nhập để cấu hình Notebase
-            loginRequiredDescription: Hãy đăng nhập trên readfrog.app trước khi chọn notebase hoặc chỉnh sửa ánh xạ.
+            loginRequiredDescription: Hãy đăng nhập trên localhost trước khi chọn notebase hoặc chỉnh sửa ánh xạ.
             loginAction: Đăng nhập
             tableLabel: Notebase
             tablePlaceholder: Chọn một notebase
             tableClearOption: Không kết nối notebase
             refreshAction: Làm mới
             emptyTitle: Chưa có Notebase nào
-            emptyDescription: Hãy tạo một notebase trên readfrog.app rồi quay lại đây để ánh xạ các trường.
+            emptyDescription: Hãy tạo một notebase trên localhost rồi quay lại đây để ánh xạ các trường.
             openNotebaseAction: Mở Notebase
             betaLockedTitle: Tài khoản này chưa nằm trong beta Notebase
             betaLockedDescription: Bạn vẫn có thể giữ cấu hình action hiện tại, nhưng việc chọn Notebase và đồng bộ kết quả hiện chỉ mở cho một số tài khoản beta.
@@ -465,7 +465,7 @@ options:
       title: Prompt cá nhân hóa
       description: Tùy chỉnh các loại Prompt khác nhau cho phép bạn tự điều chỉnh loại Prompt trong quá trình dịch. Prompt là văn bản mà người dùng gửi cho LLM.
       communityPrompts: Nhận hoặc chia sẻ prompt từ cộng đồng
-      communityPromptsUrl: https://github.com/mengxi-ream/read-frog/discussions/821
+      communityPromptsUrl: ""
       addPrompt: Thêm Prompt
       default: Mặc định
       importSuccess: Nhập thành công
@@ -865,7 +865,7 @@ action:
   saveToNotebaseSaving: Đang lưu...
   saveToNotebaseSuccess: Đã lưu vào Notebase
   saveToNotebaseFailed: Không thể lưu vào Notebase
-  saveToNotebaseLoginRequired: Hãy đăng nhập trên readfrog.app để lưu vào Notebase
+  saveToNotebaseLoginRequired: Hãy đăng nhập trên localhost để lưu vào Notebase
   saveToNotebaseBetaRequired: Tài khoản này chưa được mở quyền beta Notebase
   saveToNotebaseTableUnavailable: Notebase đã chọn không còn khả dụng
   saveToNotebaseConnectionInvalid: Kết nối Notebase này đã lỗi thời. Hãy làm mới trong Custom AI Actions và sửa các ánh xạ.

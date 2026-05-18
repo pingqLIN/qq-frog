@@ -299,8 +299,8 @@ export function SelectionToolbar() {
 
         const selectionSnapshot = readSelectionSnapshot(selection)
 
-        // https://github.com/mengxi-ream/read-frog/issues/547
-        // https://github.com/mengxi-ream/read-frog/pull/790
+        // upstream issue #547
+        // upstream PR #790
         if (!isInputOrTextarea && interactiveTarget && !selection?.containsNode(interactiveTarget, true)) {
           return
         }

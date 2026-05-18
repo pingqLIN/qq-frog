@@ -4,6 +4,7 @@ import { getTokenCellText, WEB_PAGE_PROMPT_TOKENS } from "@/utils/constants/prom
 import { promptAtoms } from "./atoms"
 
 export function PersonalizedPrompts() {
+  const communityPromptsUrl = i18n.t("options.translation.personalizedPrompts.communityPromptsUrl")
   const insertCells = WEB_PAGE_PROMPT_TOKENS.map(token => ({
     text: getTokenCellText(token),
     description: i18n.t(`options.translation.personalizedPrompts.editPrompt.promptCellInput.${token}`),
@@ -18,15 +19,19 @@ export function PersonalizedPrompts() {
       description={(
         <p>
           {i18n.t("options.translation.personalizedPrompts.description")}
-          {" "}
-          <a
-            href={i18n.t("options.translation.personalizedPrompts.communityPromptsUrl")}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-link hover:underline"
-          >
-            {i18n.t("options.translation.personalizedPrompts.communityPrompts")}
-          </a>
+          {communityPromptsUrl && (
+            <>
+              {" "}
+              <a
+                href={communityPromptsUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-link hover:underline"
+              >
+                {i18n.t("options.translation.personalizedPrompts.communityPrompts")}
+              </a>
+            </>
+          )}
         </p>
       )}
     />

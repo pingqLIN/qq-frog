@@ -67,7 +67,7 @@ describe("requestQueue – happy path", () => {
     await expect(promise).resolves.toBe("test")
   })
 
-  // 调试测试：检查带延迟的任务
+  // 調試測試：檢查帶延遲的任務
   it("works with delayed thunks", async () => {
     vi.useFakeTimers()
 
@@ -141,7 +141,7 @@ describe("requestQueue – token bucket", () => {
     void q.enqueue(trackingThunk(1), Date.now(), "1")
     void q.enqueue(trackingThunk(2), Date.now(), "2")
 
-    // t=1000ms: 第一个任务应该完成
+    // t=1000ms: 第一個任務應該完成
     vi.advanceTimersByTime(1_000)
 
     expect(completed).toEqual([0])

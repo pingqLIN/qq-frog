@@ -122,7 +122,7 @@ configAtom.onMount = (setAtom: (newValue: Config) => void) => {
 
   // Handle tab reactivation - inactive tabs may miss storage watch events,
   // so we reload from storage when the tab becomes visible again.
-  // See: https://github.com/mengxi-ream/read-frog/issues/435
+  // See: upstream issue #435
   const handleVisibilityChange = () => {
     if (document.visibilityState === "visible") {
       logger.info("configAtom onMount handleVisibilityChange when: ", new Date())
@@ -138,7 +138,7 @@ configAtom.onMount = (setAtom: (newValue: Config) => void) => {
 }
 
 // export const configFieldAtom = <K extends Keys>(key: K) => {
-//   const readAtom = selectAtom(configAtom, (c) => c[key]); // 现在是同步
+//   const readAtom = selectAtom(configAtom, (c) => c[key]); // 現在是同步
 //   const writeAtom = atom(null, (_get, set, val: Config[K]) =>
 //     set(writeConfigAtom, { [key]: val })
 //   );

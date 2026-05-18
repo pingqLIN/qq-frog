@@ -1,7 +1,7 @@
 name: 読書カエル
 extName: 読書カエル - オープンソースインビジブル翻訳
 extDescription: 読書カエルは、あらゆるウェブサイトから言語を深く学ぶために設計されたオープンソースのブラウザ拡張機能です。
-uninstallSurveyUrl: https://tally.so/r/nPK6Ob
+uninstallSurveyUrl: ""
 dataTypes:
   string: テキスト
   number: 数値
@@ -377,14 +377,14 @@ options:
             title: Notebase 接続
             description: このアクションの構造化された結果をリモート Notebase に保存します。
             loginRequiredTitle: Notebase を設定するにはログインが必要です
-            loginRequiredDescription: notebase を選択したりマッピングを編集したりする前に、readfrog.app にログインしてください。
+            loginRequiredDescription: notebase を選択したりマッピングを編集したりする前に、localhost にログインしてください。
             loginAction: ログイン
             tableLabel: Notebase
             tablePlaceholder: notebase を選択
             tableClearOption: notebase を接続しない
             refreshAction: 更新
             emptyTitle: Notebase がまだありません
-            emptyDescription: readfrog.app で notebase を作成してから、ここに戻ってフィールドをマッピングしてください。
+            emptyDescription: localhost で notebase を作成してから、ここに戻ってフィールドをマッピングしてください。
             openNotebaseAction: Notebase を開く
             betaLockedTitle: このアカウントは Notebase ベータ対象外です
             betaLockedDescription: このアクション設定は保持できますが、Notebase の選択と結果の同期は現在一部のベータアカウントのみに提供されています。
@@ -465,7 +465,7 @@ options:
       title: 個人化プロンプト
       description: 異なるタイプのプロンプトをカスタマイズすることで、翻訳時にプロンプトタイプを自ら調整できます。プロンプトとは、ユーザーがLLMに送信するテキストを指します。
       communityPrompts: コミュニティからプロンプトを取得・共有
-      communityPromptsUrl: https://github.com/mengxi-ream/read-frog/discussions/821
+      communityPromptsUrl: ""
       addPrompt: プロンプトを追加
       default: デフォルト
       importSuccess: インポート成功
@@ -865,7 +865,7 @@ action:
   saveToNotebaseSaving: 保存中...
   saveToNotebaseSuccess: Notebase に保存しました
   saveToNotebaseFailed: Notebase への保存に失敗しました
-  saveToNotebaseLoginRequired: Notebase に保存するには readfrog.app にログインしてください
+  saveToNotebaseLoginRequired: Notebase に保存するには localhost にログインしてください
   saveToNotebaseBetaRequired: このアカウントはまだ Notebase ベータに参加していません
   saveToNotebaseTableUnavailable: 選択した Notebase は利用できなくなりました
   saveToNotebaseConnectionInvalid: この Notebase 接続は古くなっています。Custom AI Actions で更新し、マッピングを修正してください。

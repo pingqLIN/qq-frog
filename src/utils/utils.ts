@@ -37,8 +37,6 @@ export function getDateFromDaysBack(daysBack: number) {
 }
 
 export function getReviewUrl(utmSource: string = "extension"): string {
-  if (import.meta.env.BROWSER === "edge") {
-    return "https://microsoftedge.microsoft.com/addons/detail/read-frog-open-source-i/cbcbomlgikfbdnoaohcjfledcoklcjbo?form=MA13IW"
-  }
-  return `https://chromewebstore.google.com/detail/read-frog-open-source-imm/modkelfkcfjpgbfmnbnllalkiogfofhb/reviews?utm_source=${utmSource}`
+  void utmSource
+  return "about:blank"
 }

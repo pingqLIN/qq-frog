@@ -4,7 +4,7 @@
  */
 
 export function getFaviconUrl(): string {
-  // 优先级列表：常见 rel 属性
+  // 優先級列表：常見 rel 屬性
   const relList = [
     "icon",
     "shortcut icon",
@@ -35,10 +35,10 @@ export function getFaviconUrl(): string {
     })
   }
 
-  // 按以下优先级排序：
-  // 1. 更大的尺寸优先
-  // 2. SVG 格式优先（通常更清晰）
-  // 3. PNG 格式优先于 ICO
+  // 按以下優先級排序：
+  // 1. 更大的尺寸優先
+  // 2. SVG 格式優先（通常更清晰）
+  // 3. PNG 格式優先於 ICO
   candidates.sort((a, b) => {
     if (a.size !== b.size)
       return b.size - a.size
@@ -53,12 +53,12 @@ export function getFaviconUrl(): string {
     return 0
   })
 
-  // 如果找到了候选图标，返回最优的那个
+  // 如果找到了候選圖標，返回最優的那個
   if (candidates.length > 0) {
     return candidates[0].url
   }
 
-  // 如果依然没找到，就回退到站点根目录的 /favicon.ico
+  // 如果依然沒找到，就回退到站點根目錄的 /favicon.ico
   const { origin } = window.location
   return `${origin}/favicon.ico`
 }

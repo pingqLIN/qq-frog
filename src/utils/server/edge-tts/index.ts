@@ -1,6 +1,6 @@
 /**
  * Edge TTS Module
- * 导出所有 Edge TTS 相关功能
+ * 導出所有 Edge TTS 相關功能
  */
 
 export * from "./api"
