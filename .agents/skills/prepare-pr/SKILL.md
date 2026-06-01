@@ -2,7 +2,7 @@
 name: prepare-pr
 description: Prepare all work before creating a pull request, optionally for the issue provided as argument
 metadata:
-  author: read-frog
+  author: qq-frog
   version: "1.0.0"
 ---
 

@@ -25,15 +25,11 @@
 - Microsoft、DeepL、OpenAI-compatible、OpenRouter、Ollama、本機或使用者自訂 provider。
 - 使用者明確設定的 translation / AI / TTS API endpoint。
 
-已移除作為 runtime service target 的原始 Read Frog 外部服務：
-
-- Read Frog website/API/blog/survey。
-- Read Frog Discord/community links。
-- upstream GitHub project links。
+不保留專案來源站台、社群、更新文章或問卷入口作為 runtime service target。
 
 ## Analytics
 
-程式中仍存在 PostHog analytics 相關模組與設定。公開發布前需要確認：
+公開發布前需要確認：
 
 - analytics 是否預設關閉。
 - 使用者是否能清楚看到並控制 analytics 偏好。

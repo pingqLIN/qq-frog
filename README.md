@@ -34,4 +34,4 @@ Local runtime URLs default to localhost. Override them in `.env.development` or 
 
 ## External Services
 
-The local build keeps third-party provider integrations such as Google, Microsoft, OpenAI-compatible providers, and other configured AI/translation providers. Original Read Frog website, API, blog, survey, Discord, and upstream project links are not used as runtime service targets.
+The local build keeps third-party provider integrations such as Google, Microsoft, OpenAI-compatible providers, and other configured AI/translation providers. Runtime service targets should be localhost or services explicitly configured by the user.

@@ -4,8 +4,8 @@
     "build": {
       "cache": true,
       "inputs": [
-        "{projectRoot}/src/**/*",
-        "{projectRoot}/public/**/*",
+        "{projectRoot}/extansion/src/**/*",
+        "{projectRoot}/extansion/public/**/*",
         "{projectRoot}/wxt.config.ts",
         "{projectRoot}/package.json",
         "{projectRoot}/pnpm-lock.yaml",
@@ -13,13 +13,13 @@
         "{projectRoot}/postcss.config.cjs",
         "{projectRoot}/vitest.setup.ts"
       ],
-      "outputs": ["{projectRoot}/.output/chrome-mv3", "{projectRoot}/.wxt"]
+      "outputs": ["{projectRoot}/extansion/.output/chrome-mv3", "{projectRoot}/.wxt"]
     },
     "build:firefox": {
       "cache": true,
       "inputs": [
-        "{projectRoot}/src/**/*",
-        "{projectRoot}/public/**/*",
+        "{projectRoot}/extansion/src/**/*",
+        "{projectRoot}/extansion/public/**/*",
         "{projectRoot}/wxt.config.ts",
         "{projectRoot}/package.json",
         "{projectRoot}/pnpm-lock.yaml",
@@ -27,12 +27,12 @@
         "{projectRoot}/postcss.config.cjs",
         "{projectRoot}/vitest.setup.ts"
       ],
-      "outputs": ["{projectRoot}/.output/firefox-mv3", "{projectRoot}/.wxt"]
+      "outputs": ["{projectRoot}/extansion/.output/firefox-mv3", "{projectRoot}/.wxt"]
     },
     "test": {
       "cache": true,
       "inputs": [
-        "{projectRoot}/src/**/*",
+        "{projectRoot}/extansion/src/**/*",
         "{projectRoot}/vitest.*.ts",
         "{projectRoot}/tsconfig.json"
       ]
@@ -40,7 +40,7 @@
     "test:cov": {
       "cache": true,
       "inputs": [
-        "{projectRoot}/src/**/*",
+        "{projectRoot}/extansion/src/**/*",
         "{projectRoot}/vitest.*.ts",
         "{projectRoot}/tsconfig.json"
       ],
@@ -49,14 +49,14 @@
     "lint": {
       "cache": true,
       "inputs": [
-        "{projectRoot}/src/**/*",
+        "{projectRoot}/extansion/src/**/*",
         "{projectRoot}/eslint.config.*"
       ]
     },
     "type-check": {
       "cache": true,
       "inputs": [
-        "{projectRoot}/src/**/*",
+        "{projectRoot}/extansion/src/**/*",
         "{projectRoot}/tsconfig.json"
       ]
     }

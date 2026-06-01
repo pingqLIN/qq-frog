@@ -45,7 +45,7 @@ When a bug appears only after `build`:
 - do not assume the dev server path is relevant
 - compare dev/build only after you have real evidence from the built version
 
-## Read-frog page-translation capture recipe
+## QQ Frog Page-Translation Capture Recipe
 
 1. Build the extension.
 2. Launch Edge with a fresh profile and the unpacked build.
@@ -72,7 +72,7 @@ await chrome.runtime.sendMessage({
 
 ```js
 await page.waitForFunction(
-  () => document.querySelectorAll('.read-frog-spinner').length >= 4,
+  () => document.querySelectorAll('.qq-frog-spinner').length >= 4,
   null,
   { timeout: 45000 },
 );
@@ -91,14 +91,14 @@ await page.waitForFunction(
 - A stitched comparison board is a comparison graphic, not a raw screenshot.
 - If the element is tiny and hard to see in a full-page shot, keep the raw shot and add a labeled crop as supplemental evidence.
 
-## Common signals for read-frog
+## Common signals for qq-frog
 
 Loading-time signals:
-- `.read-frog-spinner`
+- `.qq-frog-spinner`
 - inline spinner style strings
 
 Completion-time signals:
-- `.read-frog-translated-content-wrapper`
+- `.qq-frog-translated-content-wrapper`
 - Chinese characters in translated text
 - translated page title
 

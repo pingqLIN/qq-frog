@@ -29,7 +29,7 @@ describe("buildTrustComment", () => {
           },
         ],
       },
-      owner: "mengxi-ream",
+      owner: "local-owner",
       plan: {
         needsMaintainerReview: false,
         targetTrustLabel: "contrib-trust:trusted",
@@ -41,7 +41,7 @@ describe("buildTrustComment", () => {
         state: "open",
         title: "fix: storage false value reset and backup delete dialog not showing",
       },
-      repo: "read-frog",
+      repo: "qq-frog",
       score: {
         bucket: "trusted",
         communityStanding: 6,

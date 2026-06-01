@@ -2,18 +2,22 @@ import path from "node:path"
 import process from "node:process"
 import { defineConfig } from "wxt"
 import { z } from "zod"
-import { createExtensionClientEnvSchema, isLocalPackagesEnabled, resolveExtensionEnv } from "./src/env/shared"
+import { createExtensionClientEnvSchema, isLocalPackagesEnabled, resolveExtensionEnv } from "./extansion/src/env/shared"
 
 const WXT_API_KEY_PATTERN = /^WXT_.*API_KEY/
 const ALLOWED_BUNDLED_API_KEYS = new Set([
   "WXT_POSTHOG_API_KEY",
 ])
 const useLocalPackages = isLocalPackagesEnabled(process.env)
-const shouldSkipEnvValidation = process.env.WXT_SKIP_ENV_VALIDATION === "true"
+// Local-only builds should not require hosted auth or analytics credentials.
+// Set WXT_SKIP_ENV_VALIDATION=false to re-enable the stricter publication gate.
+const shouldSkipEnvValidation = process.env.WXT_SKIP_ENV_VALIDATION !== "false"
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
-  srcDir: "src",
+  srcDir: "extansion/src",
+  publicDir: "extansion/public",
+  outDir: "extansion/.output",
   imports: false,
   modules: ["@wxt-dev/module-react", "@wxt-dev/i18n/module"],
   manifestVersion: 3,

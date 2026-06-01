@@ -15,6 +15,24 @@ stats-*.json
 .wxt
 web-ext.config.ts
 
+# Generated unpacked Chrome extension root. Source stays under extansion/src,
+# extansion/public, and extansion/assets.
+extansion/_locales/
+extansion/chunks/
+extansion/content-scripts/
+extansion/icon/
+extansion/background.js
+extansion/devtools.html
+extansion/manifest.json
+extansion/offscreen.html
+extansion/options.html
+extansion/popup.html
+extansion/sidepanel.html
+extansion/translation-hub.html
+extansion/assets/*.css
+extansion/assets/*-[A-Za-z0-9_]*.png
+extansion/assets/*-[A-Za-z0-9_]*.svg
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -4,9 +4,9 @@
   "version": "1.33.6",
   "private": true,
   "packageManager": "pnpm@10.32.1",
-  "description": "Read Frog browser extension for language learning",
+  "description": "QQ Frog local browser extension for reading and translation",
   "scripts": {
-    "build": "wxt build",
+    "build": "wxt build && node scripts/sync-extension-root.mjs",
     "build:edge": "wxt build -b edge",
     "build:firefox": "wxt build -b firefox --mv3",
     "build:analyze": "wxt build --analyze",
@@ -171,7 +171,7 @@
       "build": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "wxt build"
+          "command": "pnpm build"
         }
       },
       "build:firefox": {

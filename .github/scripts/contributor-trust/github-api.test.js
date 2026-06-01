@@ -13,7 +13,7 @@ describe("selectOwnedNonForkRepositories", () => {
     const result = selectOwnedNonForkRepositories([
       {
         isFork: true,
-        nameWithOwner: "kilidoc/read-frog",
+        nameWithOwner: "local-owner/qq-frog",
         owner: { login: "kilidoc" },
         stargazerCount: 5040,
       },
@@ -31,8 +31,8 @@ describe("selectOwnedNonForkRepositories", () => {
       },
       {
         isFork: false,
-        nameWithOwner: "mengxi-ream/read-frog",
-        owner: { login: "mengxi-ream" },
+        nameWithOwner: "local-owner/qq-frog",
+        owner: { login: "local-owner" },
         stargazerCount: 5041,
       },
       {
@@ -123,8 +123,8 @@ describe("countAuthorCommitsInRepo", () => {
     try {
       const count = await countAuthorCommitsInRepo(
         "token",
-        "mengxi-ream",
-        "read-frog",
+        "local-owner",
+        "qq-frog",
         "Sufyr",
       )
 
@@ -145,8 +145,8 @@ describe("countAuthorCommitsInRepo", () => {
     try {
       const count = await countAuthorCommitsInRepo(
         "token",
-        "mengxi-ream",
-        "read-frog",
+        "local-owner",
+        "qq-frog",
         "Sufyr",
       )
 
@@ -192,8 +192,8 @@ describe("countReviewsOnOthersPullRequestsInRepo", () => {
     try {
       const count = await countReviewsOnOthersPullRequestsInRepo(
         "token",
-        "mengxi-ream",
-        "read-frog",
+        "local-owner",
+        "qq-frog",
         "Sufyr",
         50,
       )

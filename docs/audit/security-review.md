@@ -6,7 +6,7 @@
 
 - Manifest V3。
 - 使用 WXT 產生 manifest。
-- 不以原始 Read Frog 外部服務作為 runtime target。
+- Runtime target 僅限 localhost 或使用者明確設定的自有服務。
 - 不應在 extension bundle 中打包使用者 API key。
 
 ## 主要攻擊面
@@ -22,7 +22,6 @@
 
 - production build 會檢查可能被打包的 `WXT_*_API_KEY`。
 - runtime URL 預設改為 localhost。
-- 原始 Read Frog blog/survey/community/upstream links 不再作為使用者可點擊 runtime 服務。
 - 自訂 provider 設定由 schema 驗證。
 
 ## 後續審查重點
