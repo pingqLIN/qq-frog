@@ -259,6 +259,40 @@ describe("translation queue helpers", () => {
     expect(translationCachePutMock).not.toHaveBeenCalled()
   })
 
+  it("limits concurrent browser translation requests for Google provider", async () => {
+    let activeRequests = 0
+    let maxActiveRequests = 0
+
+    executeTranslateMock.mockImplementation(async (text: string) => {
+      activeRequests += 1
+      maxActiveRequests = Math.max(maxActiveRequests, activeRequests)
+      await new Promise(resolve => setTimeout(resolve, 5))
+      activeRequests -= 1
+      return `translated:${text}`
+    })
+
+    const { setUpWebPageTranslationQueue } = await import("../translation-queues")
+    await setUpWebPageTranslationQueue()
+
+    const handler = getRegisteredMessageHandler("enqueueTranslateRequest")
+    const requests = Array.from({ length: 8 }, (_, index) =>
+      handler({
+        data: {
+          text: `hello-${index}`,
+          langConfig: DEFAULT_CONFIG.language,
+          providerConfig: googleProvider,
+          scheduleAt: Date.now(),
+          hash: `webpage-hash-${index}`,
+        },
+      }))
+
+    const results = await Promise.all(requests)
+
+    expect(results).toHaveLength(8)
+    expect(maxActiveRequests).toBeLessThanOrEqual(2)
+    expect(executeTranslateMock).toHaveBeenCalledTimes(8)
+  })
+
   it("exposes webpage summary generation as a separate background handler", async () => {
     const { setUpWebPageTranslationQueue } = await import("../translation-queues")
     await setUpWebPageTranslationQueue()
