@@ -21,6 +21,7 @@ vi.mock("@/utils/config/storage", () => ({
 vi.mock("@/utils/config/sync", () => ({
   getLastSyncedConfigAndMeta: vi.fn(),
   setLastSyncConfigAndMeta: vi.fn(),
+  clearLastSyncConfigAndMeta: vi.fn(),
 }))
 
 vi.mock("../storage", () => ({

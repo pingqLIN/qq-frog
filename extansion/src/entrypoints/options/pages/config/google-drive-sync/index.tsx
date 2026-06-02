@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/base-ui/button"
 import { useGoogleDriveAuth } from "@/hooks/use-google-drive-auth"
 import { resolutionsAtom, unresolvedConfigsAtom } from "@/utils/atoms/google-drive-sync"
 import { lastSyncTimeAtom } from "@/utils/atoms/last-sync-time"
-import { clearAccessToken } from "@/utils/google-drive/auth"
 import { syncConfig } from "@/utils/google-drive/sync"
+import { clearGoogleDriveSyncState } from "@/utils/google-drive/sync-state"
 import { logger } from "@/utils/logger"
 import { ConfigCard } from "../../../components/config-card"
 import { UnresolvedDialog } from "./components/unresolved-dialog"
@@ -50,7 +50,7 @@ export function GoogleDriveSyncCard() {
   }
 
   const handleLogout = async () => {
-    await clearAccessToken()
+    await clearGoogleDriveSyncState()
     void invalidateAuthData()
     toast.success(i18n.t("options.config.sync.googleDrive.logoutSuccess"))
   }
