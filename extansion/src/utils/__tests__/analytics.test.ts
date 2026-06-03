@@ -71,27 +71,19 @@ describe("analytics helpers", () => {
     })
   })
 
-  it("tracks feature usage with the expected event payload", async () => {
-    sendMessageMock.mockResolvedValue(undefined)
-
-    const input = {
+  it("does not send feature usage events in the local build", async () => {
+    await expect(trackFeatureUsed({
       feature: ANALYTICS_FEATURE.PAGE_TRANSLATION,
       surface: ANALYTICS_SURFACE.POPUP,
       outcome: "success" as const,
       startedAt: 0,
       finishedAt: 1_500,
-    }
+    })).resolves.toBeUndefined()
 
-    await expect(trackFeatureUsed(input)).resolves.toBeUndefined()
-
-    expect(sendMessageMock).toHaveBeenCalledOnce()
-    expect(sendMessageMock).toHaveBeenCalledWith(
-      "trackFeatureUsedEvent",
-      buildFeatureUsedEventProperties(input),
-    )
+    expect(sendMessageMock).not.toHaveBeenCalled()
   })
 
-  it("swallows analytics upload failures", async () => {
+  it("does not warn when local analytics tracking is skipped", async () => {
     sendMessageMock.mockRejectedValueOnce(new Error("upload failed"))
 
     await expect(trackFeatureUsed({
@@ -102,6 +94,6 @@ describe("analytics helpers", () => {
       finishedAt: 1_500,
     })).resolves.toBeUndefined()
 
-    expect(loggerWarnMock).toHaveBeenCalledOnce()
+    expect(loggerWarnMock).not.toHaveBeenCalled()
   })
 })

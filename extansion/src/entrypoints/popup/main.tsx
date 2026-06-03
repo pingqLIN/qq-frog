@@ -7,6 +7,7 @@ import { Provider as JotaiProvider } from "jotai"
 import { useHydrateAtoms } from "jotai/utils"
 import * as React from "react"
 import FrogToast from "@/components/frog-toast"
+import { I18nProvider } from "@/components/providers/i18n-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { RecoveryBoundary } from "@/components/recovery/recovery-boundary"
 import { TooltipProvider } from "@/components/ui/base-ui/tooltip"
@@ -96,14 +97,16 @@ async function initApp() {
               [baseThemeModeAtom, themeMode],
             ]}
           >
-            <ThemeProvider>
-              <TooltipProvider>
-                <FrogToast />
-                <RecoveryBoundary>
-                  <App />
-                </RecoveryBoundary>
-              </TooltipProvider>
-            </ThemeProvider>
+            <I18nProvider>
+              <ThemeProvider>
+                <TooltipProvider>
+                  <FrogToast />
+                  <RecoveryBoundary>
+                    <App />
+                  </RecoveryBoundary>
+                </TooltipProvider>
+              </ThemeProvider>
+            </I18nProvider>
           </HydrateAtoms>
         </JotaiProvider>
       </QueryClientProvider>

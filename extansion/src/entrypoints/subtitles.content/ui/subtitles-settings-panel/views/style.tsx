@@ -1,6 +1,5 @@
 import type { ReactNode } from "react"
 import type { SubtitlesDisplayMode, SubtitlesFontFamily, SubtitlesTranslationPosition, SubtitleTextStyle } from "@/types/config/subtitles"
-import { i18n } from "#imports"
 import { IconLanguage, IconRefresh, IconSettings, IconSubtitles } from "@tabler/icons-react"
 import { deepmerge } from "deepmerge-ts"
 import { useAtom } from "jotai"
@@ -25,6 +24,7 @@ import {
   MIN_FONT_WEIGHT,
   SUBTITLE_FONT_FAMILIES,
 } from "@/utils/constants/subtitles"
+import { i18n } from "@/utils/i18n"
 import { ShadowWrapperContext } from "@/utils/react-shadow-host/create-shadow-host"
 import { subtitlesStore } from "../../../atoms"
 

@@ -246,8 +246,8 @@ describe("getProviderOptions", () => {
       const lowercase = getProviderOptions("glm-4-flash", "openai-compatible")
       expect(lowercase["openai-compatible"].thinking).toEqual({ type: "disabled" })
 
-      const mixed = getProviderOptions("GlM-3-Turbo", "tensdaq")
-      expect(mixed.tensdaq?.thinking).toEqual({ type: "disabled" })
+      const mixed = getProviderOptions("GlM-3-Turbo", "siliconflow")
+      expect(mixed.siliconflow?.thinking).toEqual({ type: "disabled" })
     })
 
     it("should only match models starting with GLM-", () => {

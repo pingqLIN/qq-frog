@@ -1,5 +1,4 @@
 import type { TranslationMode as TranslationModeType } from "@/types/config/translate"
-import { i18n } from "#imports"
 import { deepmerge } from "deepmerge-ts"
 import { useAtom } from "jotai"
 import { HelpTooltip } from "@/components/help-tooltip"
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/base-ui/select"
 import { TRANSLATION_MODES } from "@/types/config/translate"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
+import { i18n } from "@/utils/i18n"
 
 export default function TranslationModeSelector() {
   const [translateConfig, setTranslateConfig] = useAtom(configFieldsAtomMap.translate)

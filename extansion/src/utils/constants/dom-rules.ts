@@ -155,6 +155,13 @@ export const CUSTOM_DONT_WALK_INTO_ELEMENT_SELECTOR_MAP: Record<string, string[]
   ],
 }
 
+export const CUSTOM_MAIN_CONTENT_SELECTOR_MAP: Record<string, string[]> = {
+  "research.perplexity.ai": [
+    "header[data-framer-name=\"Section / Header\"]",
+    "header[data-framer-name=\"Section / Article\"]",
+  ],
+}
+
 export const CUSTOM_FORCE_BLOCK_TRANSLATION_SELECTOR_MAP: Record<string, string[]> = {
   "github.com": [
     "task-lists",

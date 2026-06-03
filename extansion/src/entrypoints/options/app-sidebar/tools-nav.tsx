@@ -1,4 +1,4 @@
-import { browser, i18n } from "#imports"
+import { browser } from "#imports"
 import { Icon } from "@iconify/react"
 import {
   SidebarGroup,
@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/base-ui/sidebar"
+import { i18n } from "@/utils/i18n"
 
 export function ToolsNav() {
   return (

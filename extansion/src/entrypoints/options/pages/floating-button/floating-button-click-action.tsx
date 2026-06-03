@@ -1,5 +1,4 @@
 import type { FloatingButtonClickAction as FloatingButtonClickActionValue } from "@/types/config/floating-button"
-import { i18n } from "#imports"
 import { useAtom } from "jotai"
 import {
   Select,
@@ -11,6 +10,7 @@ import {
 } from "@/components/ui/base-ui/select"
 import { floatingButtonClickActionSchema } from "@/types/config/floating-button"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
+import { i18n } from "@/utils/i18n"
 import { ConfigCard } from "../../components/config-card"
 
 const items = [

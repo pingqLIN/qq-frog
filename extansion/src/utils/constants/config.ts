@@ -46,7 +46,7 @@ const defaultDictionaryAction = createDefaultDictionaryAction()
 export const DEFAULT_CONFIG: Config = {
   language: {
     sourceCode: "auto",
-    targetCode: "cmn",
+    targetCode: "cmn-Hant",
     level: "intermediate",
   },
   providersConfig: DEFAULT_PROVIDER_CONFIG_LIST,

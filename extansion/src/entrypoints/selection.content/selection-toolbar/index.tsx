@@ -17,7 +17,6 @@ import {
 } from "./atoms"
 import { CloseButton, DropEvent } from "./close-button"
 import { SelectionToolbarCustomActionButtons } from "./custom-action-button"
-import { SpeakButton } from "./speak-button"
 import { TranslateButton } from "./translate-button"
 
 enum SelectionDirection {
@@ -215,7 +214,6 @@ function applyDirectionOffset(
 }
 
 export function SelectionToolbar() {
-  const isFirefox = import.meta.env.BROWSER === "firefox"
   const tooltipRef = useRef<HTMLDivElement>(null)
   const tooltipContainerRef = useRef<HTMLDivElement>(null)
   const selectionPositionRef = useRef<{ x: number, y: number } | null>(null) // store selection position (base position without direction offset)
@@ -427,7 +425,6 @@ export function SelectionToolbar() {
   const { features } = selectionToolbar
   const hasAnyEnabledFeature
     = features.translate.enabled
-      || (!isFirefox && features.speak.enabled)
       || selectionToolbar.customActions.some(a => a.enabled !== false)
 
   return (
@@ -452,7 +449,6 @@ export function SelectionToolbar() {
           >
             <div className="flex items-center overflow-x-auto overflow-y-hidden rounded-sm max-w-105 no-scrollbar">
               {features.translate.enabled && <TranslateButton />}
-              {!isFirefox && features.speak.enabled && <SpeakButton />}
               <SelectionToolbarCustomActionButtons />
             </div>
             <CloseButton />

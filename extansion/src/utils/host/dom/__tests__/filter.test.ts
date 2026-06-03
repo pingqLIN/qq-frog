@@ -10,6 +10,7 @@ import {
 } from "@/utils/constants/dom-labels"
 
 import {
+  isCustomMainContentElement,
   isDontWalkIntoAndDontTranslateAsChildElement,
   isDontWalkIntoButTranslateAsChildElement,
   isShallowBlockHTMLElement,
@@ -45,6 +46,22 @@ describe("isTranslatedContentNode", () => {
     const element = document.createElement("span")
     element.className = `${BLOCK_CONTENT_CLASS} ${INLINE_CONTENT_CLASS}`
     expect(isTranslatedContentNode(element)).toBe(true)
+  })
+})
+
+describe("isCustomMainContentElement", () => {
+  it("treats Perplexity Framer article sections as main content", () => {
+    const header = document.createElement("header")
+    header.setAttribute("data-framer-name", "Section / Article")
+
+    expect(isCustomMainContentElement(header, "research.perplexity.ai")).toBe(true)
+  })
+
+  it("does not treat unrelated Perplexity Framer headers as main content", () => {
+    const header = document.createElement("header")
+    header.setAttribute("data-framer-name", "Nav Wrapper")
+
+    expect(isCustomMainContentElement(header, "research.perplexity.ai")).toBe(false)
   })
 })
 

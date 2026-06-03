@@ -7,7 +7,6 @@
  * - Save button with validation state
  */
 
-import { i18n } from "#imports"
 import { useAtom } from "jotai"
 import { Activity, useMemo, useState } from "react"
 import { Button } from "@/components/ui/base-ui/button"
@@ -17,6 +16,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { MAX_CUSTOM_CSS_LENGTH } from "@/types/config/translate"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { lintCSS } from "@/utils/css/lint-css"
+import { i18n } from "@/utils/i18n"
 import { cn } from "@/utils/styles/utils"
 
 export function CSSEditor() {

@@ -11,7 +11,6 @@ import { IconHash, IconTypography } from "@tabler/icons-react"
 import { useMemo } from "react"
 import { z } from "zod"
 import { Thinking } from "@/components/thinking"
-import { FieldSpeakButton } from "./field-speak-button"
 
 interface StructuredObjectRendererProps {
   outputSchema: SelectionToolbarCustomActionOutputField[]
@@ -112,8 +111,7 @@ const { registry: STRUCTURED_OBJECT_REGISTRY } = defineRegistry(structuredObject
   components: {
     ObjectContainer: ({ children }) => <div className="space-y-3">{children}</div>,
     FieldRow: ({ props }) => {
-      const { label, type, value, pending, speakingEnabled } = props
-      const speakButtonDisabled = pending || value.length === 0
+      const { label, type, value, pending } = props
 
       return (
         <div className="" data-slot="custom-action-field-row" data-field-name={label}>
@@ -122,9 +120,6 @@ const { registry: STRUCTURED_OBJECT_REGISTRY } = defineRegistry(structuredObject
               {getFieldTypeIcon(type)}
               <span className="truncate">{label}</span>
             </div>
-            {speakingEnabled && (
-              <FieldSpeakButton text={value} disabled={speakButtonDisabled} />
-            )}
           </div>
           <div className="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
             {pending ? "…" : value || "—"}

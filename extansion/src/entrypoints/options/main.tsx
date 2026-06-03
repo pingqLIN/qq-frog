@@ -8,6 +8,7 @@ import * as React from "react"
 import { HashRouter } from "react-router"
 import FrogToast from "@/components/frog-toast"
 import { HelpButton } from "@/components/help-button"
+import { I18nProvider } from "@/components/providers/i18n-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { RecoveryBoundary } from "@/components/recovery/recovery-boundary"
 import { SidebarProvider } from "@/components/ui/base-ui/sidebar"
@@ -58,17 +59,19 @@ async function initApp() {
           <QueryClientProvider client={queryClient}>
             <HashRouter>
               <SidebarProvider>
-                <ThemeProvider>
-                  <TooltipProvider>
-                    <FrogToast />
-                    <RecoveryBoundary>
-                      <AppSidebar />
-                      <App />
-                      <HelpButton />
-                      <SettingsSearch />
-                    </RecoveryBoundary>
-                  </TooltipProvider>
-                </ThemeProvider>
+                <I18nProvider>
+                  <ThemeProvider>
+                    <TooltipProvider>
+                      <FrogToast />
+                      <RecoveryBoundary>
+                        <AppSidebar />
+                        <App />
+                        <HelpButton />
+                        <SettingsSearch />
+                      </RecoveryBoundary>
+                    </TooltipProvider>
+                  </ThemeProvider>
+                </I18nProvider>
               </SidebarProvider>
             </HashRouter>
           </QueryClientProvider>

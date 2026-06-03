@@ -8,7 +8,7 @@ import {
   INLINE_CONTENT_CLASS,
   NOTRANSLATE_CLASS,
 } from "@/utils/constants/dom-labels"
-import { CUSTOM_DONT_WALK_INTO_ELEMENT_SELECTOR_MAP, CUSTOM_FORCE_BLOCK_TRANSLATION_SELECTOR_MAP, DONT_WALK_AND_TRANSLATE_TAGS, DONT_WALK_BUT_TRANSLATE_TAGS, FORCE_BLOCK_TAGS, MAIN_CONTENT_IGNORE_TAGS } from "@/utils/constants/dom-rules"
+import { CUSTOM_DONT_WALK_INTO_ELEMENT_SELECTOR_MAP, CUSTOM_FORCE_BLOCK_TRANSLATION_SELECTOR_MAP, CUSTOM_MAIN_CONTENT_SELECTOR_MAP, DONT_WALK_AND_TRANSLATE_TAGS, DONT_WALK_BUT_TRANSLATE_TAGS, FORCE_BLOCK_TAGS, MAIN_CONTENT_IGNORE_TAGS } from "@/utils/constants/dom-rules"
 
 export function isEditable(element: HTMLElement): boolean {
   const tag = element.tagName
@@ -128,6 +128,16 @@ export function isCustomForceBlockTranslation(element: HTMLElement): boolean {
   return element.matches(forceBlockSelector)
 }
 
+export function isCustomMainContentElement(element: HTMLElement, hostname = window.location.hostname): boolean {
+  const selectorList = CUSTOM_MAIN_CONTENT_SELECTOR_MAP[hostname] ?? []
+  const selector = selectorList.join(",")
+
+  if (!selector)
+    return false
+
+  return element.matches(selector)
+}
+
 export function isDontWalkIntoButTranslateAsChildElement(element: HTMLElement): boolean {
   const dontWalkClass = element.classList.contains(NOTRANSLATE_CLASS)
 
@@ -137,9 +147,9 @@ export function isDontWalkIntoButTranslateAsChildElement(element: HTMLElement): 
   return dontWalkClass || dontWalkTag
 }
 function isInsideContentContainer(element: HTMLElement): boolean {
-  let current: HTMLElement | null = element.parentElement
+  let current: HTMLElement | null = element
   while (current) {
-    if (current.tagName === "ARTICLE" || current.tagName === "MAIN") {
+    if (current.tagName === "ARTICLE" || current.tagName === "MAIN" || isCustomMainContentElement(current)) {
       return true
     }
     current = current.parentElement

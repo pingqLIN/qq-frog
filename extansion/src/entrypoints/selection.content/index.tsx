@@ -1,7 +1,7 @@
 import "@/utils/zod-config"
 import type { ContentScriptContext } from "#imports"
 import type { ThemeMode } from "@/types/config/theme"
-import { createShadowRootUi, defineContentScript } from "#imports"
+import { browser, createShadowRootUi, defineContentScript } from "#imports"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { kebabCase } from "case-anything"
 import { Provider as JotaiProvider } from "jotai"
@@ -41,6 +41,100 @@ declare global {
   interface Window {
     __READ_FROG_SELECTION_INJECTED__?: boolean
   }
+}
+
+const SIDE_PANEL_SELECTION_CHANGED_MESSAGE = "qq-frog:side-panel-selection-changed"
+const SIDE_PANEL_GET_CURRENT_SELECTION_MESSAGE = "qq-frog:side-panel-get-current-selection"
+
+interface SidePanelSelectionChangedMessage {
+  type: typeof SIDE_PANEL_SELECTION_CHANGED_MESSAGE
+  text: string
+  title: string
+  url: string
+}
+
+interface SidePanelGetCurrentSelectionMessage {
+  type: typeof SIDE_PANEL_GET_CURRENT_SELECTION_MESSAGE
+}
+
+function readCurrentPageSelection() {
+  const text = window.getSelection()?.toString().trim() ?? ""
+  if (!text)
+    return null
+
+  return {
+    text,
+    title: document.title,
+    url: window.location.href,
+  }
+}
+
+function isSidePanelGetCurrentSelectionMessage(message: unknown): message is SidePanelGetCurrentSelectionMessage {
+  return Boolean(
+    message
+    && typeof message === "object"
+    && "type" in message
+    && message.type === SIDE_PANEL_GET_CURRENT_SELECTION_MESSAGE,
+  )
+}
+
+function installSidePanelSelectionBridge(ctx: ContentScriptContext) {
+  let lastSentText = ""
+  let sendTimerId: number | null = null
+
+  const sendCurrentSelection = () => {
+    const selection = readCurrentPageSelection()
+    if (!selection || selection.text === lastSentText)
+      return
+
+    lastSentText = selection.text
+    const message: SidePanelSelectionChangedMessage = {
+      type: SIDE_PANEL_SELECTION_CHANGED_MESSAGE,
+      ...selection,
+    }
+
+    void browser.runtime.sendMessage(message).catch((error) => {
+      if (isExtensionContextInvalidatedError(error))
+        return
+
+      console.warn("[QQ Frog] Failed to send side panel selection", error)
+    })
+  }
+
+  const scheduleSendCurrentSelection = () => {
+    if (sendTimerId !== null)
+      window.clearTimeout(sendTimerId)
+
+    sendTimerId = window.setTimeout(sendCurrentSelection, 120)
+  }
+
+  const handleMouseUp = () => {
+    requestAnimationFrame(scheduleSendCurrentSelection)
+  }
+
+  const handleSelectionChange = () => {
+    scheduleSendCurrentSelection()
+  }
+
+  const handleMessage = (message: unknown) => {
+    if (!isSidePanelGetCurrentSelectionMessage(message))
+      return undefined
+
+    return readCurrentPageSelection()
+  }
+
+  document.addEventListener("mouseup", handleMouseUp)
+  document.addEventListener("selectionchange", handleSelectionChange)
+  browser.runtime.onMessage.addListener(handleMessage)
+
+  ctx.onInvalidated(() => {
+    if (sendTimerId !== null)
+      window.clearTimeout(sendTimerId)
+
+    document.removeEventListener("mouseup", handleMouseUp)
+    document.removeEventListener("selectionchange", handleSelectionChange)
+    browser.runtime.onMessage.removeListener(handleMessage)
+  })
 }
 
 async function mountSelectionUI(ctx: ContentScriptContext) {
@@ -107,6 +201,7 @@ export default defineContentScript({
         return
       }
 
+      installSidePanelSelectionBridge(ctx)
       void mountSelectionUI(ctx)
     }
     catch (error) {
