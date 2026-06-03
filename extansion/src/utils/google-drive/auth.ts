@@ -127,6 +127,16 @@ export async function getValidAccessToken(): Promise<string> {
   }
 }
 
+export async function getStoredValidAccessToken(): Promise<string | null> {
+  const tokenData = await getTokenFromStorage()
+
+  if (!tokenData || Date.now() >= tokenData.expires_at - TOKEN_EXPIRY_BUFFER_MS) {
+    return null
+  }
+
+  return tokenData.access_token
+}
+
 export async function clearAccessToken(): Promise<void> {
   try {
     await storage.removeItem(`local:${GOOGLE_DRIVE_TOKEN_STORAGE_KEY}`)
@@ -142,13 +152,7 @@ export async function clearAccessToken(): Promise<void> {
  */
 export async function getIsAuthenticated(): Promise<boolean> {
   try {
-    const tokenData = await getTokenFromStorage()
-
-    if (!tokenData) {
-      return false
-    }
-
-    return Date.now() < tokenData.expires_at - TOKEN_EXPIRY_BUFFER_MS
+    return (await getStoredValidAccessToken()) !== null
   }
   catch (error) {
     logger.error("Failed to check authentication status", error)

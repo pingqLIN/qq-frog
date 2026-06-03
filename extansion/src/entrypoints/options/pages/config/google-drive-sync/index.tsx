@@ -24,29 +24,39 @@ export function GoogleDriveSyncCard() {
   const handleSync = async () => {
     setIsSyncing(true)
 
-    const result = await syncConfig()
+    try {
+      const result = await syncConfig()
 
-    if (result.status === "unresolved") {
-      setUnresolvedData(result.data)
-      setIsOpen(true)
+      if (result.status === "unresolved") {
+        setUnresolvedData(result.data)
+        setIsOpen(true)
+      }
+      else if (result.status === "success") {
+        const messages = {
+          "uploaded": i18n.t("options.config.sync.googleDrive.syncSuccess.uploaded"),
+          "downloaded": i18n.t("options.config.sync.googleDrive.syncSuccess.downloaded"),
+          "same-changes": i18n.t("options.config.sync.googleDrive.syncSuccess.sameChanges"),
+          "no-change": i18n.t("options.config.sync.googleDrive.syncSuccess.noChange"),
+        } as const
+        toast.success(messages[result.action])
+      }
+      else {
+        logger.error("Google Drive sync error", result.error)
+        toast.error(i18n.t("options.config.sync.googleDrive.syncError"), {
+          description: result.error.message,
+        })
+      }
     }
-    else if (result.status === "success") {
-      const messages = {
-        "uploaded": i18n.t("options.config.sync.googleDrive.syncSuccess.uploaded"),
-        "downloaded": i18n.t("options.config.sync.googleDrive.syncSuccess.downloaded"),
-        "same-changes": i18n.t("options.config.sync.googleDrive.syncSuccess.sameChanges"),
-        "no-change": i18n.t("options.config.sync.googleDrive.syncSuccess.noChange"),
-      } as const
-      toast.success(messages[result.action])
-    }
-    else {
-      logger.error("Google Drive sync error", result.error)
+    catch (error) {
+      logger.error("Google Drive sync error", error)
       toast.error(i18n.t("options.config.sync.googleDrive.syncError"), {
-        description: result.error.message,
+        description: error instanceof Error ? error.message : String(error),
       })
     }
-
-    setIsSyncing(false)
+    finally {
+      void invalidateAuthData()
+      setIsSyncing(false)
+    }
   }
 
   const handleLogout = async () => {
@@ -99,7 +109,9 @@ export function GoogleDriveSyncCard() {
                 <Icon icon="logos:google-drive" className="size-4" />
                 {isSyncing
                   ? i18n.t("options.config.sync.googleDrive.syncing")
-                  : i18n.t("options.config.sync.googleDrive.sync")}
+                  : authData?.isAuthenticated
+                    ? i18n.t("options.config.sync.googleDrive.sync")
+                    : i18n.t("options.config.sync.googleDrive.connect")}
               </Button>
             </div>
             <Activity mode={lastSyncTime ? "visible" : "hidden"}>

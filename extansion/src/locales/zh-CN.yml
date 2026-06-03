@@ -767,6 +767,7 @@ options:
       googleDrive:
         title: Google Drive 雲端同步
         description: 遠端配置較新時下載，本地配置較新時上傳
+        connect: 連接 Google Drive
         sync: 同步到 Google Drive
         syncing: 同步中...
         syncSuccess:

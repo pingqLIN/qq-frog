@@ -767,6 +767,7 @@ options:
       googleDrive:
         title: Google Drive Cloud Sync
         description: Downloads config when remote is newer, uploads config when local is newer
+        connect: Connect Google Drive
         sync: Sync to Google Drive
         syncing: Syncing...
         syncSuccess:

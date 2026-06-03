@@ -23,25 +23,29 @@ export const CONFIG_SCHEMA_VERSION = 72
 export const DEFAULT_FLOATING_BUTTON_POSITION = 0.66
 export const DEFAULT_FLOATING_BUTTON_SIDE: FloatingButtonSide = "right"
 
-function createDefaultDictionaryAction(): SelectionToolbarCustomAction | null {
-  const template = CUSTOM_ACTION_TEMPLATES.find(t => t.id === "dictionary")
+function createAppDefaultCustomAction(templateId: string, providerId = "openai-default"): SelectionToolbarCustomAction | null {
+  const template = CUSTOM_ACTION_TEMPLATES.find(t => t.id === templateId)
   if (!template)
     return null
 
-  const action = template.createAction("openai-default")
+  const referenceAction = template.createAction(providerId)
+  delete referenceAction.notebaseConnection
   return {
-    ...action,
-    id: "default-dictionary",
-    outputSchema: action.outputSchema.map(field => ({
+    ...referenceAction,
+    id: `default-${templateId}`,
+    outputSchema: referenceAction.outputSchema.map((field, index) => ({
       ...field,
-      id: field.id.startsWith("dictionary-")
+      id: field.id.startsWith(`${templateId}-`)
         ? `default-${field.id}`
-        : `default-dictionary-${field.id}`,
+        : `default-${templateId}-field-${index + 1}`,
     })),
   }
 }
 
-const defaultDictionaryAction = createDefaultDictionaryAction()
+const defaultCustomActions = [
+  createAppDefaultCustomAction("dictionary"),
+  createAppDefaultCustomAction("improve-writing"),
+].filter((action): action is SelectionToolbarCustomAction => action !== null)
 
 export const DEFAULT_CONFIG: Config = {
   language: {
@@ -113,7 +117,7 @@ export const DEFAULT_CONFIG: Config = {
         enabled: true,
       },
     },
-    customActions: defaultDictionaryAction ? [defaultDictionaryAction] : [],
+    customActions: defaultCustomActions,
   },
   sideContent: {
     width: DEFAULT_SIDE_CONTENT_WIDTH,

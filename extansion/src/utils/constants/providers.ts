@@ -522,6 +522,14 @@ export const DEFAULT_PROVIDER_CONFIG = {
   },
 } as const satisfies Record<AllProviderTypes, ProviderConfig>
 
+const SENSITIVE_PROVIDER_CONFIG_KEYS = new Set(["apiKey", "headers", "providerOptions"])
+
+export function sanitizeProviderConfigForAppDefault<T extends ProviderConfig>(providerConfig: T): T {
+  return Object.fromEntries(
+    Object.entries(providerConfig).filter(([key]) => !SENSITIVE_PROVIDER_CONFIG_KEYS.has(key)),
+  ) as T
+}
+
 export const DEFAULT_PROVIDER_CONFIG_LIST: ProvidersConfig = [
   DEFAULT_PROVIDER_CONFIG["microsoft-translate"],
   DEFAULT_PROVIDER_CONFIG["google-translate"],
@@ -543,7 +551,7 @@ export const DEFAULT_PROVIDER_CONFIG_LIST: ProvidersConfig = [
   // DEFAULT_PROVIDER_CONFIG.replicate,
   // DEFAULT_PROVIDER_CONFIG.perplexity,
   // DEFAULT_PROVIDER_CONFIG.vercel,
-]
+].map(sanitizeProviderConfigForAppDefault)
 
 export const NON_API_TRANSLATE_PROVIDER_ITEMS = pick(
   PROVIDER_ITEMS,

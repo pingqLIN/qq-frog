@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-describe("dEFAULT_CONFIG", () => {
+describe("default config", () => {
   const originalCrypto = globalThis.crypto
 
   afterEach(() => {
@@ -33,5 +33,26 @@ describe("dEFAULT_CONFIG", () => {
     ]))
     expect(defaultDictionaryAction?.outputSchema.every(field => typeof field.id === "string" && field.id.length > 0)).toBe(true)
     expect(getRandomValues).toHaveBeenCalled()
+  })
+
+  it("uses sanitized app reference providers and custom AI actions", async () => {
+    const { DEFAULT_CONFIG } = await import("../config")
+
+    expect(DEFAULT_CONFIG.providersConfig.length).toBeGreaterThan(0)
+    for (const providerConfig of DEFAULT_CONFIG.providersConfig) {
+      expect(providerConfig).not.toHaveProperty("apiKey")
+      expect(providerConfig).not.toHaveProperty("headers")
+      expect(providerConfig).not.toHaveProperty("providerOptions")
+    }
+
+    expect(DEFAULT_CONFIG.selectionToolbar.customActions.map(action => action.id)).toEqual([
+      "default-dictionary",
+      "default-improve-writing",
+    ])
+    for (const action of DEFAULT_CONFIG.selectionToolbar.customActions) {
+      expect(action.providerId).toBe("openai-default")
+      expect(action).not.toHaveProperty("notebaseConnection")
+      expect(action.outputSchema.every(field => field.id.startsWith(`${action.id}-`))).toBe(true)
+    }
   })
 })
