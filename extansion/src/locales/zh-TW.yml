@@ -34,6 +34,7 @@ popup:
   more:
     title: 更多
     translationHub: 翻譯中心
+    sidePanel: 側邊欄
 errorRecovery:
   title: 應用發生異常
   description: 已進入恢復模式。你可以先導出當前設定作為備份，再重置設定後重試。

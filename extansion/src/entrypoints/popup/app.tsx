@@ -1,4 +1,5 @@
 import { Icon } from "@iconify/react"
+import readFrogLogo from "@/assets/icons/qq-frog.png?url&no-inline"
 import { i18n } from "@/utils/i18n"
 import { openOptionsPage } from "@/utils/navigation"
 import { AISmartContext } from "./components/ai-smart-context"
@@ -17,7 +18,11 @@ function App() {
   return (
     <>
       <div className="bg-background flex flex-col gap-4 px-6 pt-5 pb-4">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          <div className="flex min-w-0 items-center gap-2">
+            <img src={readFrogLogo} alt="QQ Frog" className="size-8 shrink-0 rounded-full" />
+            <span className="truncate text-sm font-semibold">QQ Frog</span>
+          </div>
           <div className="flex items-center">
             <TranslationHubButton />
           </div>

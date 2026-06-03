@@ -7,6 +7,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { Provider as JotaiProvider, useAtom, useSetAtom } from "jotai"
 import { useHydrateAtoms } from "jotai/utils"
 import * as React from "react"
+import readFrogLogo from "@/assets/icons/qq-frog.png?url&no-inline"
 import FrogToast from "@/components/frog-toast"
 import { I18nProvider } from "@/components/providers/i18n-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
@@ -14,6 +15,11 @@ import { Button } from "@/components/ui/base-ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/base-ui/tabs"
 import { Textarea } from "@/components/ui/base-ui/textarea"
 import { TooltipProvider } from "@/components/ui/base-ui/tooltip"
+import { ClearAiSegmentationCache } from "@/entrypoints/options/pages/video-subtitles/clear-ai-segmentation-cache"
+import { SubtitlesConfig } from "@/entrypoints/options/pages/video-subtitles/subtitles-config"
+import { SubtitlesRequestBatch } from "@/entrypoints/options/pages/video-subtitles/subtitles-request-batch"
+import { SubtitlesRequestRate } from "@/entrypoints/options/pages/video-subtitles/subtitles-request-rate"
+import { SubtitlesStyleSettings } from "@/entrypoints/options/pages/video-subtitles/subtitles-style-settings"
 import { configAtom } from "@/utils/atoms/config"
 import { baseThemeModeAtom } from "@/utils/atoms/theme"
 import { getLocalConfig } from "@/utils/config/storage"
@@ -35,6 +41,8 @@ import "@/assets/styles/theme.css"
 
 const SIDE_PANEL_SELECTION_CHANGED_MESSAGE = "qq-frog:side-panel-selection-changed"
 const SIDE_PANEL_GET_CURRENT_SELECTION_MESSAGE = "qq-frog:side-panel-get-current-selection"
+const SIDE_PANEL_TAB_TRANSLATE = "translate"
+const SIDE_PANEL_TAB_SUBTITLES = "subtitles"
 
 interface SidePanelSelectionMessage {
   type: typeof SIDE_PANEL_SELECTION_CHANGED_MESSAGE
@@ -48,6 +56,8 @@ interface PageSelectionSnapshot {
   title?: string
   url?: string
 }
+
+type SidePanelTab = typeof SIDE_PANEL_TAB_TRANSLATE | typeof SIDE_PANEL_TAB_SUBTITLES
 
 function HydrateAtoms({
   initialValues,
@@ -202,24 +212,131 @@ function SidePanelTranslationTab() {
   )
 }
 
+function isVideoSubtitlesUrl(url: string | undefined) {
+  if (!url)
+    return false
+
+  try {
+    const parsedUrl = new URL(url)
+    const hostname = parsedUrl.hostname
+    return (
+      (hostname === "www.youtube.com" || hostname === "youtube.com" || hostname === "m.youtube.com")
+      && parsedUrl.pathname === "/watch"
+    ) || (
+      (hostname === "www.youtube.com" || hostname === "youtube.com" || hostname === "www.youtube-nocookie.com")
+      && parsedUrl.pathname.startsWith("/embed/")
+    )
+  }
+  catch {
+    return false
+  }
+}
+
+function useAutoSidePanelTab() {
+  const [activeTab, setActiveTab] = React.useState<SidePanelTab>(SIDE_PANEL_TAB_TRANSLATE)
+
+  const refreshActiveTab = React.useCallback(async () => {
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true,
+    })
+
+    if (isVideoSubtitlesUrl(tab?.url))
+      setActiveTab(SIDE_PANEL_TAB_SUBTITLES)
+  }, [])
+
+  React.useEffect(() => {
+    void refreshActiveTab()
+
+    const handleActivated = () => {
+      void refreshActiveTab()
+    }
+    const handleUpdated = (_tabId: number, changeInfo: { url?: string }) => {
+      if (isVideoSubtitlesUrl(changeInfo.url))
+        setActiveTab(SIDE_PANEL_TAB_SUBTITLES)
+    }
+
+    browser.tabs.onActivated.addListener(handleActivated)
+    browser.tabs.onUpdated.addListener(handleUpdated)
+
+    return () => {
+      browser.tabs.onActivated.removeListener(handleActivated)
+      browser.tabs.onUpdated.removeListener(handleUpdated)
+    }
+  }, [refreshActiveTab])
+
+  return [activeTab, setActiveTab] as const
+}
+
+function SidePanelVideoSubtitlesTab() {
+  const openFullSettings = () => {
+    void browser.tabs.create({
+      url: browser.runtime.getURL("/options.html#/video-subtitles"),
+    })
+  }
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold">
+            {i18n.t("options.videoSubtitles.title")}
+          </h2>
+          <p className="text-muted-foreground text-xs">
+            {i18n.t("options.videoSubtitles.description")}
+          </p>
+        </div>
+        <Button variant="outline" size="icon-sm" onClick={openFullSettings} title={i18n.t("popup.options")}>
+          <Icon icon="tabler:external-link" className="size-4" />
+        </Button>
+      </div>
+
+      <div className={cn(
+        "space-y-0 *:border-b [&>*:last-child]:border-b-0",
+        "[&_section]:py-4 [&_section]:gap-y-3",
+        "[&_section>div:first-child]:basis-auto [&_section>div:first-child]:shrink",
+        "[&_section_h2]:text-sm [&_section_h2]:leading-snug",
+        "[&_section_[data-slot=card]]:rounded-lg [&_section_[data-slot=card]]:py-3",
+        "[&_section_[data-slot=field-group]]:gap-4",
+        "[&_section_[data-slot=field]]:gap-2",
+      )}
+      >
+        <SubtitlesConfig />
+        <SubtitlesStyleSettings />
+        <SubtitlesRequestRate />
+        <SubtitlesRequestBatch />
+        <ClearAiSegmentationCache />
+      </div>
+    </div>
+  )
+}
+
 function SidePanelShell() {
+  const [activeTab, setActiveTab] = useAutoSidePanelTab()
+
   return (
     <main className="bg-background text-foreground flex h-screen min-h-0 flex-col">
       <header className="flex h-12 shrink-0 items-center justify-between border-b px-3">
         <div className="flex min-w-0 items-center gap-2">
-          <Icon icon="tabler:language" className="size-4 shrink-0" />
+          <img src={readFrogLogo} alt={APP_NAME} className="size-7 shrink-0 rounded-full" />
           <h1 className="truncate text-sm font-semibold">{APP_NAME}</h1>
         </div>
       </header>
 
-      <Tabs defaultValue="translate" className="min-h-0 flex-1 px-3 py-3">
-        <TabsList className="mb-2">
-          <TabsTrigger value="translate" className={cn("min-w-20")}>
+      <Tabs value={activeTab} onValueChange={value => setActiveTab(value as SidePanelTab)} className="min-h-0 flex-1 px-3 py-3">
+        <TabsList className="mb-2 w-full">
+          <TabsTrigger value={SIDE_PANEL_TAB_TRANSLATE} className={cn("min-w-0")}>
             {i18n.t("popup.translate")}
           </TabsTrigger>
+          <TabsTrigger value={SIDE_PANEL_TAB_SUBTITLES} className={cn("min-w-0")}>
+            {i18n.t("options.videoSubtitles.title")}
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="translate" className="min-h-0">
+        <TabsContent value={SIDE_PANEL_TAB_TRANSLATE} className="min-h-0">
           <SidePanelTranslationTab />
+        </TabsContent>
+        <TabsContent value={SIDE_PANEL_TAB_SUBTITLES} className="min-h-0">
+          <SidePanelVideoSubtitlesTab />
         </TabsContent>
       </Tabs>
     </main>

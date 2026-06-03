@@ -34,6 +34,7 @@ popup:
   more:
     title: More
     translationHub: Translation Hub
+    sidePanel: Side Panel
 errorRecovery:
   title: Something went wrong
   description: Recovery mode is active. You can export your current settings as a backup, then reset settings and try again.
