@@ -1,6 +1,8 @@
 # QQ Frog
 
-QQ Frog 是本機優先的瀏覽器擴充功能，用於閱讀外語網頁、翻譯選取文字，並把日常瀏覽變成更輕量的語言學習流程。
+![QQ Frog 輕量化版本 banner](./extansion/assets/readme-banner.jpg)
+
+QQ Frog 是基於 Read Frog / 伴讀蛙的輕量化、本機優先個人 fork，用於日常閱讀與翻譯。
 
 英文主文件請見 [README.md](./README.md)。
 
@@ -10,13 +12,17 @@ QQ Frog 是基於原始 Read Frog 瀏覽器擴充樣板，也就是「伴讀蛙�
 
 感謝原始 Read Frog / 伴讀蛙專案與貢獻者提供擴充功能基礎、產品想法與實作模式，讓此 fork 能在其成果上延伸。
 
-## 功能
+## 輕量化版本
 
-- 翻譯選取文字、完整網頁、輸入欄位與影片字幕。
-- 保留 Google Translate 與 Microsoft Translate，提供不需 API key 的快速翻譯。
-- 可使用自己的 AI 提供商，取得自訂提示詞、語意說明或字幕分段能力。
-- 可儲存選取工具列的自訂 AI 動作，例如字典查詢與寫作修飾。
-- 支援設定備份、匯出、匯入，以及透過 Google Drive app data 同步。
+此 fork 將擴充功能收斂在自用的小型流程：快速閱讀網頁、選取翻譯、本機設定，以及可選的個人 provider 設定。
+
+專案不打包個人憑證，並盡量降低 hosted/runtime 假設。
+
+## 畫面預覽
+
+![選取工具列](./extansion/src/assets/demo/selection-toolbar.png)
+
+![浮動按鈕](./extansion/src/assets/demo/floating-button.png)
 
 ## 本機優先預設
 
@@ -63,3 +69,9 @@ pnpm build
 - [Privacy review](./docs/audit/privacy-review.md)
 - [Permissions review](./docs/audit/permissions-review.md)
 - [Release checklist](./docs/audit/release-checklist.md)
+
+## 授權與致謝
+
+此 fork 以 GNU General Public License v3.0 only 授權散布。請見 [LICENSE](./LICENSE)。
+
+本專案修改自原始 Read Frog / 伴讀蛙瀏覽器擴充樣板。此 repository 內的修改是 2026 年為輕量化個人備份與本機自用版本所做。

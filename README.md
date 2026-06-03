@@ -1,6 +1,8 @@
 # QQ Frog
 
-QQ Frog is a local-first browser extension for reading foreign-language pages, translating selected text, and turning everyday browsing into a lighter language-learning workflow.
+![QQ Frog lightweight banner](./extansion/assets/readme-banner.jpg)
+
+QQ Frog is a lightweight, local-first personal fork of Read Frog / 伴讀蛙 for everyday reading and translation.
 
 Traditional Chinese documentation is available in [README.zh-TW.md](./README.zh-TW.md).
 
@@ -10,13 +12,17 @@ QQ Frog is a personal backup fork based on the original Read Frog browser extens
 
 Thanks to the original Read Frog / 伴讀蛙 project and its contributors for the extension foundation, product idea, and implementation patterns this fork builds on.
 
-## What It Does
+## Lightweight Version
 
-- Translate selected text, full pages, input fields, and video subtitles.
-- Keep Google Translate and Microsoft Translate available for quick no-key translation.
-- Use your own AI providers when you want custom prompts, richer explanations, or subtitle segmentation.
-- Save reusable custom AI actions for selection-toolbar workflows such as dictionary lookup and writing improvement.
-- Back up, export, import, and sync settings through Google Drive app data.
+This fork keeps the extension focused on a small self-use workflow: quick page reading, selection translation, local settings, and optional personal provider configuration.
+
+It deliberately avoids bundled personal credentials and keeps hosted/runtime assumptions minimal.
+
+## Screenshots
+
+![Selection toolbar](./extansion/src/assets/demo/selection-toolbar.png)
+
+![Floating button](./extansion/src/assets/demo/floating-button.png)
 
 ## Local-First Defaults
 
@@ -63,3 +69,9 @@ pnpm build
 - [Privacy review](./docs/audit/privacy-review.md)
 - [Permissions review](./docs/audit/permissions-review.md)
 - [Release checklist](./docs/audit/release-checklist.md)
+
+## License And Attribution
+
+This fork is distributed under the GNU General Public License v3.0 only. See [LICENSE](./LICENSE).
+
+Modified from the original Read Frog / 伴讀蛙 browser extension template. Changes in this repository are made for a lightweight personal backup and local self-use version in 2026.
