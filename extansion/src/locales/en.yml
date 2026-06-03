@@ -768,6 +768,9 @@ options:
         title: Google Drive Cloud Sync
         description: Downloads config when remote is newer, uploads config when local is newer
         connect: Connect Google Drive
+        oauthNotConfigured:
+          title: Google Drive OAuth is not configured
+          description: Rebuild the extension with WXT_GOOGLE_CLIENT_ID set before using Google Drive sync.
         sync: Sync to Google Drive
         syncing: Syncing...
         syncSuccess:

@@ -28,6 +28,10 @@ const googleUserInfoSchema = z.object({
 export type GoogleAuthToken = z.infer<typeof googleAuthTokenSchema>
 export type GoogleUserInfo = z.infer<typeof googleUserInfoSchema>
 
+export function isGoogleDriveOAuthConfigured(): boolean {
+  return GOOGLE_CLIENT_ID.length > 0
+}
+
 /**
  * Get token from storage with validation
  */

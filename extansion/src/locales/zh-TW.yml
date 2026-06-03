@@ -653,6 +653,9 @@ options:
         title: Google Drive 雲端同步
         description: 遠端設定較新時下載，本機設定較新時上傳
         connect: 連線 Google Drive
+        oauthNotConfigured:
+          title: 尚未設定 Google Drive OAuth
+          description: 使用 Google Drive 同步前，請先設定 WXT_GOOGLE_CLIENT_ID 並重新 build 擴充功能。
         sync: 同步到 Google Drive
         syncing: 同步中...
         syncSuccess:

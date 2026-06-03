@@ -2,10 +2,12 @@ import { Icon } from "@iconify/react"
 import { useAtomValue, useSetAtom } from "jotai"
 import { Activity, useState } from "react"
 import { toast } from "sonner"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/base-ui/alert"
 import { Button } from "@/components/ui/base-ui/button"
 import { useGoogleDriveAuth } from "@/hooks/use-google-drive-auth"
 import { resolutionsAtom, unresolvedConfigsAtom } from "@/utils/atoms/google-drive-sync"
 import { lastSyncTimeAtom } from "@/utils/atoms/last-sync-time"
+import { isGoogleDriveOAuthConfigured } from "@/utils/google-drive/auth"
 import { syncConfig } from "@/utils/google-drive/sync"
 import { clearGoogleDriveSyncState } from "@/utils/google-drive/sync-state"
 import { i18n } from "@/utils/i18n"
@@ -20,8 +22,16 @@ export function GoogleDriveSyncCard() {
   const setUnresolvedData = useSetAtom(unresolvedConfigsAtom)
   const setResolutions = useSetAtom(resolutionsAtom)
   const lastSyncTime = useAtomValue(lastSyncTimeAtom)
+  const isOAuthConfigured = isGoogleDriveOAuthConfigured()
 
   const handleSync = async () => {
+    if (!isOAuthConfigured) {
+      toast.error(i18n.t("options.config.sync.googleDrive.oauthNotConfigured.title"), {
+        description: i18n.t("options.config.sync.googleDrive.oauthNotConfigured.description"),
+      })
+      return
+    }
+
     setIsSyncing(true)
 
     try {
@@ -100,11 +110,20 @@ export function GoogleDriveSyncCard() {
         )}
       >
         <div className="w-full flex flex-col items-end gap-4">
+          {!isOAuthConfigured && (
+            <Alert>
+              <Icon icon="tabler:alert-circle" className="size-4" />
+              <AlertTitle>{i18n.t("options.config.sync.googleDrive.oauthNotConfigured.title")}</AlertTitle>
+              <AlertDescription>
+                {i18n.t("options.config.sync.googleDrive.oauthNotConfigured.description")}
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="flex flex-col gap-2 items-end">
             <div className="flex gap-2">
               <Button
                 onClick={handleSync}
-                disabled={isSyncing}
+                disabled={isSyncing || !isOAuthConfigured}
               >
                 <Icon icon="logos:google-drive" className="size-4" />
                 {isSyncing
