@@ -82,7 +82,7 @@ export async function translateNodesBilingualMode(
       }
       else {
         nodes.forEach(node => translatingNodes.delete(node))
-        void translateNodesBilingualMode(nodes, walkId, config, toggle)
+        await translateNodesBilingualMode(nodes, walkId, config, toggle)
         return
       }
     }
@@ -224,7 +224,7 @@ export async function translateNodeTranslationOnlyMode(
         // same nodes array, we ensure the translation uses the newly created DOM elements since the
         // function will re-query and find the correct parent and child nodes from the restored DOM.
         nodes.forEach(node => translatingNodes.delete(node))
-        void translateNodeTranslationOnlyMode(nodes, walkId, config, toggle)
+        await translateNodeTranslationOnlyMode(nodes, walkId, config, toggle)
         return
       }
     }

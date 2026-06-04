@@ -22,6 +22,7 @@ import { logger } from "@/utils/logger"
 import { getModelById } from "@/utils/providers/model"
 
 const invalidStreamStartPayloadMessage = "Invalid stream start payload"
+const STREAM_TEXT_CHUNK_THROTTLE_MS = 80
 
 function createStreamAbortError(message: string) {
   return new DOMException(message, "AbortError")
@@ -257,6 +258,21 @@ export async function runStreamTextInBackground(
     status: "thinking",
     text: "",
   }
+  let lastChunkSnapshotAt = 0
+
+  const emitThrottledChunk = () => {
+    if (!onChunk) {
+      return
+    }
+
+    const now = Date.now()
+    if (lastChunkSnapshotAt > 0 && now - lastChunkSnapshotAt < STREAM_TEXT_CHUNK_THROTTLE_MS) {
+      return
+    }
+
+    lastChunkSnapshotAt = now
+    onChunk(createStreamSnapshot(cumulativeText, thinking))
+  }
 
   const result = streamText({
     ...(streamTextParams as Parameters<typeof streamText>[0]),
@@ -275,7 +291,7 @@ export async function runStreamTextInBackground(
     switch (part.type) {
       case "text-delta": {
         cumulativeText += part.text
-        onChunk?.(createStreamSnapshot(cumulativeText, thinking))
+        emitThrottledChunk()
         break
       }
       case "reasoning-delta": {
@@ -283,7 +299,7 @@ export async function runStreamTextInBackground(
           status: "thinking",
           text: thinking.text + part.text,
         }
-        onChunk?.(createStreamSnapshot(cumulativeText, thinking))
+        emitThrottledChunk()
         break
       }
       case "reasoning-end": {
@@ -291,7 +307,7 @@ export async function runStreamTextInBackground(
           ...thinking,
           status: "complete",
         }
-        onChunk?.(createStreamSnapshot(cumulativeText, thinking))
+        emitThrottledChunk()
         break
       }
       case "error": {
