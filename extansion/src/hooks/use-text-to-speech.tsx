@@ -147,7 +147,6 @@ export function useTextToSpeech() {
 
       const requestId = getRandomUUID()
       activeRequestIdRef.current = requestId
-      let didStartPlayback = false
 
       const selectedVoice = await resolveVoiceForText(text, ttsConfig, languageDetection.mode === "llm", forcedVoice)
       if (shouldStopRef.current || activeRequestIdRef.current !== requestId) {
@@ -178,9 +177,6 @@ export function useTextToSpeech() {
             audioBase64: audioChunk.audioBase64,
             contentType: audioChunk.contentType,
           })
-          if (playbackResult.ok) {
-            didStartPlayback = true
-          }
           return playbackResult.ok
         }
         finally {
@@ -217,9 +213,6 @@ export function useTextToSpeech() {
       }
       setCurrentChunk(0)
       setTotalChunks(0)
-
-      if (didStartPlayback) {
-      }
     },
     onError: (error) => {
       toast.error(i18n.t("speak.failedToGenerateSpeech"), {

@@ -310,7 +310,7 @@ export class UniversalVideoAdapter {
     this.toggleSubtitlesWithSource(true, "auto")
   }
 
-  private toggleSubtitlesWithSource(enabled: boolean, source: SubtitlesToggleSource) {
+  private toggleSubtitlesWithSource(enabled: boolean, _source: SubtitlesToggleSource) {
     this.handleToggleSubtitles(
       enabled,
     )

@@ -53,7 +53,6 @@ const strictCookieDomainSchema = strictStringSchema
   })
 
 const optionalNonEmptyStringSchema = z.string().min(1).optional()
-const optionalStrictUrlSchema = strictUrlSchema.optional()
 
 function parseCommaSeparatedEntries(
   value: string,

@@ -165,13 +165,13 @@ export default function FloatingButton() {
   }, [])
 
   const handleFloatingButtonClick = () => {
-  if (floatingButton.clickAction === "translate") {
-    const nextEnabled = !translationState.enabled
-    void sendMessage("tryToSetEnablePageTranslationOnContentScript", {
-      enabled: nextEnabled,
-    })
-    return
-  }
+    if (floatingButton.clickAction === "translate") {
+      const nextEnabled = !translationState.enabled
+      void sendMessage("tryToSetEnablePageTranslationOnContentScript", {
+        enabled: nextEnabled,
+      })
+      return
+    }
 
     void Promise.resolve(sendMessage("toggleSidePanel", undefined)).then((result) => {
       if (result?.ok === false && result.reason === "requires-extension-user-action") {

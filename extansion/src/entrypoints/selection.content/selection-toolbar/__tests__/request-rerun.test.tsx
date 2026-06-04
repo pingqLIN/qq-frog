@@ -857,7 +857,6 @@ describe("selection toolbar requests", () => {
     await waitFor(() => {
       expect(screen.getByTestId("translation-result").textContent).toBe("Context menu result")
     })
-
   })
 
   it("reuses the same captured session for cross-node context-menu translation", async () => {
@@ -985,7 +984,6 @@ describe("selection toolbar requests", () => {
 
     expect(screen.getByTestId("footer-paragraphs").textContent).toContain("Selected text inside a paragraph.")
     expect(toastErrorMock).not.toHaveBeenCalled()
-
   })
 
   it("renders the custom action tooltip as non-interactive and closes it on hover leave", async () => {
@@ -1044,7 +1042,6 @@ describe("selection toolbar requests", () => {
       "options.floatingButtonAndToolbar.selectionToolbar.errors.missingSelection",
     )
     expect(streamBackgroundStructuredObjectMock).not.toHaveBeenCalled()
-
   })
 
   it("does not rerun custom action requests on passive config refresh, but reruns when request values change", async () => {
@@ -1300,7 +1297,6 @@ describe("selection toolbar requests", () => {
     expect(alert).toHaveTextContent("options.floatingButtonAndToolbar.selectionToolbar.errors.customActionFailed")
     expect(alert).toHaveTextContent("options.floatingButtonAndToolbar.selectionToolbar.errors.missingSelection")
     expect(streamBackgroundStructuredObjectMock).not.toHaveBeenCalled()
-
   })
 
   it("shows separate precheck alerts when multiple custom actions are triggered with no selected text", async () => {

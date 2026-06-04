@@ -108,52 +108,46 @@ export class PageTranslationManager implements IPageTranslationManager {
       return
     }
 
-    try {
-      const providerConfig = resolveProviderConfig(config, "translate")
+    const providerConfig = resolveProviderConfig(config, "translate")
 
-      await sendMessage("setAndNotifyPageTranslationStateChangedByManager", {
-        enabled: true,
-        url: window.location.href,
-      })
+    await sendMessage("setAndNotifyPageTranslationStateChangedByManager", {
+      enabled: true,
+      url: window.location.href,
+    })
 
-      this.isPageTranslating = true
-      await this.primeDocumentTitleContext(
-        config.translate.enableAIContentAware && isLLMProviderConfig(providerConfig),
-      )
-      this.startDocumentTitleTracking()
+    this.isPageTranslating = true
+    await this.primeDocumentTitleContext(
+      config.translate.enableAIContentAware && isLLMProviderConfig(providerConfig),
+    )
+    this.startDocumentTitleTracking()
 
-      // Listen to existing elements when they enter the viewpoint
-      const walkId = getRandomUUID()
-      this.walkId = walkId
-      this.intersectionObserver = new IntersectionObserver(async (entries, observer) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            if (isHTMLElement(entry.target)) {
-              if (!entry.target.closest(`.${CONTENT_WRAPPER_CLASS}`)) {
-                const currentConfig = await getLocalConfig()
-                if (!currentConfig) {
-                  logger.error("Global config is not initialized")
-                  return
-                }
-                this.enqueueElementTranslation(entry.target, walkId)
+    // Listen to existing elements when they enter the viewpoint
+    const walkId = getRandomUUID()
+    this.walkId = walkId
+    this.intersectionObserver = new IntersectionObserver(async (entries, observer) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          if (isHTMLElement(entry.target)) {
+            if (!entry.target.closest(`.${CONTENT_WRAPPER_CLASS}`)) {
+              const currentConfig = await getLocalConfig()
+              if (!currentConfig) {
+                logger.error("Global config is not initialized")
+                return
               }
+              this.enqueueElementTranslation(entry.target, walkId)
             }
-            observer.unobserve(entry.target)
           }
+          observer.unobserve(entry.target)
         }
-      }, this.intersectionOptions)
+      }
+    }, this.intersectionOptions)
 
-      // Initialize walkability state for existing elements
-      this.addWalkBlockedElements(document.body, config)
-      await this.observerTopLevelParagraphs(document.body, config)
+    // Initialize walkability state for existing elements
+    this.addWalkBlockedElements(document.body, config)
+    await this.observerTopLevelParagraphs(document.body, config)
 
-      // Start observing mutations from document.body and all shadow roots
-      this.observeMutations(document.body)
-
-    }
-    catch (error) {
-      throw error
-    }
+    // Start observing mutations from document.body and all shadow roots
+    this.observeMutations(document.body)
   }
 
   stop(): void {
@@ -237,7 +231,7 @@ export class PageTranslationManager implements IPageTranslationManager {
       if (!startTouches)
         return
       if (performance.now() - startTime < PageTranslationManager.MAX_DURATION) {
-      this.isPageTranslating
+        this.isPageTranslating
           ? this.stop()
           : void this.start()
       }

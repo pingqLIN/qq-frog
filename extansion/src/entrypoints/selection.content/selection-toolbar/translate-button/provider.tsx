@@ -316,7 +316,6 @@ export function SelectionTranslationProvider({
       if (runIdRef.current === runId) {
         setTranslatedText(nextTranslatedText)
       }
-
     }
     catch (error) {
       if (!isAbortError(error) && runIdRef.current === runId) {
