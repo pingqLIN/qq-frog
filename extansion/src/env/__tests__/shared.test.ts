@@ -106,9 +106,7 @@ describe("extension env parsing", () => {
   })
 
   it("requires Google env var when PROD is true", () => {
-    expect(() => parseResolvedExtensionEnv({
-      WXT_GOOGLE_CLIENT_ID: "test-google-client-id",
-    }, true)).toThrowError("expected string, received undefined")
+    expect(() => parseResolvedExtensionEnv({}, true)).toThrowError("expected string, received undefined")
   })
 
   it("accepts Google env var when PROD is true", () => {
