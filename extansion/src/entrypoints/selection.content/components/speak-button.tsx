@@ -3,7 +3,6 @@ import { useAtomValue } from "jotai"
 import { useCallback } from "react"
 import { buttonVariants } from "@/components/ui/base-ui/button"
 import { useTextToSpeech } from "@/hooks/use-text-to-speech"
-import { ANALYTICS_SURFACE } from "@/types/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { i18n } from "@/utils/i18n"
 import { cn } from "@/utils/styles/utils"
@@ -12,7 +11,7 @@ import { SelectionPopoverTooltip, useSelectionTooltipState } from "./selection-t
 export function SpeakButton({ text }: { text: string | undefined }) {
   const { handlePress, onOpenChange: handleTooltipOpenChange, open: tooltipOpen } = useSelectionTooltipState()
   const ttsConfig = useAtomValue(configFieldsAtomMap.tts)
-  const { play, stop, isFetching, isPlaying } = useTextToSpeech(ANALYTICS_SURFACE.SELECTION_TOOLBAR)
+  const { play, stop, isFetching, isPlaying } = useTextToSpeech()
 
   const handleClick = useCallback(() => {
     if (isFetching || isPlaying) {

@@ -9,8 +9,6 @@ import {
 
 const PRODUCTION_REQUIRED_ENV = {
   WXT_GOOGLE_CLIENT_ID: "test-google-client-id",
-  WXT_POSTHOG_HOST: "https://us.i.posthog.com",
-  WXT_POSTHOG_API_KEY: "phc_test",
 } as const
 
 function parseResolvedExtensionEnv(
@@ -56,12 +54,10 @@ describe("extension env resolution", () => {
 
   it("passes through unrelated env vars untouched", () => {
     expect(resolveExtensionEnv({
-      WXT_POSTHOG_API_KEY: "phc_test",
-      WXT_POSTHOG_TEST_UUID: "00000000-0000-0000-0000-000000000001",
+      WXT_WEBSITE_URL: "https://www.example.test",
     })).toMatchObject({
       ...PRODUCTION_EXTENSION_ENV_DEFAULTS,
-      WXT_POSTHOG_API_KEY: "phc_test",
-      WXT_POSTHOG_TEST_UUID: "00000000-0000-0000-0000-000000000001",
+      WXT_WEBSITE_URL: "https://www.example.test",
     })
   })
 })
@@ -78,9 +74,6 @@ describe("extension env parsing", () => {
       WXT_OFFICIAL_SITE_ORIGINS: ["https://example.test", "https://www.example.test"],
       WXT_AUTH_COOKIE_DOMAINS: ["example.test", "localhost"],
       WXT_GOOGLE_CLIENT_ID: undefined,
-      WXT_POSTHOG_HOST: undefined,
-      WXT_POSTHOG_API_KEY: undefined,
-      WXT_POSTHOG_TEST_UUID: undefined,
     })
   })
 
@@ -112,14 +105,13 @@ describe("extension env parsing", () => {
     })).toThrowError("must not include leading or trailing whitespace")
   })
 
-  it("requires Google and PostHog env vars when PROD is true", () => {
+  it("requires Google env var when PROD is true", () => {
     expect(() => parseResolvedExtensionEnv({
       WXT_GOOGLE_CLIENT_ID: "test-google-client-id",
-      WXT_POSTHOG_HOST: "https://us.i.posthog.com",
     }, true)).toThrowError("expected string, received undefined")
   })
 
-  it("accepts Google and PostHog env vars when PROD is true", () => {
+  it("accepts Google env var when PROD is true", () => {
     expect(parseResolvedExtensionEnv({
       ...PRODUCTION_REQUIRED_ENV,
     }, true)).toEqual({
@@ -128,13 +120,10 @@ describe("extension env parsing", () => {
       WXT_OFFICIAL_SITE_ORIGINS: ["https://localhost:8877"],
       WXT_AUTH_COOKIE_DOMAINS: ["localhost"],
       WXT_GOOGLE_CLIENT_ID: PRODUCTION_REQUIRED_ENV.WXT_GOOGLE_CLIENT_ID,
-      WXT_POSTHOG_HOST: PRODUCTION_REQUIRED_ENV.WXT_POSTHOG_HOST,
-      WXT_POSTHOG_API_KEY: PRODUCTION_REQUIRED_ENV.WXT_POSTHOG_API_KEY,
-      WXT_POSTHOG_TEST_UUID: undefined,
     })
   })
 
-  it("lets production parsing skip only the required Google and PostHog env vars", () => {
+  it("lets production parsing skip only the required Google env var", () => {
     expect(parseResolvedExtensionEnv({
       WXT_OFFICIAL_SITE_ORIGINS: "https://example.test,https://www.example.test",
     }, true, true)).toEqual({
@@ -143,9 +132,6 @@ describe("extension env parsing", () => {
       WXT_OFFICIAL_SITE_ORIGINS: ["https://example.test", "https://www.example.test"],
       WXT_AUTH_COOKIE_DOMAINS: ["localhost"],
       WXT_GOOGLE_CLIENT_ID: undefined,
-      WXT_POSTHOG_HOST: undefined,
-      WXT_POSTHOG_API_KEY: undefined,
-      WXT_POSTHOG_TEST_UUID: undefined,
     })
   })
 

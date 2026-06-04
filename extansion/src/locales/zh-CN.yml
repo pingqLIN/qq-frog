@@ -770,7 +770,7 @@ options:
         connect: 連接 Google Drive
         oauthNotConfigured:
           title: 尚未配置 Google Drive OAuth
-          description: 使用 Google Drive 同步前，請先配置 WXT_GOOGLE_CLIENT_ID 並重新 build 擴展。
+          description: 使用 Google Drive 同步前，請先以扩展的 Google OAuth client ID 配置 WXT_GOOGLE_CLIENT_ID，并重新 build 扩展。
         sync: 同步到 Google Drive
         syncing: 同步中...
         syncSuccess:

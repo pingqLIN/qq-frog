@@ -1,8 +1,5 @@
-import type { FeatureUsageContext } from "@/types/analytics"
 import type { Config } from "@/types/config/config"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
 import { isLLMProviderConfig } from "@/types/config/provider"
-import { createFeatureUsageContext, trackFeatureUsed } from "@/utils/analytics"
 import { getLocalConfig } from "@/utils/config/storage"
 import { CONTENT_WRAPPER_CLASS } from "@/utils/constants/dom-labels"
 import { resolveProviderConfig } from "@/utils/constants/feature-providers"
@@ -31,7 +28,7 @@ interface IPageTranslationManager {
    * Starts the automatic page translation functionality
    * Registers observers, touch triggers and set storage
    */
-  start: (analyticsContext?: FeatureUsageContext) => Promise<void>
+  start: () => Promise<void>
 
   /**
    * Stops the automatic page translation functionality
@@ -91,23 +88,15 @@ export class PageTranslationManager implements IPageTranslationManager {
     return this.isPageTranslating
   }
 
-  async start(analyticsContext?: FeatureUsageContext): Promise<void> {
+  async start(): Promise<void> {
     if (this.isPageTranslating) {
       console.warn("PageTranslationManager is already active")
       return
     }
 
-    const trackedContext = window === window.top ? analyticsContext : undefined
-
     const config = await getLocalConfig()
     if (!config) {
       console.warn("Config is not initialized")
-      if (trackedContext) {
-        void trackFeatureUsed({
-          ...trackedContext,
-          outcome: "failure",
-        })
-      }
       return
     }
 
@@ -116,12 +105,6 @@ export class PageTranslationManager implements IPageTranslationManager {
       translate: config.translate,
       language: config.language,
     })) {
-      if (trackedContext) {
-        void trackFeatureUsed({
-          ...trackedContext,
-          outcome: "failure",
-        })
-      }
       return
     }
 
@@ -167,20 +150,8 @@ export class PageTranslationManager implements IPageTranslationManager {
       // Start observing mutations from document.body and all shadow roots
       this.observeMutations(document.body)
 
-      if (trackedContext) {
-        void trackFeatureUsed({
-          ...trackedContext,
-          outcome: "success",
-        })
-      }
     }
     catch (error) {
-      if (trackedContext) {
-        void trackFeatureUsed({
-          ...trackedContext,
-          outcome: "failure",
-        })
-      }
       throw error
     }
   }
@@ -266,12 +237,9 @@ export class PageTranslationManager implements IPageTranslationManager {
       if (!startTouches)
         return
       if (performance.now() - startTime < PageTranslationManager.MAX_DURATION) {
-        this.isPageTranslating
+      this.isPageTranslating
           ? this.stop()
-          : void this.start(createFeatureUsageContext(
-            ANALYTICS_FEATURE.PAGE_TRANSLATION,
-            ANALYTICS_SURFACE.TOUCH_GESTURE,
-          ))
+          : void this.start()
       }
       reset()
     }

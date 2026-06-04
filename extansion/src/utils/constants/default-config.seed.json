@@ -1,0 +1,565 @@
+{
+  "language": {
+    "sourceCode": "auto",
+    "targetCode": "cmn",
+    "level": "intermediate"
+  },
+  "providersConfig": [
+    {
+      "id": "microsoft-translate-default",
+      "name": "Microsoft Translator",
+      "enabled": true,
+      "provider": "microsoft-translate"
+    },
+    {
+      "id": "google-translate-default",
+      "name": "Google Translate",
+      "enabled": true,
+      "provider": "google-translate"
+    },
+    {
+      "id": "openai-default",
+      "name": "OpenAI",
+      "description": "一般翻譯",
+      "enabled": true,
+      "temperature": 0.2,
+      "providerOptions": {
+        "reasoningEffort": "none"
+      },
+      "provider": "openai",
+      "model": {
+        "model": "gpt-5.4-mini",
+        "isCustomModel": false,
+        "customModel": null
+      }
+    },
+    {
+      "id": "google-default",
+      "name": "Gemini",
+      "description": "具有先進推理能力的 Google 旗艦 AI 模型",
+      "enabled": true,
+      "provider": "google",
+      "model": {
+        "model": "gemini-2.5-flash",
+        "isCustomModel": false,
+        "customModel": null
+      }
+    },
+    {
+      "id": "deeplx-default",
+      "name": "DeepLX",
+      "description": "非官方 DeepL API",
+      "enabled": true,
+      "baseURL": "https://api.deeplx.org/{{apiKey}}/translate",
+      "provider": "deeplx"
+    },
+    {
+      "id": "16892eeb-1717-416f-954c-64d0f3b17728",
+      "name": "OpenAI 高品質",
+      "description": "含有輕度推理",
+      "enabled": true,
+      "temperature": 0.1,
+      "providerOptions": {
+        "reasoningEffort": "low"
+      },
+      "provider": "openai",
+      "model": {
+        "model": "gpt-5.4",
+        "isCustomModel": false,
+        "customModel": null
+      }
+    },
+    {
+      "id": "594e29c9-e68d-4b9c-9879-6a8203707b2a",
+      "name": "OpenAI 特殊用途",
+      "description": "包含自訂AI指令 含有輕度推理",
+      "enabled": true,
+      "temperature": 0.1,
+      "providerOptions": {
+        "reasoningEffort": "low"
+      },
+      "provider": "openai",
+      "model": {
+        "model": "gpt-5.4-mini",
+        "isCustomModel": false,
+        "customModel": null
+      }
+    }
+  ],
+  "translate": {
+    "providerId": "google-translate-default",
+    "mode": "bilingual",
+    "node": {
+      "enabled": false,
+      "hotkey": "control"
+    },
+    "page": {
+      "range": "main",
+      "autoTranslatePatterns": [
+        "news.ycombinator.com"
+      ],
+      "autoTranslateLanguages": [],
+      "shortcut": "Alt+E",
+      "preload": {
+        "margin": 1000,
+        "threshold": 0
+      },
+      "minCharactersPerNode": 0,
+      "minWordsPerNode": 0,
+      "enableTargetLanguageSkip": true,
+      "skipLanguages": []
+    },
+    "enableAIContentAware": false,
+    "customPromptsConfig": {
+      "promptId": null,
+      "patterns": []
+    },
+    "requestQueueConfig": {
+      "capacity": 60,
+      "rate": 8
+    },
+    "batchQueueConfig": {
+      "maxCharactersPerBatch": 1000,
+      "maxItemsPerBatch": 4
+    },
+    "translationNodeStyle": {
+      "preset": "textColor",
+      "isCustom": false,
+      "customCSS": null
+    }
+  },
+  "languageDetection": {
+    "mode": "llm",
+    "providerId": "openai-default"
+  },
+  "tts": {
+    "defaultVoice": "en-US-DavisNeural",
+    "languageVoices": {
+      "eng": "en-US-DavisNeural",
+      "cmn": "zh-CN-YunxiNeural",
+      "cmn-Hant": "zh-TW-YunJheNeural",
+      "yue": "zh-CN-YunxiNeural",
+      "spa": "es-ES-AlvaroNeural",
+      "rus": "ru-RU-DmitryNeural",
+      "arb": "ar-SA-HamedNeural",
+      "ben": "bn-BD-NabanitaNeural",
+      "hin": "hi-IN-MadhurNeural",
+      "por": "pt-BR-AntonioNeural",
+      "ind": "id-ID-ArdiNeural",
+      "jpn": "ja-JP-KeitaNeural",
+      "fra": "fr-FR-HenriNeural",
+      "deu": "de-DE-ConradNeural",
+      "jav": "jv-ID-DimasNeural",
+      "kor": "ko-KR-InJoonNeural",
+      "tel": "te-IN-MohanNeural",
+      "vie": "vi-VN-NamMinhNeural",
+      "mar": "mr-IN-ManoharNeural",
+      "ita": "it-IT-DiegoNeural",
+      "tam": "ta-IN-ValluvarNeural",
+      "tur": "tr-TR-AhmetNeural",
+      "urd": "ur-PK-AsadNeural",
+      "guj": "gu-IN-NiranjanNeural",
+      "pol": "pl-PL-MarekNeural",
+      "ukr": "uk-UA-OstapNeural",
+      "kan": "kn-IN-GaganNeural",
+      "mai": "en-US-DavisNeural",
+      "mal": "ml-IN-MidhunNeural",
+      "pes": "fa-IR-FaridNeural",
+      "mya": "my-MM-ThihaNeural",
+      "swh": "sw-KE-RafikiNeural",
+      "sun": "su-ID-JajangNeural",
+      "ron": "ro-RO-EmilNeural",
+      "pan": "pa-IN-OjasNeural",
+      "bho": "en-US-DavisNeural",
+      "amh": "am-ET-AmehaNeural",
+      "hau": "ha-NG-AbubakarNeural",
+      "fuv": "ff-Latn-SN-SambaNeural",
+      "bos": "bs-BA-GoranNeural",
+      "hrv": "hr-HR-SreckoNeural",
+      "nld": "nl-NL-MaartenNeural",
+      "srp": "sr-RS-NicholasNeural",
+      "tha": "th-TH-NiwatNeural",
+      "ckb": "en-US-DavisNeural",
+      "yor": "yo-NG-AbeoNeural",
+      "uzn": "uz-UZ-SardorNeural",
+      "zlm": "ms-MY-OsmanNeural",
+      "ibo": "ig-NG-EzinneNeural",
+      "npi": "ne-NP-SagarNeural",
+      "ceb": "en-US-DavisNeural",
+      "skr": "en-US-DavisNeural",
+      "tgl": "fil-PH-AngeloNeural",
+      "hun": "hu-HU-TamasNeural",
+      "azj": "az-AZ-BabekNeural",
+      "sin": "si-LK-SameeraNeural",
+      "koi": "en-US-DavisNeural",
+      "ell": "el-GR-NestorasNeural",
+      "ces": "cs-CZ-AntoninNeural",
+      "mag": "en-US-DavisNeural",
+      "run": "en-US-DavisNeural",
+      "bel": "be-BY-YauheniNeural",
+      "plt": "en-US-DavisNeural",
+      "qug": "en-US-DavisNeural",
+      "mad": "en-US-DavisNeural",
+      "nya": "en-US-GuyNeural",
+      "zyb": "en-US-DavisNeural",
+      "pbu": "en-US-DavisNeural",
+      "kin": "rw-RW-JeanNeural",
+      "zul": "zu-ZA-ThembaNeural",
+      "bul": "bg-BG-BorislavNeural",
+      "swe": "sv-SE-MattiasNeural",
+      "lin": "ln-CD-BaudouinNeural",
+      "som": "so-SO-MuuseNeural",
+      "hms": "en-US-DavisNeural",
+      "hnj": "en-US-DavisNeural",
+      "ilo": "en-US-DavisNeural",
+      "kaz": "kk-KZ-DauletNeural",
+      "heb": "he-IL-AvriNeural",
+      "nob": "nb-NO-FinnNeural",
+      "nno": "nn-NO-FinnNeural",
+      "afr": "af-ZA-AdriNeural",
+      "sqi": "sq-AL-IlirNeural",
+      "asm": "as-IN-BiswajitNeural",
+      "eus": "eu-ES-AnderNeural",
+      "bre": "fr-FR-HenriNeural",
+      "cat": "ca-ES-EnricNeural",
+      "cos": "fr-FR-HenriNeural",
+      "cym": "cy-GB-AledNeural",
+      "dan": "da-DK-JeppeNeural",
+      "div": "si-LK-SameeraNeural",
+      "epo": "en-US-GuyNeural",
+      "ekk": "et-EE-KertNeural",
+      "fao": "fo-FO-PoulNeural",
+      "fij": "en-US-GuyNeural",
+      "fin": "fi-FI-HarriNeural",
+      "fry": "nl-NL-MaartenNeural",
+      "gla": "en-GB-RyanNeural",
+      "gle": "ga-IE-ColmNeural",
+      "glg": "gl-ES-RoiNeural",
+      "grn": "es-ES-AlvaroNeural",
+      "hat": "fr-FR-HenriNeural",
+      "haw": "en-US-DavisNeural",
+      "hye": "hy-AM-HaykNeural",
+      "ido": "en-US-GuyNeural",
+      "ina": "en-US-GuyNeural",
+      "isl": "is-IS-GunnarNeural",
+      "kat": "ka-GE-GiorgiNeural",
+      "khm": "km-KH-PisethNeural",
+      "kir": "kk-KZ-DauletNeural",
+      "lao": "lo-LA-ChanthavongNeural",
+      "lat": "it-IT-DiegoNeural",
+      "lvs": "lv-LV-NilsNeural",
+      "lit": "lt-LT-LeonasNeural",
+      "ltz": "fr-FR-HenriNeural",
+      "mkd": "mk-MK-AleksandarNeural",
+      "mlt": "mt-MT-JosephNeural",
+      "mon": "mn-MN-BataaNeural",
+      "mri": "en-NZ-MitchellNeural",
+      "nso": "en-US-DavisNeural",
+      "oci": "fr-FR-HenriNeural",
+      "ori": "or-IN-DineshNeural",
+      "orm": "en-US-GuyNeural",
+      "prs": "en-US-DavisNeural",
+      "san": "hi-IN-MadhurNeural",
+      "slk": "sk-SK-LukasNeural",
+      "slv": "sl-SI-RokNeural",
+      "smo": "en-US-GuyNeural",
+      "sna": "en-US-GuyNeural",
+      "snd": "sd-PK-SalmanNeural",
+      "sot": "en-US-GuyNeural",
+      "tah": "fr-FR-HenriNeural",
+      "tat": "tt-RU-AidarNeural",
+      "tgk": "tg-TJ-SharifNeural",
+      "tir": "am-ET-AmehaNeural",
+      "ton": "en-US-GuyNeural",
+      "tsn": "en-US-GuyNeural",
+      "tuk": "tk-TM-AmanNeural",
+      "uig": "ug-CN-KashgarNeural",
+      "vol": "en-US-GuyNeural",
+      "wol": "en-US-GuyNeural",
+      "xho": "xh-ZA-ThembaNeural",
+      "ydd": "he-IL-AvriNeural",
+      "aka": "en-US-GuyNeural",
+      "bam": "fr-FR-HenriNeural",
+      "bis": "en-US-GuyNeural",
+      "bod": "zh-CN-YunxiNeural",
+      "che": "ru-RU-DmitryNeural",
+      "chv": "ru-RU-DmitryNeural",
+      "dzo": "zh-CN-YunxiNeural",
+      "ewe": "en-US-GuyNeural",
+      "kab": "en-US-DavisNeural",
+      "lug": "en-US-GuyNeural",
+      "oss": "ru-RU-DmitryNeural",
+      "ssw": "en-US-GuyNeural",
+      "ven": "en-US-GuyNeural",
+      "war": "en-US-DavisNeural",
+      "nde": "en-US-GuyNeural",
+      "nbl": "en-US-GuyNeural",
+      "pam": "en-US-DavisNeural",
+      "hil": "en-US-DavisNeural",
+      "bcl": "en-US-DavisNeural",
+      "min": "en-US-DavisNeural",
+      "ace": "en-US-DavisNeural",
+      "bug": "en-US-DavisNeural",
+      "ban": "en-US-DavisNeural",
+      "bjn": "en-US-DavisNeural",
+      "mak": "en-US-DavisNeural",
+      "sas": "en-US-DavisNeural",
+      "tet": "en-US-DavisNeural",
+      "cha": "en-US-GuyNeural",
+      "niu": "en-US-DavisNeural",
+      "tvl": "en-US-DavisNeural",
+      "gil": "en-US-DavisNeural",
+      "mah": "en-US-GuyNeural",
+      "pau": "en-US-DavisNeural",
+      "wls": "en-US-DavisNeural",
+      "rar": "en-US-DavisNeural",
+      "hif": "en-US-DavisNeural"
+    },
+    "rate": 0,
+    "pitch": 0,
+    "volume": 0
+  },
+  "floatingButton": {
+    "enabled": true,
+    "position": 0.66,
+    "side": "right",
+    "disabledFloatingButtonPatterns": [],
+    "clickAction": "translate",
+    "locked": false
+  },
+  "selectionToolbar": {
+    "enabled": true,
+    "disabledSelectionToolbarPatterns": [],
+    "opacity": 100,
+    "features": {
+      "translate": {
+        "enabled": true,
+        "providerId": "google-translate-default"
+      },
+      "speak": {
+        "enabled": true
+      }
+    },
+    "customActions": [
+      {
+        "id": "default-dictionary",
+        "name": "Dictionary",
+        "enabled": false,
+        "icon": "tabler:book-2",
+        "providerId": "16892eeb-1717-416f-954c-64d0f3b17728",
+        "systemPrompt": "",
+        "prompt": "",
+        "outputSchema": [
+          {
+            "id": "default-dictionary-term",
+            "name": "Term",
+            "type": "string",
+            "description": "Base/canonical lemma of the selected term.",
+            "speaking": true
+          },
+          {
+            "id": "default-dictionary-phonetic",
+            "name": "Phonetic",
+            "type": "string",
+            "description": "Standard phonetic transcription for the term's language (e.g., IPA for English, pinyin for Mandarin, romaji for Japanese).",
+            "speaking": false
+          },
+          {
+            "id": "default-dictionary-part-of-speech",
+            "name": "Part of Speech",
+            "type": "string",
+            "description": "Grammatical category (e.g., noun, verb, adjective).",
+            "speaking": false
+          },
+          {
+            "id": "default-dictionary-definition",
+            "name": "Definition",
+            "type": "string",
+            "description": "One concise definition for the contextual sense.",
+            "speaking": false
+          },
+          {
+            "id": "default-dictionary-context",
+            "name": "Paragraphs",
+            "type": "string",
+            "description": "The paragraphs from the prompt above. Do not rewrite them.",
+            "speaking": true
+          },
+          {
+            "id": "default-dictionary-context-translation",
+            "name": "Paragraphs Translation",
+            "type": "string",
+            "description": "The translation of the paragraphs.",
+            "speaking": false
+          },
+          {
+            "id": "default-dictionary-difficulty",
+            "name": "Difficulty",
+            "type": "string",
+            "description": "Estimated CEFR difficulty level A1, A2, B1, B2, C1, or C2.",
+            "speaking": false
+          }
+        ]
+      },
+      {
+        "id": "92f316c4-a0ba-4587-a7de-a2b3e8c26a21",
+        "name": "一般翻譯｜台灣繁中",
+        "enabled": true,
+        "icon": "lucide:languages",
+        "providerId": "openai-default",
+        "systemPrompt": "You are a professional web translation engine.\n\nYour task is to translate the selected webpage text into natural Traditional Chinese used in Taiwan.\n\nRules:\n1. Translate faithfully. Do not summarize, omit, expand, or add commentary.\n2. Use fluent Taiwanese Traditional Chinese, not Simplified Chinese or Mainland Chinese phrasing.\n3. Preserve meaning, tone, numbers, units, dates, URLs, product names, brand names, code, file paths, formulas, and proper nouns.\n4. Preserve paragraph breaks and list structure when possible.\n5. If the source text is already Traditional Chinese, lightly polish only obvious unnatural phrasing; otherwise keep it unchanged.\n6. If a technical term has a common English form, keep the English term when necessary, especially on first occurrence.\n7. Return only the translated text in the required output field.",
+        "prompt": "Page title:\n{{webTitle}}\n\nTarget language:\n{{targetLanguage}}\n\nSelected text:\n{{selection}}\n\nNearby context:\n{{paragraphs}}\n\nTranslate the selected text into natural Traditional Chinese used in Taiwan.\nUse the nearby context only to resolve ambiguity and terminology.\nDo not translate unrelated context unless it is part of the selected text.",
+        "outputSchema": [
+          {
+            "id": "c9d3b91b-148f-4364-baf7-577da22597ba",
+            "name": "Translation",
+            "type": "string",
+            "description": "e translated selected text in natural Traditional Chinese used in Taiwan. Return only the translation. Preserve paragraph breaks, numbers, units, URLs, names, code, and formatting where possible.",
+            "speaking": true
+          }
+        ]
+      },
+      {
+        "id": "e89a4eb7-57b7-4ba9-986f-17a076eba6ab",
+        "name": "高品質翻譯｜專業繁中",
+        "enabled": true,
+        "icon": "mdi:translate-variant",
+        "providerId": "16892eeb-1717-416f-954c-64d0f3b17728",
+        "systemPrompt": "You are a senior professional translator and technical editor.\n\nYour task is to translate selected webpage text into publication-quality Traditional Chinese used in Taiwan.\n\nTranslation goals:\n1. Preserve the original meaning with high fidelity.\n2. Produce natural, readable, professional Traditional Chinese for readers in Taiwan.\n3. Use the surrounding context to resolve ambiguous terms, pronouns, references, and domain-specific vocabulary.\n4. Maintain the original register: technical, academic, journalistic, legal, marketing, casual, or instructional.\n5. Preserve numbers, units, dates, URLs, product names, brand names, file paths, code, formulas, citations, and proper nouns.\n6. For established technical terms, keep the English term in parentheses on first occurrence when it helps clarity.\n7. Avoid Simplified Chinese, Mainland Chinese phrasing, and over-literal translation.\n8. Do not invent facts, add unsupported explanations, or correct the author's claims unless the source clearly contains a typo.\n9. If the source is ambiguous, choose the most contextually likely translation and mention the ambiguity in the Notes field.\n10. If the selected text is already Traditional Chinese, only polish obvious machine-like phrasing and explain this in the Notes field.",
+        "prompt": "Page title:\n{{webTitle}}\n\nTarget language:\n{{targetLanguage}}\n\nSelected text:\n{{selection}}\n\nNearby context:\n{{paragraphs}}\n\nTranslate the selected text into publication-quality Traditional Chinese used in Taiwan.\n\nUse the nearby context to improve terminology, tone, and ambiguity resolution.\nOnly translate the selected text. Do not translate unrelated context unless necessary for understanding.\nReturn the result according to the output schema.",
+        "outputSchema": [
+          {
+            "id": "faf7bbb3-346c-4555-b4d0-4e145935abb7",
+            "name": "Translation",
+            "type": "string",
+            "description": "Publication-quality Traditional Chinese translation used in Taiwan. Preserve original meaning, tone, paragraph breaks, numbers, units, URLs, proper nouns, code, formulas, and formatting where possible.",
+            "speaking": true
+          },
+          {
+            "id": "a320fcb7-f9cd-4870-9ff9-90d074fc5305",
+            "name": "Terminology",
+            "type": "string",
+            "description": "Important technical terms or proper nouns used in the translation. Format each item as source term → translated term separated by \\r\\n. Return an empty string if there are no notable terms.",
+            "speaking": false
+          },
+          {
+            "id": "5ce2c70e-be2b-4027-bb2f-72f7d89a4dcb",
+            "name": "Notes",
+            "type": "string",
+            "description": "Brief notes about ambiguity, tone, translation choices, or terms intentionally kept in English. Use Traditional Chinese. Return an empty string if no note is needed.",
+            "speaking": false
+          },
+          {
+            "id": "9803c0d6-bdc4-4dd2-b156-4edd4ee3064e",
+            "name": "Confidence",
+            "type": "number",
+            "description": "Translation confidence from 0 to 100. Use lower scores when the selected text lacks context, contains ambiguous references, or has unclear terminology.",
+            "speaking": false
+          }
+        ]
+      },
+      {
+        "id": "7a3750f6-0de9-4e0a-a4c1-fbe903c4e57c",
+        "name": "高品質翻譯 | 色彩管理",
+        "enabled": true,
+        "icon": "solar:document-text-bold",
+        "providerId": "594e29c9-e68d-4b9c-9879-6a8203707b2a",
+        "systemPrompt": "You are a senior professional translator and technical editor.\n\nYour task is to translate selected webpage text into publication-quality Traditional Chinese used in Taiwan.\n\nTranslation goals:\n1. Preserve the original meaning with high fidelity.\n2. Produce natural, readable, professional Traditional Chinese for readers in Taiwan.\n3. Use the surrounding context to resolve ambiguous terms, pronouns, references, and domain-specific vocabulary.\n4. Maintain the original register: technical, academic, journalistic, legal, marketing, casual, or instructional.\n5. Preserve numbers, units, dates, URLs, product names, brand names, file paths, code, formulas, citations, and proper nouns.\n6. For established technical terms, keep the English term in parentheses on first occurrence when it helps clarity.\n7. Avoid Simplified Chinese, Mainland Chinese phrasing, and over-literal translation.\n8. Do not invent facts, add unsupported explanations, or correct the author's claims unless the source clearly contains a typo.\n9. If the source is ambiguous, choose the most contextually likely translation and mention the ambiguity in the Notes field.\n10. If the selected text is already Traditional Chinese, only polish obvious machine-like phrasing and explain this in the Notes field.\n\nDomain-specific terminology preference:\nFor color management, imaging, display calibration, video post-production, and printing topics, preserve established English technical terms when appropriate.\n\nExamples:\n- color management → 色彩管理\n- display calibration → 顯示器校正\n- profiling → 建立描述檔 / profile 建立，depending on context\n- ICC profile → ICC 描述檔\n- gamut → 色域\n- tone mapping → 色調映射\n- EOTF → EOTF, electro-optical transfer function / 電光轉換函數\n- HDR → HDR\n- SDR → SDR\n- white point → 白點\n- luminance → 亮度\n- chromaticity → 色度\n- metamerism → 同色異譜\n- colorimeter → 色度計\n- spectroradiometer → 光譜輻射計\n- spectrophotometer → 分光光度計",
+        "prompt": "Page title:\n{{webTitle}}\n\nTarget language:\n{{targetLanguage}}\n\nSelected text:\n{{selection}}\n\nNearby context:\n{{paragraphs}}\n\nTranslate the selected text into publication-quality Traditional Chinese used in Taiwan.\n\nUse the nearby context to improve terminology, tone, and ambiguity resolution.\nOnly translate the selected text. Do not translate unrelated context unless necessary for understanding.\nReturn the result according to the output schema.",
+        "outputSchema": [
+          {
+            "id": "64300c37-917f-4323-bc45-77705d7f9464",
+            "name": "Translation",
+            "type": "string",
+            "description": "Publication-quality Traditional Chinese translation used in Taiwan. Preserve original meaning, tone, paragraph breaks, numbers, units, URLs, proper nouns, code, formulas, and formatting where possible.",
+            "speaking": true
+          },
+          {
+            "id": "ac391644-0c94-4d65-a926-5d725192dd1e",
+            "name": "Terminology",
+            "type": "string",
+            "description": "Important technical terms or proper nouns used in the translation. Format each item as source term → translated term separated by \\r\\n. Return an empty string if there are no notable terms.",
+            "speaking": false
+          },
+          {
+            "id": "be66e5da-a294-4b7e-a1ad-03e13cfab490",
+            "name": "Notes",
+            "type": "string",
+            "description": "Brief notes about ambiguity, tone, translation choices, or terms intentionally kept in English. Use Traditional Chinese. Return an empty string if no note is needed.",
+            "speaking": false
+          },
+          {
+            "id": "6272fd09-c4b0-4d22-b0ee-336f19ac4d47",
+            "name": "Confidence",
+            "type": "number",
+            "description": "Translation confidence from 0 to 100. Use lower scores when the selected text lacks context, contains ambiguous references, or has unclear terminology.",
+            "speaking": false
+          }
+        ]
+      }
+    ]
+  },
+  "sideContent": {
+    "width": 420
+  },
+  "betaExperience": {
+    "enabled": false
+  },
+  "contextMenu": {
+    "enabled": true
+  },
+  "inputTranslation": {
+    "enabled": true,
+    "providerId": "google-translate-default",
+    "fromLang": "sourceCode",
+    "toLang": "cmn-Hant",
+    "enableCycle": false,
+    "timeThreshold": 300
+  },
+  "videoSubtitles": {
+    "enabled": true,
+    "autoStart": false,
+    "providerId": "google-translate-default",
+    "style": {
+      "displayMode": "bilingual",
+      "translationPosition": "above",
+      "main": {
+        "fontFamily": "system",
+        "fontScale": 100,
+        "color": "#FFFFFF",
+        "fontWeight": 400
+      },
+      "translation": {
+        "fontFamily": "system",
+        "fontScale": 100,
+        "color": "#FFFFFF",
+        "fontWeight": 400
+      },
+      "container": {
+        "backgroundOpacity": 75
+      }
+    },
+    "aiSegmentation": false,
+    "requestQueueConfig": {
+      "capacity": 60,
+      "rate": 8
+    },
+    "batchQueueConfig": {
+      "maxCharactersPerBatch": 1000,
+      "maxItemsPerBatch": 4
+    },
+    "customPromptsConfig": {
+      "promptId": null,
+      "patterns": []
+    },
+    "position": {
+      "percent": 10,
+      "anchor": "bottom"
+    }
+  },
+  "siteControl": {
+    "mode": "blacklist",
+    "blacklistPatterns": [],
+    "whitelistPatterns": []
+  }
+}

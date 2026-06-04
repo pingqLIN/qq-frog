@@ -6,7 +6,7 @@ import type {
 } from "@/types/background-stream"
 import type { Config } from "@/types/config/config"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { createStore, Provider } from "jotai"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { TooltipProvider } from "@/components/ui/base-ui/tooltip"
@@ -858,8 +858,6 @@ describe("selection toolbar requests", () => {
       expect(screen.getByTestId("translation-result").textContent).toBe("Context menu result")
     })
 
-    const { sendMessage } = await import("@/utils/message")
-    expect(vi.mocked(sendMessage)).not.toHaveBeenCalledWith("trackFeatureUsedEvent", expect.anything())
   })
 
   it("reuses the same captured session for cross-node context-menu translation", async () => {
@@ -988,8 +986,6 @@ describe("selection toolbar requests", () => {
     expect(screen.getByTestId("footer-paragraphs").textContent).toContain("Selected text inside a paragraph.")
     expect(toastErrorMock).not.toHaveBeenCalled()
 
-    const { sendMessage } = await import("@/utils/message")
-    expect(vi.mocked(sendMessage)).not.toHaveBeenCalledWith("trackFeatureUsedEvent", expect.anything())
   })
 
   it("renders the custom action tooltip as non-interactive and closes it on hover leave", async () => {
@@ -1049,8 +1045,6 @@ describe("selection toolbar requests", () => {
     )
     expect(streamBackgroundStructuredObjectMock).not.toHaveBeenCalled()
 
-    const { sendMessage } = await import("@/utils/message")
-    expect(vi.mocked(sendMessage)).not.toHaveBeenCalledWith("trackFeatureUsedEvent", expect.anything())
   })
 
   it("does not rerun custom action requests on passive config refresh, but reruns when request values change", async () => {
@@ -1307,8 +1301,56 @@ describe("selection toolbar requests", () => {
     expect(alert).toHaveTextContent("options.floatingButtonAndToolbar.selectionToolbar.errors.missingSelection")
     expect(streamBackgroundStructuredObjectMock).not.toHaveBeenCalled()
 
-    const { sendMessage } = await import("@/utils/message")
-    expect(vi.mocked(sendMessage)).not.toHaveBeenCalledWith("trackFeatureUsedEvent", expect.anything())
+  })
+
+  it("shows separate precheck alerts when multiple custom actions are triggered with no selected text", async () => {
+    const paragraph = document.createElement("p")
+    paragraph.textContent = "Selected text inside a paragraph."
+    document.body.appendChild(paragraph)
+
+    const store = createStore()
+    const updatedConfig = cloneConfig(DEFAULT_CONFIG)
+    const firstAction = updatedConfig.selectionToolbar.customActions[0]
+    if (!firstAction) {
+      throw new Error("Default custom action is missing")
+    }
+
+    const secondAction = {
+      ...firstAction,
+      id: `${firstAction.id}-secondary`,
+      name: "Secondary custom action",
+    }
+    updatedConfig.selectionToolbar.customActions = [firstAction, secondAction]
+    store.set(configAtom, updatedConfig)
+    setSelectionState(store, { text: "   ", range: createRangeFor(paragraph) })
+    renderWithProviders(<SelectionToolbarCustomActionButtons />, store)
+
+    fireEvent.click(screen.getByRole("button", { name: firstAction.name }))
+
+    const firstPopover = screen.getByTestId("selection-popover-content")
+    const firstAlert = within(firstPopover).getByRole("alert")
+    await waitFor(() => {
+      expect(firstAlert).toHaveTextContent(
+        "options.floatingButtonAndToolbar.selectionToolbar.errors.customActionFailed",
+      )
+    })
+    expect(firstAlert).toHaveTextContent(
+      "options.floatingButtonAndToolbar.selectionToolbar.errors.missingSelection",
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: secondAction.name }))
+
+    const secondPopover = screen.getByTestId("selection-popover-content")
+    await waitFor(() => {
+      expect(secondPopover).toHaveTextContent("Secondary custom action")
+    })
+    expect(within(secondPopover).getByRole("alert")).toHaveTextContent(
+      "options.floatingButtonAndToolbar.selectionToolbar.errors.customActionFailed",
+    )
+    expect(within(secondPopover).getByRole("alert")).toHaveTextContent(
+      "options.floatingButtonAndToolbar.selectionToolbar.errors.missingSelection",
+    )
+    expect(streamBackgroundStructuredObjectMock).not.toHaveBeenCalled()
   })
 
   it("renders custom action errors inline and clears them after a successful rerun", async () => {

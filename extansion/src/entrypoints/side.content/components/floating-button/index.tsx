@@ -11,8 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/base-ui/dropdown-menu"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
-import { createFeatureUsageContext } from "@/utils/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { APP_NAME } from "@/utils/constants/app"
 import { i18n } from "@/utils/i18n"
@@ -167,16 +165,13 @@ export default function FloatingButton() {
   }, [])
 
   const handleFloatingButtonClick = () => {
-    if (floatingButton.clickAction === "translate") {
-      const nextEnabled = !translationState.enabled
-      void sendMessage("tryToSetEnablePageTranslationOnContentScript", {
-        enabled: nextEnabled,
-        analyticsContext: nextEnabled
-          ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.FLOATING_BUTTON)
-          : undefined,
-      })
-      return
-    }
+  if (floatingButton.clickAction === "translate") {
+    const nextEnabled = !translationState.enabled
+    void sendMessage("tryToSetEnablePageTranslationOnContentScript", {
+      enabled: nextEnabled,
+    })
+    return
+  }
 
     void Promise.resolve(sendMessage("toggleSidePanel", undefined)).then((result) => {
       if (result?.ok === false && result.reason === "requires-extension-user-action") {

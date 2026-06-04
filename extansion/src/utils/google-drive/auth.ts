@@ -11,6 +11,18 @@ const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/userinfo.email",
 ]
 const TOKEN_EXPIRY_BUFFER_MS = 60000
+const CHROME_IDENTITY_TOKEN_TTL_MS = 50 * 60 * 1000
+
+interface NativeIdentityAPI {
+  getAuthToken?: (
+    details: { interactive: boolean, scopes?: string[] },
+    callback?: (token?: string | { token?: string }) => void,
+  ) => Promise<string | { token?: string } | undefined> | void
+  removeCachedAuthToken?: (
+    details: { token: string },
+    callback?: () => void,
+  ) => Promise<void> | void
+}
 
 const googleAuthTokenSchema = z.object({
   access_token: z.string(),
@@ -30,6 +42,89 @@ export type GoogleUserInfo = z.infer<typeof googleUserInfoSchema>
 
 export function isGoogleDriveOAuthConfigured(): boolean {
   return GOOGLE_CLIENT_ID.length > 0
+}
+
+function getNativeIdentityAPI(): NativeIdentityAPI | null {
+  const globalWithChrome = globalThis as typeof globalThis & {
+    chrome?: { identity?: NativeIdentityAPI }
+  }
+  const nativeIdentity = globalWithChrome.chrome?.identity
+    ?? (browser.identity as unknown as NativeIdentityAPI)
+
+  return typeof nativeIdentity.getAuthToken === "function" ? nativeIdentity : null
+}
+
+function normalizeNativeAuthToken(result: string | { token?: string } | undefined): string | null {
+  if (typeof result === "string")
+    return result
+  return result?.token ?? null
+}
+
+async function getTokenWithNativeIdentity(): Promise<string | null> {
+  const nativeIdentity = getNativeIdentityAPI()
+  if (!nativeIdentity?.getAuthToken)
+    return null
+
+  return await new Promise((resolve, reject) => {
+    try {
+      const result = nativeIdentity.getAuthToken?.({
+        interactive: true,
+        scopes: GOOGLE_SCOPES,
+      }, (token) => {
+        const runtimeError = browser.runtime.lastError
+        if (runtimeError?.message) {
+          reject(new Error(runtimeError.message))
+          return
+        }
+        resolve(normalizeNativeAuthToken(token))
+      })
+
+      if (result && typeof (result as Promise<unknown>).then === "function") {
+        void (result as Promise<string | { token?: string } | undefined>)
+          .then(token => resolve(normalizeNativeAuthToken(token)))
+          .catch(reject)
+      }
+      else if (result !== undefined) {
+        resolve(normalizeNativeAuthToken(result as string | { token?: string }))
+      }
+    }
+    catch (error) {
+      reject(error)
+    }
+  })
+}
+
+async function getTokenWithWebAuthFlow(): Promise<string> {
+  const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth")
+  authUrl.searchParams.set("client_id", GOOGLE_CLIENT_ID)
+  authUrl.searchParams.set("response_type", "token")
+  authUrl.searchParams.set("redirect_uri", GOOGLE_REDIRECT_URI)
+  authUrl.searchParams.set("scope", GOOGLE_SCOPES.join(" "))
+  authUrl.searchParams.set("prompt", "select_account")
+
+  const responseUrl = await browser.identity.launchWebAuthFlow({
+    url: authUrl.toString(),
+    interactive: true,
+  })
+
+  if (!responseUrl) {
+    throw new Error("No response URL from Google OAuth")
+  }
+
+  const url = new URL(responseUrl)
+  const params = new URLSearchParams(url.hash.slice(1))
+  const error = params.get("error")
+  if (error) {
+    throw new Error(params.get("error_description") ?? error)
+  }
+
+  const accessToken = params.get("access_token")
+
+  if (!accessToken) {
+    throw new Error("No access token in OAuth response")
+  }
+
+  return accessToken
 }
 
 /**
@@ -65,32 +160,8 @@ export async function authenticateGoogleDriveAndSaveTokenToStorage(): Promise<st
       throw new Error("Google Drive sync requires WXT_GOOGLE_CLIENT_ID before starting OAuth")
     }
 
-    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth")
-    authUrl.searchParams.set("client_id", GOOGLE_CLIENT_ID)
-    authUrl.searchParams.set("response_type", "token")
-    authUrl.searchParams.set("redirect_uri", GOOGLE_REDIRECT_URI)
-    authUrl.searchParams.set("scope", GOOGLE_SCOPES.join(" "))
-    authUrl.searchParams.set("prompt", "select_account")
-
-    const responseUrl = await browser.identity.launchWebAuthFlow({
-      url: authUrl.toString(),
-      interactive: true,
-    })
-
-    if (!responseUrl) {
-      throw new Error("No response URL from Google OAuth")
-    }
-
-    const url = new URL(responseUrl)
-    const params = new URLSearchParams(url.hash.slice(1))
-    const accessToken = params.get("access_token")
-    const expiresIn = params.get("expires_in")
-
-    if (!accessToken) {
-      throw new Error("No access token in OAuth response")
-    }
-
-    const expiresAt = Date.now() + (expiresIn ? Number.parseInt(expiresIn) * 1000 : 3600 * 1000)
+    const accessToken = await getTokenWithNativeIdentity() ?? await getTokenWithWebAuthFlow()
+    const expiresAt = Date.now() + CHROME_IDENTITY_TOKEN_TTL_MS
 
     const tokenData: GoogleAuthToken = {
       access_token: accessToken,
@@ -143,6 +214,11 @@ export async function getStoredValidAccessToken(): Promise<string | null> {
 
 export async function clearAccessToken(): Promise<void> {
   try {
+    const tokenData = await getTokenFromStorage()
+    if (tokenData) {
+      const nativeIdentity = getNativeIdentityAPI()
+      await nativeIdentity?.removeCachedAuthToken?.({ token: tokenData.access_token })
+    }
     await storage.removeItem(`local:${GOOGLE_DRIVE_TOKEN_STORAGE_KEY}`)
   }
   catch (error) {

@@ -156,10 +156,7 @@ describe("translationMessage", () => {
 
     expect(storageSetItemMock).toHaveBeenCalledWith(getTranslationStateKey(42), { enabled: false })
     expect(sendMessageMock).toHaveBeenCalledWith("notifyTranslationStateChanged", { enabled: false }, 42)
-    expect(sendMessageMock).toHaveBeenCalledWith("askManagerToTogglePageTranslation", {
-      enabled: false,
-      analyticsContext: undefined,
-    }, 42)
+    expect(sendMessageMock).toHaveBeenCalledWith("askManagerToTogglePageTranslation", { enabled: false }, 42)
   })
 
   it("injects current iframes when explicitly asked for a tab", async () => {
@@ -301,10 +298,7 @@ describe("translationMessage", () => {
 
     expect(storageSetItemMock).not.toHaveBeenCalled()
     expect(injectHostContentIntoTabIframesMock).not.toHaveBeenCalled()
-    expect(sendMessageMock).toHaveBeenCalledWith("askManagerToTogglePageTranslation", {
-      enabled: true,
-      analyticsContext: undefined,
-    }, 42)
+    expect(sendMessageMock).toHaveBeenCalledWith("askManagerToTogglePageTranslation", { enabled: true }, 42)
   })
 
   it("publishes cached detected language and requests refresh when tabs are activated", async () => {

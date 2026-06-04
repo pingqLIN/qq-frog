@@ -1,5 +1,4 @@
 import type { LangCodeISO6393 } from "@read-frog/definitions"
-import type { FeatureUsageContext, FeatureUsedEventProperties } from "@/types/analytics"
 import type {
   BackgroundGenerateTextPayload,
   BackgroundGenerateTextResponse,
@@ -32,8 +31,8 @@ interface ProtocolMap {
   // translation state
   getEnablePageTranslationByTabId: (data: { tabId: number }) => boolean | undefined
   getEnablePageTranslationFromContentScript: () => Promise<boolean>
-  tryToSetEnablePageTranslationByTabId: (data: { tabId: number, enabled: boolean, analyticsContext?: FeatureUsageContext }) => void
-  tryToSetEnablePageTranslationOnContentScript: (data: { enabled: boolean, analyticsContext?: FeatureUsageContext }) => void
+  tryToSetEnablePageTranslationByTabId: (data: { tabId: number, enabled: boolean }) => void
+  tryToSetEnablePageTranslationOnContentScript: (data: { enabled: boolean }) => void
   setAndNotifyPageTranslationStateChangedByManager: (data: { enabled: boolean, url?: string }) => void
   notifyTranslationStateChanged: (data: { enabled: boolean }) => void
   ensureIframeHostContentInjected: (data: { tabId?: number }) => void
@@ -43,11 +42,9 @@ interface ProtocolMap {
   getDetectedCode: () => LangCodeISO6393
   detectedPageLanguageChanged: (data: { detectedCode: LangCodeISO6393 }) => void
   // ask host to start page translation
-  askManagerToTogglePageTranslation: (data: { enabled: boolean, analyticsContext?: FeatureUsageContext }) => void
+  askManagerToTogglePageTranslation: (data: { enabled: boolean }) => void
   openSelectionTranslationFromContextMenu: (data: { selectionText: string }) => void
   openSelectionCustomActionFromContextMenu: (data: { actionId: string, selectionText: string }) => void
-  // analytics
-  trackFeatureUsedEvent: (data: FeatureUsedEventProperties) => void
   // user guide
   pinStateChanged: (data: { isPinned: boolean }) => void
   getPinState: () => boolean
