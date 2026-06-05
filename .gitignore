@@ -69,3 +69,11 @@ docs/*
 scripts/output/
 
 reference/
+
+# Local screenshot intake used for documentation review. Curated publishable
+# assets should live under extansion/src/assets/demo or an explicitly tracked
+# docs asset path instead.
+appsrc/
+
+!docs/interface-tour.md
+!docs/interface-tour.zh-tw.md

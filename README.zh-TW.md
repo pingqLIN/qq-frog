@@ -24,6 +24,10 @@ QQ Frog 是基於原始 Read Frog 瀏覽器擴充樣板，也就是「伴讀蛙�
 
 ![浮動按鈕](./extansion/src/assets/demo/floating-button.png)
 
+![右鍵選單](./extansion/src/assets/demo/context-menu.png)
+
+完整介面地圖請見 [介面導覽](./docs/interface-tour.zh-tw.md)。
+
 ## 本機優先預設
 
 QQ Frog 設計為可單機執行的瀏覽器擴充。Runtime 服務 URL 預設指向 localhost，API keys 由使用者在設定頁輸入，不會打包進 production build。
@@ -64,6 +68,7 @@ pnpm build
 
 ## 專案參考
 
+- [介面導覽](./docs/interface-tour.zh-tw.md)
 - [專案資料夾結構](./docs/project-structure.md)
 - [Security review](./docs/audit/security-review.md)
 - [Privacy review](./docs/audit/privacy-review.md)

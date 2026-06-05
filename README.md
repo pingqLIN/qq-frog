@@ -24,6 +24,10 @@ It deliberately avoids bundled personal credentials and keeps hosted/runtime ass
 
 ![Floating button](./extansion/src/assets/demo/floating-button.png)
 
+![Context menu](./extansion/src/assets/demo/context-menu.png)
+
+For the full surface map, see the [interface tour](./docs/interface-tour.md).
+
 ## Local-First Defaults
 
 QQ Frog is designed to run as a standalone extension. Runtime service URLs default to localhost, and API keys are entered by the user in the options page rather than bundled into production builds.
@@ -64,6 +68,7 @@ pnpm build
 
 ## Project References
 
+- [Interface tour](./docs/interface-tour.md)
 - [Project structure](./docs/project-structure.md)
 - [Security review](./docs/audit/security-review.md)
 - [Privacy review](./docs/audit/privacy-review.md)
