@@ -13,13 +13,13 @@ export const selectionToolbarCustomActionOutputFieldSchema = z.object({
 export const selectionToolbarCustomActionNotebaseMappingSchema = z.object({
   id: z.string().nonempty(),
   localFieldId: z.string().nonempty(),
-  notebaseColumnId: z.string().nonempty(),
-  notebaseColumnNameSnapshot: z.string().trim().min(1),
+  remoteColumnId: z.string().nonempty(),
+  remoteColumnNameSnapshot: z.string().trim().min(1),
 })
 
 export const selectionToolbarCustomActionNotebaseConnectionSchema = z.object({
-  notebaseId: z.string().nonempty(),
-  notebaseNameSnapshot: z.string().trim().min(1),
+  tableId: z.string().nonempty(),
+  tableNameSnapshot: z.string().trim().min(1),
   mappings: z.array(selectionToolbarCustomActionNotebaseMappingSchema),
 })
 
@@ -57,7 +57,7 @@ export const selectionToolbarCustomActionSchema = z.object({
 
   const mappingIdSet = new Set<string>()
   const localFieldIdSet = new Set<string>()
-  const notebaseColumnIdSet = new Set<string>()
+  const remoteColumnIdSet = new Set<string>()
 
   connection.mappings.forEach((mapping, index) => {
     if (mappingIdSet.has(mapping.id)) {
@@ -86,14 +86,14 @@ export const selectionToolbarCustomActionSchema = z.object({
     }
     localFieldIdSet.add(mapping.localFieldId)
 
-    if (notebaseColumnIdSet.has(mapping.notebaseColumnId)) {
+    if (remoteColumnIdSet.has(mapping.remoteColumnId)) {
       ctx.addIssue({
         code: "custom",
-        message: `Duplicate notebase column id "${mapping.notebaseColumnId}" in notebase mappings.`,
-        path: ["notebaseConnection", "mappings", index, "notebaseColumnId"],
+        message: `Duplicate remote column id "${mapping.remoteColumnId}" in notebase mappings.`,
+        path: ["notebaseConnection", "mappings", index, "remoteColumnId"],
       })
     }
-    notebaseColumnIdSet.add(mapping.notebaseColumnId)
+    remoteColumnIdSet.add(mapping.remoteColumnId)
   })
 })
 

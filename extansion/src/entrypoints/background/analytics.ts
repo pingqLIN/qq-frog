@@ -1,10 +1,8 @@
-import type { LangCodeISO6393 } from "@read-frog/definitions"
 import type { CaptureResult } from "posthog-js/dist/module.no-external"
 import type { FeatureUsedEventProperties } from "@/types/analytics"
-import posthog from "posthog-js/dist/module.no-external"
 import { storage } from "#imports"
+import posthog from "posthog-js/dist/module.no-external"
 import { env } from "@/env"
-import { getLocalConfig } from "@/utils/config/storage"
 import {
   ANALYTICS_ENABLED_STORAGE_KEY,
   ANALYTICS_FEATURE_USED_EVENT,
@@ -16,12 +14,8 @@ import { getRandomUUID } from "@/utils/crypto-polyfill"
 import { logger } from "@/utils/logger"
 import { onMessage } from "@/utils/message"
 
-type BackgroundFeatureUsedEventProperties = FeatureUsedEventProperties & {
-  target_language?: LangCodeISO6393
-}
-
 interface BackgroundAnalyticsClient {
-  capture: (eventName: string, properties: BackgroundFeatureUsedEventProperties) => void
+  capture: (eventName: string, properties: FeatureUsedEventProperties) => void
   init: (token: string, config: Record<string, unknown>) => void
   register: (properties: { extension_version: string }) => void
 }
@@ -34,7 +28,6 @@ interface BackgroundAnalyticsRuntime {
   distinctIdOverride?: string
   extensionVersion: string
   getStorageItem: (key: string) => Promise<unknown>
-  getTargetLanguage: () => Promise<LangCodeISO6393 | undefined>
   onMessage: (type: "trackFeatureUsedEvent", handler: (message: { data: FeatureUsedEventProperties }) => Promise<void>) => unknown
   posthog: BackgroundAnalyticsClient
   setStorageItem: (key: string, value: unknown) => Promise<void>
@@ -76,10 +69,6 @@ function createDefaultRuntime(): BackgroundAnalyticsRuntime {
     ),
     extensionVersion: EXTENSION_VERSION,
     getStorageItem: key => storage.getItem(key as `local:${string}`),
-    getTargetLanguage: async () => {
-      const config = await getLocalConfig()
-      return config?.language.targetCode
-    },
     onMessage,
     posthog,
     setStorageItem: (key, value) => storage.setItem(key as `local:${string}`, value),
@@ -111,7 +100,6 @@ export function filterAnalyticsCaptureResult(data: CaptureResult): CaptureResult
   setPropertyIfDefined(filteredProperties, "latency_ms", properties.latency_ms)
   setPropertyIfDefined(filteredProperties, "action_id", properties.action_id)
   setPropertyIfDefined(filteredProperties, "action_name", properties.action_name)
-  setPropertyIfDefined(filteredProperties, "target_language", properties.target_language)
   setPropertyIfDefined(filteredProperties, "$browser", properties.$browser)
   setPropertyIfDefined(filteredProperties, "$browser_version", properties.$browser_version)
   setPropertyIfDefined(filteredProperties, "$insert_id", properties.$insert_id)
@@ -212,35 +200,10 @@ export function createBackgroundAnalytics(
         return
       }
 
-      client.capture(ANALYTICS_FEATURE_USED_EVENT, await buildBackgroundFeatureUsedEventProperties(properties))
+      client.capture(ANALYTICS_FEATURE_USED_EVENT, properties)
     }
     catch (error) {
       runtime.warn(`[Analytics] Failed to capture ${ANALYTICS_FEATURE_USED_EVENT} in background`, error)
-    }
-  }
-
-  async function getBackgroundFeatureUsedEventProperties(): Promise<Partial<BackgroundFeatureUsedEventProperties>> {
-    const backgroundProperties: Partial<BackgroundFeatureUsedEventProperties> = {}
-
-    try {
-      const targetLanguage = await runtime.getTargetLanguage()
-      if (targetLanguage) {
-        backgroundProperties.target_language = targetLanguage
-      }
-    }
-    catch (error) {
-      runtime.warn("[Analytics] Failed to read target language for analytics event", error)
-    }
-
-    return backgroundProperties
-  }
-
-  async function buildBackgroundFeatureUsedEventProperties(
-    properties: FeatureUsedEventProperties,
-  ): Promise<BackgroundFeatureUsedEventProperties> {
-    return {
-      ...properties,
-      ...await getBackgroundFeatureUsedEventProperties(),
     }
   }
 

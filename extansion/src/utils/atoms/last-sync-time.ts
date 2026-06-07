@@ -1,6 +1,6 @@
 import type { LastSyncedConfigMeta } from "@/types/config/meta"
-import { atom } from "jotai"
 import { storage } from "#imports"
+import { atom } from "jotai"
 import { LAST_SYNCED_CONFIG_STORAGE_KEY } from "../constants/config"
 
 // internal atom for storing last sync time (from lastSyncedConfig meta)

@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef } from "react"
 import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
 import { createFeatureUsageContext, trackFeatureAttempt } from "@/utils/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
-import { INPUT_REPLACE_REQUEST_TYPE } from "@/utils/constants/input-injector"
 import { translateTextForInput } from "@/utils/host/translate/translate-variants"
 
 const SPACE_KEY = " "
@@ -114,14 +113,22 @@ function setTextWithUndo(element: HTMLInputElement | HTMLTextAreaElement | HTMLE
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
     // Select all text in input/textarea
     element.select()
-    document.execCommand("insertText", false, text)
-    element.dispatchEvent(new Event("input", { bubbles: true }))
-    return
+  }
+  else if (element.isContentEditable) {
+    // Select all content in contenteditable
+    const selection = window.getSelection()
+    const range = document.createRange()
+    range.selectNodeContents(element)
+    selection?.removeAllRanges()
+    selection?.addRange(range)
   }
 
-  if (element.isContentEditable) {
-    window.postMessage({ type: INPUT_REPLACE_REQUEST_TYPE, text }, window.location.origin)
-  }
+  // Use execCommand to insert text with undo support
+  // Note: execCommand is deprecated but still the only way to support undo
+  document.execCommand("insertText", false, text)
+
+  // Dispatch input event for framework compatibility (React, Vue, etc.)
+  element.dispatchEvent(new Event("input", { bubbles: true }))
 }
 
 export function useInputTranslation() {
@@ -153,14 +160,10 @@ export function useInputTranslation() {
     // Remove trailing whitespace added by space key presses
     text = text.trim()
 
-    // For input/textarea, trim whitespace immediately (execCommand works reliably).
-    // For contenteditable, skip — we'll do a single replacement after translation
-    // returns, because rich text editors can't be updated reliably from isolated world.
-    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-      setTextWithUndo(element, text)
-    }
+    // Set the trimmed text back immediately (with undo support)
+    setTextWithUndo(element, text)
 
-    if (!text) {
+    if (!text.trim()) {
       return
     }
 
@@ -211,7 +214,7 @@ export function useInputTranslation() {
       }
 
       // Only apply translation if content hasn't changed during async operation
-      if (currentText.trim() === originalText && translatedText) {
+      if (currentText === originalText && translatedText) {
         setTextWithUndo(element, translatedText)
       }
     }

@@ -1,6 +1,6 @@
 import type { FloatingButtonClickAction as FloatingButtonClickActionValue } from "@/types/config/floating-button"
-import { useAtom } from "jotai"
 import { i18n } from "#imports"
+import { useAtom } from "jotai"
 import {
   Select,
   SelectContent,

@@ -26,12 +26,12 @@ export const DEFAULT_LLM_PROVIDER_MODELS: LLMProviderModels = {
     customModel: null,
   },
   "deepseek": {
-    model: "deepseek-v4-flash",
+    model: "deepseek-chat",
     isCustomModel: false,
     customModel: null,
   },
   "google": {
-    model: "gemini-3.1-flash-lite",
+    model: "gemini-2.5-flash",
     isCustomModel: false,
     customModel: null,
   },
@@ -115,6 +115,11 @@ export const DEFAULT_LLM_PROVIDER_MODELS: LLMProviderModels = {
     isCustomModel: true,
     customModel: null,
   },
+  "ai302": {
+    model: "gpt-4.1-mini",
+    isCustomModel: true,
+    customModel: null,
+  },
   "volcengine": {
     model: "doubao-seed-1-6-flash-250828",
     isCustomModel: true,
@@ -168,6 +173,11 @@ export const PROVIDER_ITEMS: Record<AllProviderTypes, { logo: (theme: Theme) => 
       logo: getLobeIconsCDNUrlFn("siliconcloud-color"),
       name: "SiliconFlow",
       website: "https://siliconflow.cn/",
+    },
+    "ai302": {
+      logo: getLobeIconsCDNUrlFn("ai302-color"),
+      name: "302.AI",
+      website: "https://302.ai/",
     },
     "openrouter": {
       logo: getLobeIconsCDNUrlFn("openrouter"),
@@ -326,6 +336,15 @@ export const DEFAULT_PROVIDER_CONFIG = {
     provider: "tensdaq",
     baseURL: "https://tensdaq-api.x-aio.com/v1",
     model: DEFAULT_LLM_PROVIDER_MODELS.tensdaq,
+  },
+  "ai302": {
+    id: "ai302-default",
+    name: PROVIDER_ITEMS.ai302.name,
+    description: i18n.t("options.apiProviders.providers.description.ai302"),
+    enabled: true,
+    provider: "ai302",
+    baseURL: "https://api.302.ai/v1",
+    model: DEFAULT_LLM_PROVIDER_MODELS.ai302,
   },
   "openai-compatible": {
     id: "openai-compatible-default",
@@ -546,8 +565,9 @@ export const DEFAULT_PROVIDER_CONFIG_LIST: ProvidersConfig = [
   DEFAULT_PROVIDER_CONFIG["microsoft-translate"],
   DEFAULT_PROVIDER_CONFIG["google-translate"],
   DEFAULT_PROVIDER_CONFIG.openai,
-  DEFAULT_PROVIDER_CONFIG.deepseek,
   DEFAULT_PROVIDER_CONFIG.tensdaq,
+  DEFAULT_PROVIDER_CONFIG.ai302,
+  // DEFAULT_PROVIDER_CONFIG.deepseek,
   DEFAULT_PROVIDER_CONFIG.google,
   // DEFAULT_PROVIDER_CONFIG.openaiCompatible,
   DEFAULT_PROVIDER_CONFIG.deeplx,

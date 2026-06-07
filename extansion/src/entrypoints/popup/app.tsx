@@ -1,5 +1,5 @@
-import { Icon } from "@iconify/react"
 import { i18n } from "#imports"
+import { Icon } from "@iconify/react"
 import { UserAccount } from "@/components/user-account"
 import { openOptionsPage } from "@/utils/navigation"
 import { version } from "../../../../package.json"

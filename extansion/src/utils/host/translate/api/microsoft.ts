@@ -1,18 +1,10 @@
-export async function microsoftTranslate(source: string, fromLang: string, toLang: string): Promise<string>
-export async function microsoftTranslate(source: string[], fromLang: string, toLang: string): Promise<string[]>
 export async function microsoftTranslate(
-  source: string | string[],
+  sourceText: string,
   fromLang: string,
   toLang: string,
-): Promise<string | string[]> {
-  const isSingle = typeof source === "string"
-  const texts = isSingle ? [source] : source
-
-  if (texts.length === 0) {
-    return []
-  }
-
+): Promise<string> {
   const effectiveFromLang = fromLang === "auto" ? "" : fromLang
+
   const token = await refreshMicrosoftToken()
 
   const resp = await fetch(
@@ -24,7 +16,7 @@ export async function microsoftTranslate(
         "Ocp-Apim-Subscription-Key": token,
         "Authorization": `Bearer ${token}`,
       },
-      body: JSON.stringify(texts.map(text => ({ Text: text }))),
+      body: JSON.stringify([{ Text: sourceText }]),
     },
   ).catch((error) => {
     throw new Error(
@@ -46,21 +38,13 @@ export async function microsoftTranslate(
   try {
     const result = await resp.json()
 
-    if (!Array.isArray(result) || result.length !== texts.length) {
+    if (!Array.isArray(result) || !result[0]?.translations?.[0]?.text) {
       throw new Error(
-        `Unexpected response format: expected ${texts.length} results, got ${Array.isArray(result) ? result.length : "non-array"}`,
+        "Unexpected response format from Microsoft translation API",
       )
     }
 
-    const translations = result.map((item: { translations?: { text?: string }[] }, index: number) => {
-      const text = item?.translations?.[0]?.text
-      if (text == null) {
-        throw new Error(`Missing translation for item at index ${index}`)
-      }
-      return text
-    })
-
-    return isSingle ? translations[0] : translations
+    return result[0].translations[0].text
   }
   catch (error) {
     throw new Error(
@@ -69,7 +53,7 @@ export async function microsoftTranslate(
   }
 }
 
-export async function refreshMicrosoftToken(): Promise<string> {
+async function refreshMicrosoftToken(): Promise<string> {
   try {
     const resp = await fetch("https://edge.microsoft.com/translate/auth")
 

@@ -1,9 +1,9 @@
 import type {
-  NotebaseColumn,
-  NotebaseGetSchemaOutput,
-  NotebaseRowCreateInput,
+  CustomTableGetSchemaOutput,
+  RowCreateInput,
+  TableColumn,
 } from "@read-frog/api-contract"
-import type { NotebaseColumnConfig } from "@read-frog/definitions"
+import type { ColumnConfig } from "@read-frog/definitions"
 import type {
   SelectionToolbarCustomAction,
   SelectionToolbarCustomActionNotebaseConnection,
@@ -19,34 +19,34 @@ export type ResolvedNotebaseMappingStatus = "valid" | "missing_local" | "missing
 export interface ResolvedNotebaseMapping {
   localField: SelectionToolbarCustomActionOutputField | null
   mapping: SelectionToolbarCustomActionNotebaseMapping
-  notebaseColumn: NotebaseColumn | null
+  remoteColumn: TableColumn | null
   status: ResolvedNotebaseMappingStatus
 }
 
 export function createNotebaseMapping(
   localFieldId: string,
-  notebaseColumnId: string,
-  notebaseColumnNameSnapshot: string,
+  remoteColumnId: string,
+  remoteColumnNameSnapshot: string,
 ): SelectionToolbarCustomActionNotebaseMapping {
   return {
     id: getRandomUUID(),
     localFieldId,
-    notebaseColumnId,
-    notebaseColumnNameSnapshot,
+    remoteColumnId,
+    remoteColumnNameSnapshot,
   }
 }
 
-export function isSupportedNotebaseColumnConfig(config: NotebaseColumnConfig) {
+export function isSupportedNotebaseColumnConfig(config: ColumnConfig) {
   return config.type === "string" || config.type === "number"
 }
 
-export function isNotebaseMappingCompatible(localType: SelectionToolbarCustomActionOutputType, notebaseColumnConfig: NotebaseColumnConfig) {
+export function isNotebaseMappingCompatible(localType: SelectionToolbarCustomActionOutputType, remoteConfig: ColumnConfig) {
   if (localType === "string") {
-    return notebaseColumnConfig.type === "string"
+    return remoteConfig.type === "string"
   }
 
   if (localType === "number") {
-    return notebaseColumnConfig.type === "number"
+    return remoteConfig.type === "number"
   }
 
   return false
@@ -60,40 +60,40 @@ export function sanitizeCustomActionNotebaseConnection(
     return undefined
   }
 
-  const notebaseId = connection.notebaseId.trim()
-  if (!notebaseId) {
+  const tableId = connection.tableId.trim()
+  if (!tableId) {
     return undefined
   }
 
   const outputFieldIds = new Set(outputSchema.map(field => field.id))
   const mappingIds = new Set<string>()
   const localFieldIds = new Set<string>()
-  const notebaseColumnIds = new Set<string>()
+  const remoteColumnIds = new Set<string>()
   const mappings = connection.mappings.filter((mapping) => {
     if (!outputFieldIds.has(mapping.localFieldId)) {
       return false
     }
 
-    if (!mapping.localFieldId.trim() || !mapping.notebaseColumnId.trim()) {
+    if (!mapping.localFieldId.trim() || !mapping.remoteColumnId.trim()) {
       return false
     }
 
-    if (mappingIds.has(mapping.id) || localFieldIds.has(mapping.localFieldId) || notebaseColumnIds.has(mapping.notebaseColumnId)) {
+    if (mappingIds.has(mapping.id) || localFieldIds.has(mapping.localFieldId) || remoteColumnIds.has(mapping.remoteColumnId)) {
       return false
     }
 
     mappingIds.add(mapping.id)
     localFieldIds.add(mapping.localFieldId)
-    notebaseColumnIds.add(mapping.notebaseColumnId)
+    remoteColumnIds.add(mapping.remoteColumnId)
     return true
   }).map(mapping => ({
     ...mapping,
-    notebaseColumnNameSnapshot: mapping.notebaseColumnNameSnapshot.trim() || mapping.notebaseColumnId,
+    remoteColumnNameSnapshot: mapping.remoteColumnNameSnapshot.trim() || mapping.remoteColumnId,
   }))
 
   return {
-    notebaseId,
-    notebaseNameSnapshot: connection.notebaseNameSnapshot.trim() || notebaseId,
+    tableId,
+    tableNameSnapshot: connection.tableNameSnapshot.trim() || tableId,
     mappings,
   }
 }
@@ -107,7 +107,7 @@ export function sanitizeSelectionToolbarCustomAction(action: SelectionToolbarCus
 
 export function resolveNotebaseMappings(
   action: SelectionToolbarCustomAction,
-  schema: NotebaseGetSchemaOutput | null | undefined,
+  schema: CustomTableGetSchemaOutput | null | undefined,
 ): ResolvedNotebaseMapping[] {
   const connection = sanitizeCustomActionNotebaseConnection(action.notebaseConnection, action.outputSchema)
   if (!connection) {
@@ -115,46 +115,46 @@ export function resolveNotebaseMappings(
   }
 
   const outputFields = new Map(action.outputSchema.map(field => [field.id, field]))
-  const notebaseColumns = new Map(schema?.notebaseColumns.map(column => [column.id, column]) ?? [])
+  const remoteColumns = new Map(schema?.columns.map(column => [column.id, column]) ?? [])
 
   return connection.mappings.map((mapping) => {
     const localField = outputFields.get(mapping.localFieldId) ?? null
-    const notebaseColumn = notebaseColumns.get(mapping.notebaseColumnId) ?? null
+    const remoteColumn = remoteColumns.get(mapping.remoteColumnId) ?? null
 
     if (!localField) {
-      return { localField, mapping, notebaseColumn, status: "missing_local" }
+      return { localField, mapping, remoteColumn, status: "missing_local" }
     }
 
     if (!schema) {
-      return { localField, mapping, notebaseColumn, status: "missing_schema" }
+      return { localField, mapping, remoteColumn, status: "missing_schema" }
     }
 
-    if (!notebaseColumn) {
-      return { localField, mapping, notebaseColumn, status: "missing_remote" }
+    if (!remoteColumn) {
+      return { localField, mapping, remoteColumn, status: "missing_remote" }
     }
 
-    if (!isNotebaseMappingCompatible(localField.type, notebaseColumn.config)) {
-      return { localField, mapping, notebaseColumn, status: "incompatible" }
+    if (!isNotebaseMappingCompatible(localField.type, remoteColumn.config)) {
+      return { localField, mapping, remoteColumn, status: "incompatible" }
     }
 
-    return { localField, mapping, notebaseColumn, status: "valid" }
+    return { localField, mapping, remoteColumn, status: "valid" }
   })
 }
 
 export function buildNotebaseRowCells(
   action: SelectionToolbarCustomAction,
-  schema: NotebaseGetSchemaOutput,
+  schema: CustomTableGetSchemaOutput,
   result: Record<string, unknown> | null,
 ) {
-  const cells: NotebaseRowCreateInput["data"]["cells"] = {}
+  const cells: RowCreateInput["data"]["cells"] = {}
   const resolvedMappings = resolveNotebaseMappings(action, schema)
 
   for (const resolvedMapping of resolvedMappings) {
-    if (resolvedMapping.status !== "valid" || !resolvedMapping.localField || !resolvedMapping.notebaseColumn) {
+    if (resolvedMapping.status !== "valid" || !resolvedMapping.localField || !resolvedMapping.remoteColumn) {
       continue
     }
 
-    cells[resolvedMapping.notebaseColumn.id] = result?.[resolvedMapping.localField.name] ?? null
+    cells[resolvedMapping.remoteColumn.id] = result?.[resolvedMapping.localField.name] ?? null
   }
 
   return {

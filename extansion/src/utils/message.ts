@@ -65,8 +65,6 @@ interface ProtocolMap {
   // Subtitle-specific queue config messages
   setSubtitlesRequestQueueConfig: (data: Partial<RequestQueueConfig>) => void
   setSubtitlesBatchQueueConfig: (data: Partial<BatchQueueConfig>) => void
-  // microsoft batch translation
-  microsoftBatchTranslate: (data: { texts: string[], fromLang: string, toLang: string }) => Promise<string[]>
   // network proxy
   backgroundFetch: (data: ProxyRequest) => Promise<ProxyResponse>
   // cache management

@@ -1,10 +1,9 @@
 import type { LangCodeISO6393 } from "@read-frog/definitions"
 import type { BackgroundGenerateTextPayload } from "@/types/background-generate-text"
 import type { LLMProviderConfig } from "@/types/config/provider"
-import { langCodeISO6393Schema } from "@read-frog/definitions"
+import { i18n } from "#imports"
 import { franc } from "franc"
 import { toast } from "sonner"
-import { i18n } from "#imports"
 import { isLLMProviderConfig } from "@/types/config/provider"
 import { getProviderConfigById } from "@/utils/config/helpers"
 import { getLocalConfig } from "@/utils/config/storage"
@@ -81,13 +80,7 @@ export async function detectLanguageWithSource(
   if (francResult === "und") {
     return { code: "und", source: "fallback" }
   }
-
-  const parsedFrancResult = langCodeISO6393Schema.safeParse(francResult)
-  if (!parsedFrancResult.success) {
-    return { code: "und", source: "fallback" }
-  }
-
-  return { code: parsedFrancResult.data, source: "franc" }
+  return { code: francResult as LangCodeISO6393, source: "franc" }
 }
 
 /**

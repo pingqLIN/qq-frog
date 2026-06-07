@@ -1,5 +1,5 @@
-import { useAtom } from "jotai"
 import { i18n } from "#imports"
+import { useAtom } from "jotai"
 import { Label } from "@/components/ui/base-ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/base-ui/radio-group"
 import { configFieldsAtomMap } from "@/utils/atoms/config"

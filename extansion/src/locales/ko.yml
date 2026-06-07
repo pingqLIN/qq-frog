@@ -71,6 +71,11 @@ options:
   apiProviders:
     title: API 제공업체
     description: 번역 및 어휘 분석 기능을 위한 API 제공업체를 구성합니다. 20개 이상의 내장 제공업체와 모든 OpenAI 호환 API를 지원합니다.
+    promotion:
+      ai302:
+        description: 오른쪽 링크를 클릭하여 302.AI에 등록하면 1달러 API 크레딧을 받을 수 있습니다
+        action: 등록하여 무료 API 키 받기
+        addProvider: 302.AI 구성 추가
     addProvider: 제공업체 추가
     badges:
       featureCount: $1 개 기능
@@ -93,7 +98,6 @@ options:
         apiKey: API Key
         baseURL: Base URL
         optional: 선택사항
-      duplicate: 복제
       delete: 삭제
       deleteDialog:
         title: 제공업체를 삭제하시겠습니까?
@@ -145,6 +149,7 @@ options:
         xai: 실시간 데이터 접근이 가능한 Grok 모델을 제공하는 일론 머스크의 AI 회사
         siliconflow: 중국 및 국제 모델을 위한 고성능 추론 플랫폼
         tensdaq: 혁신적인 경매 AI MaaS 플랫폼으로 시장 수요와 공급에 따라 가격이 결정되어 고비용 고정 요금제를 없앰
+        ai302: 최신의 포괄적인 모델과 종량제 API를 제공
         openaiCompatible: OpenAI API 호환 서드파티
         deeplx: 비공식 DeepL API
         deepl: 공식 DeepL API
@@ -276,11 +281,6 @@ options:
         description: 플로팅 버튼을 클릭할 때 실행할 동작 선택
         panel: 사이드 패널 열기
         translate: 페이지 번역 전환
-      side:
-        title: 버튼 위치
-        description: 플로팅 버튼을 페이지 어느 쪽에 고정할지 선택합니다
-        left: 왼쪽
-        right: 오른쪽
     selectionToolbar:
       globalToggle:
         title: 선택 툴바 활성화
@@ -334,17 +334,7 @@ options:
           actions: 작업
         form:
           name: 이름
-          icon: 아이콘
-          iconField:
-            chooseAriaLabel: 아이콘 선택
-            chooseTitle: 아이콘 선택
-            inputPlaceholder: 아이콘 이름 입력
-            helpAriaLabel: 아이콘 도움말 더보기
-            helpTitle: 원하는 아이콘을 못 찾았나요?
-            helpStepBrowsePrefix: ""
-            helpStepBrowseSuffix: 에서 아이콘 찾아보기
-            helpStepCopyPrefix: "예를 들어 "
-            helpStepCopySuffix: " 같은 아이콘 이름을 복사해 입력란에 붙여넣으세요."
+          icon: 아이콘 (Iconify)
           provider: 제공업체(구조화 출력 지원 필요)
           selectProvider: 제공업체 선택
           systemPrompt: 시스템 프롬프트
@@ -460,11 +450,6 @@ options:
       description: 이 사이트를 항상 번역합니다
       urlPattern: URL 패턴
       enterUrlPattern: URL 패턴 입력
-    neverAutoTranslateWebsite:
-      title: Never Auto Translate Based on Website
-      description: Never automatically translate this website
-      urlPattern: URL Pattern
-      enterUrlPattern: Enter URL Pattern
     personalizedPrompts:
       title: 개인화된 프롬프트
       description: 다양한 유형의 프롬프트를 사용자 정의하여, 번역 시 프롬프트 유형을 직접 조정할 수 있습니다. 프롬프트는 사용자가 LLM에게 보내는 텍스트를 나타내며.
@@ -816,8 +801,6 @@ options:
           videoSummary: 동영상 요약 (AI 스마트 컨텍스트 필요)
   whatsNew:
     title: 새로운 기능
-  survey:
-    title: Notebase 사전 체험
   rateUs:
     title: 리뷰 남기기
 side:

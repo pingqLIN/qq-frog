@@ -1,5 +1,5 @@
-import { Icon } from "@iconify/react"
 import { browser, i18n } from "#imports"
+import { Icon } from "@iconify/react"
 import { Button } from "@/components/ui/base-ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/base-ui/tooltip"
 

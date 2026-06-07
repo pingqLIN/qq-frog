@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
 import { browser } from "#imports"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { openOptionsPage } from "../navigation"
 
 describe("navigation", () => {

@@ -6,12 +6,11 @@ import type { PromptResolver } from "@/utils/host/translate/api/ai"
 import { isLLMProviderConfig, isNonAPIProvider } from "@/types/config/provider"
 import { putBatchRequestRecord } from "@/utils/batch-request-record"
 import { DEFAULT_CONFIG } from "@/utils/constants/config"
-import { BATCH_SEPARATOR, BATCH_SEPARATOR_LINE_PATTERN } from "@/utils/constants/prompt"
+import { BATCH_SEPARATOR } from "@/utils/constants/prompt"
 import { generateArticleSummary } from "@/utils/content/summary"
 import { cleanText } from "@/utils/content/utils"
 import { db } from "@/utils/db/dexie/db"
 import { Sha256Hex } from "@/utils/hash"
-import { microsoftTranslate } from "@/utils/host/translate/api/microsoft"
 import { executeTranslate } from "@/utils/host/translate/execute-translate"
 import { normalizePromptContextValue } from "@/utils/host/translate/translate-text"
 import { normalizeTranslationOutput } from "@/utils/host/translate/translation-output-normalization"
@@ -24,7 +23,7 @@ import { RequestQueue } from "@/utils/request/request-queue"
 import { ensureInitializedConfig } from "./config"
 
 export function parseBatchResult(result: string): string[] {
-  return result.trim().split(BATCH_SEPARATOR_LINE_PATTERN).map(t => t.trim())
+  return result.split(BATCH_SEPARATOR).map(t => t.trim())
 }
 
 export function shouldUseBatchQueue(providerConfig: ProviderConfig): boolean {
@@ -370,13 +369,6 @@ export async function setUpSubtitlesTranslationQueue() {
     }
 
     return await getOrGenerateSubtitleSummary(videoTitle, subtitlesContext, providerConfig, requestQueue)
-  })
-
-  onMessage("microsoftBatchTranslate", async (message) => {
-    const { texts, fromLang, toLang } = message.data
-    const hash = Sha256Hex("ms-batch", fromLang, toLang, ...texts)
-    const thunk = () => microsoftTranslate(texts, fromLang, toLang)
-    return requestQueue.enqueue(thunk, Date.now(), hash)
   })
 
   onMessage("setSubtitlesRequestQueueConfig", (message) => {

@@ -1,5 +1,5 @@
-import { useAtom } from "jotai"
 import { i18n } from "#imports"
+import { useAtom } from "jotai"
 import { Switch } from "@/components/ui/base-ui/switch"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 

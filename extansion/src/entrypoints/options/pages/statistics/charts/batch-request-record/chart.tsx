@@ -1,5 +1,6 @@
 import type { ChartConfig } from "@/components/ui/base-ui/chart"
 import type BatchRequestRecord from "@/utils/db/dexie/tables/batch-request-record"
+import { i18n } from "#imports"
 import { useAtomValue } from "jotai"
 import {
   Area,
@@ -8,7 +9,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { i18n } from "#imports"
 import { Card, CardContent } from "@/components/ui/base-ui/card"
 import {
 

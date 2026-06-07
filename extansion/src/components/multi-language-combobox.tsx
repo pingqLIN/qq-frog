@@ -1,10 +1,13 @@
 import type { LangCodeISO6393 } from "@read-frog/definitions"
-import type { LanguageItem } from "./language-combobox-options"
+import { i18n } from "#imports"
 import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 import { Icon } from "@iconify/react"
-import { langCodeISO6393Schema } from "@read-frog/definitions"
+import {
+  LANG_CODE_TO_LOCALE_NAME,
+  langCodeISO6393Schema,
+} from "@read-frog/definitions"
+import { camelCase } from "case-anything"
 import { useMemo } from "react"
-import { i18n } from "#imports"
 import { Button } from "@/components/ui/base-ui/button"
 import {
   Combobox,
@@ -14,14 +17,23 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/base-ui/combobox"
-import { getLanguageLabel } from "@/utils/language-labels"
-import { filterLanguage } from "./language-combobox-options"
 
-function getLanguageItems(): LanguageItem<LangCodeISO6393>[] {
+interface LanguageItem {
+  value: LangCodeISO6393
+  label: string
+}
+
+function getLanguageItems(): LanguageItem[] {
   return langCodeISO6393Schema.options.map(code => ({
     value: code,
-    label: getLanguageLabel(code),
+    label: `${i18n.t(`languages.${camelCase(code)}` as Parameters<typeof i18n.t>[0])} (${LANG_CODE_TO_LOCALE_NAME[code]})`,
   }))
+}
+
+function filterLanguage(item: LanguageItem, query: string): boolean {
+  const searchLower = query.toLowerCase()
+  return item.label.toLowerCase().includes(searchLower)
+    || item.value.toLowerCase().includes(searchLower)
 }
 
 interface MultiLanguageComboboxProps {
@@ -46,7 +58,7 @@ export function MultiLanguageCombobox({
     <Combobox
       multiple
       value={selectedItems}
-      onValueChange={(items: LanguageItem<LangCodeISO6393>[]) => {
+      onValueChange={(items: LanguageItem[]) => {
         onLanguagesChange(items.map(item => item.value))
       }}
       items={languageItems}
@@ -59,7 +71,7 @@ export function MultiLanguageCombobox({
       <ComboboxContent align="end" className="w-fit">
         <ComboboxInput showTrigger={false} placeholder={i18n.t("translationHub.searchLanguages")} />
         <ComboboxList>
-          {(item: LanguageItem<LangCodeISO6393>) => (
+          {(item: LanguageItem) => (
             <ComboboxItem key={item.value} value={item}>
               {item.label}
             </ComboboxItem>
