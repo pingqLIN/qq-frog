@@ -1,4 +1,3 @@
-import { i18n } from "#imports"
 import { Icon } from "@iconify/react"
 import { Link, useLocation } from "react-router"
 import {
@@ -17,13 +16,13 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/base-ui/sidebar"
+import { i18n } from "@/utils/i18n"
 
 const OVERLAY_TOOLS_PATHS = ["/floating-button", "/selection-toolbar", "/context-menu"] as const
 
 export function SettingsNav() {
   const { pathname } = useLocation()
   const isOverlayToolsActive = OVERLAY_TOOLS_PATHS.includes(pathname)
-  const isFirefox = import.meta.env.BROWSER === "firefox"
 
   return (
     <SidebarGroup>
@@ -103,22 +102,6 @@ export function SettingsNav() {
               </CollapsibleContent>
             </SidebarMenuItem>
           </Collapsible>
-
-          {!isFirefox && (
-            <SidebarMenuItem>
-              <SidebarMenuButton render={<Link to="/tts" />} isActive={pathname === "/tts"}>
-                <Icon icon="tabler:speakerphone" />
-                <span>{i18n.t("options.tts.title")}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
-
-          <SidebarMenuItem>
-            <SidebarMenuButton render={<Link to="/statistics" />} isActive={pathname === "/statistics"}>
-              <Icon icon="tabler:chart-dots" />
-              <span>{i18n.t("options.statistics.title")}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
 
           <SidebarMenuItem>
             <SidebarMenuButton render={<Link to="/config" />} isActive={pathname === "/config"}>

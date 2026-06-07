@@ -1,10 +1,9 @@
 import type { Browser } from "#imports"
 import type { Config } from "@/types/config/config"
-import { browser, i18n, storage } from "#imports"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
-import { createFeatureUsageContext } from "@/utils/analytics"
+import { browser, storage } from "#imports"
 import { CONFIG_STORAGE_KEY } from "@/utils/constants/config"
 import { getTranslationStateKey, TRANSLATION_STATE_KEY_PREFIX } from "@/utils/constants/storage-keys"
+import { i18n } from "@/utils/i18n"
 import { sendMessage } from "@/utils/message"
 import { handleOptionalMessage } from "@/utils/message-errors"
 import { ensureInitializedConfig } from "./config"
@@ -211,9 +210,6 @@ async function handleTranslateClick(tabId: number) {
   handleOptionalMessage(
     sendMessage("askManagerToTogglePageTranslation", {
       enabled: newState,
-      analyticsContext: newState
-        ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.CONTEXT_MENU)
-        : undefined,
     }, tabId),
     "Failed to ask page translation manager from context menu",
   )

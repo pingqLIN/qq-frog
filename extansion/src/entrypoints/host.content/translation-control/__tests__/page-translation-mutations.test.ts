@@ -304,4 +304,43 @@ describe("pageTranslationManager mutation re-walk", () => {
 
     manager.stop()
   })
+
+  it("limits concurrent visible page element translations", async () => {
+    document.body.innerHTML = `
+      <main>
+        ${Array.from({ length: 8 }, (_, index) => `<p id="item-${index}">Long paragraph ${index}</p>`).join("")}
+      </main>
+    `
+
+    let activeTranslations = 0
+    let maxActiveTranslations = 0
+    mockTranslateWalkedElement.mockImplementation(async () => {
+      activeTranslations++
+      maxActiveTranslations = Math.max(maxActiveTranslations, activeTranslations)
+      await new Promise(resolve => setTimeout(resolve, 5))
+      activeTranslations--
+    })
+
+    const manager = new PageTranslationManager()
+    await manager.start()
+    await flushDomUpdates()
+
+    const observer = intersectionObservers[0]
+    const paragraphs = Array.from(document.querySelectorAll("p"))
+
+    expect(paragraphs).toHaveLength(8)
+    paragraphs.forEach((paragraph) => {
+      expect(observer.observe).toHaveBeenCalledWith(paragraph)
+    })
+
+    await Promise.all(paragraphs.map(paragraph => observer.triggerIntersect(paragraph)))
+
+    await vi.waitFor(() => {
+      expect(mockTranslateWalkedElement).toHaveBeenCalledTimes(8)
+    })
+
+    expect(maxActiveTranslations).toBeLessThanOrEqual(3)
+
+    manager.stop()
+  })
 })

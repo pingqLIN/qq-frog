@@ -1,7 +1,7 @@
 import type { MigrationFunction } from "./migration-scripts/types"
 import type { Config } from "@/types/config/config"
-import { i18n } from "#imports"
 import { configSchema } from "@/types/config/config"
+import { i18n } from "@/utils/i18n"
 import { CONFIG_SCHEMA_VERSION } from "../constants/config"
 import { logger } from "../logger"
 import { ConfigVersionTooNewError } from "./errors"
@@ -9,6 +9,7 @@ import { ConfigVersionTooNewError } from "./errors"
 export const LATEST_SCHEMA_VERSION = CONFIG_SCHEMA_VERSION
 
 const MIGRATION_FILENAME_RE = /v\d+-to-v(\d+)\.ts$/
+const RETIRED_LOCAL_PROVIDER_TYPES = new Set(["tensdaq", "ai302"])
 
 /**
  * Loads migration scripts from the "migration-scripts" directory and runs them sequentially to migrate the configuration
@@ -42,6 +43,36 @@ export async function runMigration(version: number, config: any): Promise<any> {
   return migrationFn(config)
 }
 
+function normalizeLocalForkConfig(config: unknown): unknown {
+  if (!config || typeof config !== "object" || !("providersConfig" in config)) {
+    return config
+  }
+
+  const configObject = config as Record<string, unknown>
+  const providersConfig = configObject.providersConfig
+  if (!Array.isArray(providersConfig)) {
+    return config
+  }
+
+  const filteredProviders = providersConfig.filter((provider) => {
+    if (!provider || typeof provider !== "object" || !("provider" in provider)) {
+      return true
+    }
+
+    const providerType = (provider as Record<string, unknown>).provider
+    return typeof providerType !== "string" || !RETIRED_LOCAL_PROVIDER_TYPES.has(providerType)
+  })
+
+  if (filteredProviders.length === providersConfig.length) {
+    return config
+  }
+
+  return {
+    ...configObject,
+    providersConfig: filteredProviders,
+  }
+}
+
 export async function migrateConfig(originalConfig: unknown, originalConfigSchemaVersion: number): Promise<Config> {
   if (originalConfigSchemaVersion > CONFIG_SCHEMA_VERSION) {
     throw new ConfigVersionTooNewError(i18n.t("options.config.sync.versionTooNew"))
@@ -55,6 +86,8 @@ export async function migrateConfig(originalConfig: unknown, originalConfigSchem
       currentVersion = nextVersion
     }
   }
+
+  originalConfig = normalizeLocalForkConfig(originalConfig)
 
   const parseResult = configSchema.safeParse(originalConfig)
   if (!parseResult.success) {

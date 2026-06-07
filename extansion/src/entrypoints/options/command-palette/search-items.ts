@@ -10,32 +10,13 @@ export interface SearchItem {
   pageKey: string
 }
 
-const IS_FIREFOX = import.meta.env.BROWSER === "firefox"
-
 type SearchItemDefinition = Omit<SearchItem, "titleKey" | "descriptionKey" | "pageKey"> & {
   titleKey: I18nKey
   descriptionKey?: I18nKey
   pageKey: I18nKey
 }
 
-const TTS_SEARCH_ITEMS: SearchItemDefinition[] = !IS_FIREFOX
-  ? [{
-      sectionId: "tts-config",
-      route: "/tts",
-      titleKey: "options.tts.title",
-      descriptionKey: "options.tts.description",
-      pageKey: "options.tts.title",
-    }]
-  : []
-
 const CONFIG_SEARCH_ITEMS = [
-  {
-    sectionId: "beta-experience",
-    route: "/config",
-    titleKey: "options.betaExperience.title",
-    descriptionKey: "options.betaExperience.description",
-    pageKey: "options.config.title",
-  },
   {
     sectionId: "google-drive-sync",
     route: "/config",
@@ -87,6 +68,13 @@ export const SEARCH_ITEMS: SearchItem[] = [
     route: "/",
     titleKey: "options.general.appearance.title",
     descriptionKey: "options.general.appearance.theme",
+    pageKey: "options.general.title",
+  },
+  {
+    sectionId: "app-language",
+    route: "/",
+    titleKey: "options.general.appLanguage.title",
+    descriptionKey: "options.general.appLanguage.description",
     pageKey: "options.general.title",
   },
 
@@ -334,9 +322,6 @@ export const SEARCH_ITEMS: SearchItem[] = [
     descriptionKey: "options.videoSubtitles.aiSegmentation.clearCacheDialog.description",
     pageKey: "options.videoSubtitles.title",
   },
-
-  // Text to Speech page
-  ...TTS_SEARCH_ITEMS,
 
   // Config page
   ...CONFIG_SEARCH_ITEMS,

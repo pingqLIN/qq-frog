@@ -16,8 +16,6 @@ const LLM_PROVIDER_TYPES = [
   "xai",
   "openai-compatible",
   "siliconflow",
-  "tensdaq",
-  "ai302",
   "bedrock",
   "groq",
   "deepinfra",

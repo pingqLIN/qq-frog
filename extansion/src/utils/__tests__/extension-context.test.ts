@@ -14,12 +14,6 @@ describe("isExtensionContextInvalidatedError", () => {
     )).toBe(true)
   })
 
-  it("detects WXT storage runtime unavailability errors", () => {
-    expect(isExtensionContextInvalidatedError(
-      new Error("'wxt/storage' must be loaded in a web extension environment"),
-    )).toBe(true)
-  })
-
   it("does not hide unrelated runtime errors", () => {
     expect(isExtensionContextInvalidatedError(
       new Error("Could not establish connection. Receiving end does not exist."),

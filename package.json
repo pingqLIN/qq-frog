@@ -1,10 +1,11 @@
 {
   "name": "@read-frog/extension",
   "type": "module",
-  "version": "1.33.6",
+  "version": "0.1",
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "description": "QQ Frog local browser extension for reading and translation",
+  "license": "GPL-3.0-only",
   "scripts": {
     "build": "wxt build && node scripts/sync-extension-root.mjs",
     "build:edge": "wxt build -b edge",
@@ -102,7 +103,6 @@
     "jotai-family": "^1.0.1",
     "js-sha256": "^0.11.1",
     "ollama-ai-provider-v2": "^3.5.0",
-    "posthog-js": "^1.372.10",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-error-boundary": "^6.1.1",

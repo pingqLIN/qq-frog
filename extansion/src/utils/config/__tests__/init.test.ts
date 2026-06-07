@@ -3,12 +3,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { isAPIProviderConfig } from "@/types/config/provider"
 import { CONFIG_SCHEMA_VERSION, DEFAULT_CONFIG } from "@/utils/constants/config"
 
-const getItemMock = vi.fn()
-const getMetaMock = vi.fn()
-const setItemMock = vi.fn()
-const setMetaMock = vi.fn()
-const runMigrationMock = vi.fn()
-const loggerWarnMock = vi.fn()
+const {
+  getItemMock,
+  getMetaMock,
+  setItemMock,
+  setMetaMock,
+  runMigrationMock,
+  loggerWarnMock,
+} = vi.hoisted(() => ({
+  getItemMock: vi.fn(),
+  getMetaMock: vi.fn(),
+  setItemMock: vi.fn(),
+  setMetaMock: vi.fn(),
+  runMigrationMock: vi.fn(),
+  loggerWarnMock: vi.fn(),
+}))
 
 vi.mock("#imports", () => ({
   storage: {

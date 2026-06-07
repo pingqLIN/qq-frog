@@ -14,7 +14,7 @@
 - Content script 讀取與修改網頁 DOM。
 - Background service worker 與 content/popup/options/side panel 之間的 message channel。
 - 使用者自訂 API provider、base URL、headers、provider options。
-- Google OAuth / Google Drive sync。
+- Google OAuth / Google Drive sync：只使用 `drive.appdata` 與 userinfo email；登出需清 token 與 last-synced metadata。
 - 字幕擷取與第三方影片平臺 DOM 變動。
 - DevTools panel 載入 options UI。
 
@@ -35,5 +35,5 @@
 ## 未決事項
 
 - 針對公開發布版建立更窄權限設定。
-- 對 Google Drive sync 與 analytics 做一次獨立資料流審查。
+- 對 analytics 做一次獨立資料流審查。
 - 以實際 build 後的 manifest 做最終 permission diff。

@@ -4,13 +4,11 @@ import { logger } from "@/utils/logger"
 import { onMessage } from "@/utils/message"
 import { openOptionsPage } from "@/utils/navigation"
 import { runAiSegmentSubtitles } from "./ai-segmentation"
-import { setupAnalyticsMessageHandlers } from "./analytics"
 import { dispatchBackgroundStreamPort } from "./background-stream"
 import { ensureInitializedConfig } from "./config"
 import { setUpConfigBackup } from "./config-backup"
 import { initializeContextMenu, registerContextMenuListeners } from "./context-menu"
 import { cleanupAllAiSegmentationCache, cleanupAllSummaryCache, cleanupAllTranslationCache, setUpDatabaseCleanup } from "./db-cleanup"
-import { setupEdgeTTSMessageHandlers } from "./edge-tts"
 import { setupIframeInjection } from "./iframe-injection"
 import { setupLLMGenerateTextMessageHandlers } from "./llm-generate-text"
 import { initMockData } from "./mock-data"
@@ -18,7 +16,6 @@ import { proxyFetch } from "./proxy-fetch"
 import { setupSidePanelMessageHandler } from "./side-panel"
 import { setUpSubtitlesTranslationQueue, setUpWebPageTranslationQueue } from "./translation-queues"
 import { translationMessage } from "./translation-signal"
-import { setupTTSPlaybackMessageHandlers } from "./tts-playback"
 
 export default defineBackground({
   type: "module",
@@ -69,7 +66,6 @@ export default defineBackground({
       await cleanupAllAiSegmentationCache()
     })
 
-    setupAnalyticsMessageHandlers()
     translationMessage()
 
     // Register context menu listeners synchronously
@@ -85,9 +81,7 @@ export default defineBackground({
     setUpConfigBackup()
 
     proxyFetch()
-    setupEdgeTTSMessageHandlers()
     setupLLMGenerateTextMessageHandlers()
-    setupTTSPlaybackMessageHandlers()
     void initMockData()
 
     // Setup on-demand iframe injection after page translation is enabled.

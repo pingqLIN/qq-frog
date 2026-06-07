@@ -154,6 +154,42 @@ describe("requestQueue – token bucket", () => {
     vi.advanceTimersByTime(1_000)
     expect(completed).toEqual([0, 1, 2])
   })
+
+  it("limits concurrent in-flight tasks independently from burst capacity", async () => {
+    vi.useFakeTimers()
+
+    const q = new RequestQueue({
+      ...baseConfig,
+      rate: 100,
+      capacity: 10,
+      maxConcurrent: 2,
+    })
+    const starts: number[] = []
+    const deferreds = Array.from({ length: 5 }, () => createDeferred<number>())
+
+    const promises = deferreds.map((deferred, index) =>
+      q.enqueue(() => {
+        starts.push(index)
+        return deferred.promise
+      }, Date.now(), `concurrent-${index}`))
+
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(starts).toEqual([0, 1])
+
+    deferreds[0].resolve(0)
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(starts).toEqual([0, 1, 2])
+
+    deferreds[1].resolve(1)
+    deferreds[2].resolve(2)
+    deferreds[3].resolve(3)
+    deferreds[4].resolve(4)
+    await vi.advanceTimersByTimeAsync(1000)
+
+    await expect(Promise.all(promises)).resolves.toEqual([0, 1, 2, 3, 4])
+  })
 })
 
 // 4. scheduleAt in the future should delay execution even when tokens are available.

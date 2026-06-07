@@ -1,5 +1,5 @@
 import type { FloatingButtonSide } from "@/types/config/floating-button"
-import { browser, i18n } from "#imports"
+import { browser } from "#imports"
 import { IconLock, IconLockOpen, IconSettings, IconX } from "@tabler/icons-react"
 import { useAtom, useAtomValue } from "jotai"
 import { useEffect, useRef, useState } from "react"
@@ -11,10 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/base-ui/dropdown-menu"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
-import { createFeatureUsageContext } from "@/utils/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { APP_NAME } from "@/utils/constants/app"
+import { i18n } from "@/utils/i18n"
 import { sendMessage } from "@/utils/message"
 import { handleOptionalMessage } from "@/utils/message-errors"
 import { cn } from "@/utils/styles/utils"
@@ -172,9 +171,6 @@ export default function FloatingButton() {
       handleOptionalMessage(
         sendMessage("tryToSetEnablePageTranslationOnContentScript", {
           enabled: nextEnabled,
-          analyticsContext: nextEnabled
-            ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.FLOATING_BUTTON)
-            : undefined,
         }),
         "Failed to toggle page translation from floating button",
       )

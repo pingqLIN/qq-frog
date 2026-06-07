@@ -1,15 +1,12 @@
-import type { AnalyticsSurface, FeatureUsageContext } from "@/types/analytics"
 import type { TTSConfig } from "@/types/config/tts"
-import { i18n } from "#imports"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAtomValue } from "jotai"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
-import { createFeatureUsageContext, trackFeatureUsed } from "@/utils/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { detectLanguage } from "@/utils/content/language"
 import { getRandomUUID } from "@/utils/crypto-polyfill"
+import { i18n } from "@/utils/i18n"
 import { logger } from "@/utils/logger"
 import { sendMessage } from "@/utils/message"
 import { splitTextByUtf8Bytes } from "@/utils/server/edge-tts/chunk"
@@ -17,7 +14,6 @@ import { splitTextByUtf8Bytes } from "@/utils/server/edge-tts/chunk"
 interface PlayAudioParams {
   text: string
   ttsConfig: TTSConfig
-  analyticsContext: FeatureUsageContext
   forcedVoice?: string
 }
 
@@ -118,7 +114,7 @@ async function synthesizeEdgeTTSAudioChunk(
   }
 }
 
-export function useTextToSpeech(surface: AnalyticsSurface = ANALYTICS_SURFACE.SELECTION_TOOLBAR) {
+export function useTextToSpeech() {
   const queryClient = useQueryClient()
   const languageDetection = useAtomValue(configFieldsAtomMap.languageDetection)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -145,13 +141,12 @@ export function useTextToSpeech(surface: AnalyticsSurface = ANALYTICS_SURFACE.SE
     meta: {
       suppressToast: true,
     },
-    mutationFn: async ({ text, ttsConfig, analyticsContext, forcedVoice }) => {
+    mutationFn: async ({ text, ttsConfig, forcedVoice }) => {
       stop()
       shouldStopRef.current = false
 
       const requestId = getRandomUUID()
       activeRequestIdRef.current = requestId
-      let didStartPlayback = false
 
       const selectedVoice = await resolveVoiceForText(text, ttsConfig, languageDetection.mode === "llm", forcedVoice)
       if (shouldStopRef.current || activeRequestIdRef.current !== requestId) {
@@ -182,9 +177,6 @@ export function useTextToSpeech(surface: AnalyticsSurface = ANALYTICS_SURFACE.SE
             audioBase64: audioChunk.audioBase64,
             contentType: audioChunk.contentType,
           })
-          if (playbackResult.ok) {
-            didStartPlayback = true
-          }
           return playbackResult.ok
         }
         finally {
@@ -221,19 +213,8 @@ export function useTextToSpeech(surface: AnalyticsSurface = ANALYTICS_SURFACE.SE
       }
       setCurrentChunk(0)
       setTotalChunks(0)
-
-      if (didStartPlayback) {
-        void trackFeatureUsed({
-          ...analyticsContext,
-          outcome: "success",
-        })
-      }
     },
-    onError: (error, variables) => {
-      void trackFeatureUsed({
-        ...variables.analyticsContext,
-        outcome: "failure",
-      })
+    onError: (error) => {
       toast.error(i18n.t("speak.failedToGenerateSpeech"), {
         id: TTS_ERROR_TOAST_ID,
         description: getTTSFriendlyErrorDescription(error),
@@ -250,10 +231,6 @@ export function useTextToSpeech(surface: AnalyticsSurface = ANALYTICS_SURFACE.SE
       text,
       ttsConfig,
       forcedVoice: options?.forcedVoice,
-      analyticsContext: createFeatureUsageContext(
-        ANALYTICS_FEATURE.TEXT_TO_SPEECH,
-        surface,
-      ),
     })
   }
 

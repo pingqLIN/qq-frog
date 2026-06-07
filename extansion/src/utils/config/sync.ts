@@ -36,3 +36,7 @@ export async function setLastSyncConfigAndMeta(value: Config, meta: Partial<Last
     }),
   ])
 }
+
+export async function clearLastSyncConfigAndMeta(): Promise<void> {
+  await storage.removeItem(`local:${LAST_SYNCED_CONFIG_STORAGE_KEY}`, { removeMeta: true })
+}

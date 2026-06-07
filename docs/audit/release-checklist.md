@@ -14,6 +14,7 @@
 
 - [ ] Runtime target 僅限 localhost 或使用者明確設定的自有服務。
 - [ ] Google 等第三方 provider 保留且只在使用者設定或啟用時使用。
+- [ ] Google Drive sync 只使用 `drive.appdata`，登出會清 token 與 last-synced metadata。
 - [ ] `.env.production` 不包含私人 API key。
 - [ ] provider base URL 與 headers 不會被公開文件誤導為內建服務。
 

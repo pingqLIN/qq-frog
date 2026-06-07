@@ -1,14 +1,16 @@
-import { i18n } from "#imports"
 import { Icon } from "@iconify/react"
 import { useAtomValue, useSetAtom } from "jotai"
 import { Activity, useState } from "react"
 import { toast } from "sonner"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/base-ui/alert"
 import { Button } from "@/components/ui/base-ui/button"
 import { useGoogleDriveAuth } from "@/hooks/use-google-drive-auth"
 import { resolutionsAtom, unresolvedConfigsAtom } from "@/utils/atoms/google-drive-sync"
 import { lastSyncTimeAtom } from "@/utils/atoms/last-sync-time"
-import { clearAccessToken } from "@/utils/google-drive/auth"
+import { isGoogleDriveOAuthConfigured } from "@/utils/google-drive/auth"
 import { syncConfig } from "@/utils/google-drive/sync"
+import { clearGoogleDriveSyncState } from "@/utils/google-drive/sync-state"
+import { i18n } from "@/utils/i18n"
 import { logger } from "@/utils/logger"
 import { ConfigCard } from "../../../components/config-card"
 import { UnresolvedDialog } from "./components/unresolved-dialog"
@@ -20,37 +22,55 @@ export function GoogleDriveSyncCard() {
   const setUnresolvedData = useSetAtom(unresolvedConfigsAtom)
   const setResolutions = useSetAtom(resolutionsAtom)
   const lastSyncTime = useAtomValue(lastSyncTimeAtom)
+  const isOAuthConfigured = isGoogleDriveOAuthConfigured()
 
   const handleSync = async () => {
+    if (!isOAuthConfigured) {
+      toast.error(i18n.t("options.config.sync.googleDrive.oauthNotConfigured.title"), {
+        description: i18n.t("options.config.sync.googleDrive.oauthNotConfigured.description"),
+      })
+      return
+    }
+
     setIsSyncing(true)
 
-    const result = await syncConfig()
+    try {
+      const result = await syncConfig()
 
-    if (result.status === "unresolved") {
-      setUnresolvedData(result.data)
-      setIsOpen(true)
+      if (result.status === "unresolved") {
+        setUnresolvedData(result.data)
+        setIsOpen(true)
+      }
+      else if (result.status === "success") {
+        const messages = {
+          "uploaded": i18n.t("options.config.sync.googleDrive.syncSuccess.uploaded"),
+          "downloaded": i18n.t("options.config.sync.googleDrive.syncSuccess.downloaded"),
+          "same-changes": i18n.t("options.config.sync.googleDrive.syncSuccess.sameChanges"),
+          "no-change": i18n.t("options.config.sync.googleDrive.syncSuccess.noChange"),
+        } as const
+        toast.success(messages[result.action])
+      }
+      else {
+        logger.error("Google Drive sync error", result.error)
+        toast.error(i18n.t("options.config.sync.googleDrive.syncError"), {
+          description: result.error.message,
+        })
+      }
     }
-    else if (result.status === "success") {
-      const messages = {
-        "uploaded": i18n.t("options.config.sync.googleDrive.syncSuccess.uploaded"),
-        "downloaded": i18n.t("options.config.sync.googleDrive.syncSuccess.downloaded"),
-        "same-changes": i18n.t("options.config.sync.googleDrive.syncSuccess.sameChanges"),
-        "no-change": i18n.t("options.config.sync.googleDrive.syncSuccess.noChange"),
-      } as const
-      toast.success(messages[result.action])
-    }
-    else {
-      logger.error("Google Drive sync error", result.error)
+    catch (error) {
+      logger.error("Google Drive sync error", error)
       toast.error(i18n.t("options.config.sync.googleDrive.syncError"), {
-        description: result.error.message,
+        description: error instanceof Error ? error.message : String(error),
       })
     }
-
-    setIsSyncing(false)
+    finally {
+      void invalidateAuthData()
+      setIsSyncing(false)
+    }
   }
 
   const handleLogout = async () => {
-    await clearAccessToken()
+    await clearGoogleDriveSyncState()
     void invalidateAuthData()
     toast.success(i18n.t("options.config.sync.googleDrive.logoutSuccess"))
   }
@@ -90,16 +110,27 @@ export function GoogleDriveSyncCard() {
         )}
       >
         <div className="w-full flex flex-col items-end gap-4">
+          {!isOAuthConfigured && (
+            <Alert>
+              <Icon icon="tabler:alert-circle" className="size-4" />
+              <AlertTitle>{i18n.t("options.config.sync.googleDrive.oauthNotConfigured.title")}</AlertTitle>
+              <AlertDescription>
+                {i18n.t("options.config.sync.googleDrive.oauthNotConfigured.description")}
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="flex flex-col gap-2 items-end">
             <div className="flex gap-2">
               <Button
                 onClick={handleSync}
-                disabled={isSyncing}
+                disabled={isSyncing || !isOAuthConfigured}
               >
                 <Icon icon="logos:google-drive" className="size-4" />
                 {isSyncing
                   ? i18n.t("options.config.sync.googleDrive.syncing")
-                  : i18n.t("options.config.sync.googleDrive.sync")}
+                  : authData?.isAuthenticated
+                    ? i18n.t("options.config.sync.googleDrive.sync")
+                    : i18n.t("options.config.sync.googleDrive.connect")}
               </Button>
             </div>
             <Activity mode={lastSyncTime ? "visible" : "hidden"}>

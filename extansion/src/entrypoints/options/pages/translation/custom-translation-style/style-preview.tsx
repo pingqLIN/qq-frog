@@ -1,4 +1,3 @@
-import { i18n } from "#imports"
 import { LANG_CODE_ISO6391_OPTIONS } from "@read-frog/definitions"
 import { useAtomValue } from "jotai"
 import { useEffect, useRef, useState } from "react"
@@ -8,6 +7,7 @@ import { Textarea } from "@/components/ui/base-ui/textarea"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { BLOCK_CONTENT_CLASS, CONTENT_WRAPPER_CLASS } from "@/utils/constants/dom-labels"
 import { decorateTranslationNode } from "@/utils/host/translate/ui/decorate-translation"
+import { i18n } from "@/utils/i18n"
 
 export function StylePreview() {
   const { translationNodeStyle } = useAtomValue(configFieldsAtomMap.translate)
@@ -15,7 +15,7 @@ export function StylePreview() {
   const blockContentRef = useRef<HTMLSpanElement>(null)
   const [language, setLanguage] = useState<string>("zh")
   const [dir, setDir] = useState<"ltr" | "rtl">("ltr")
-  const [translatedText, setTranslatedText] = useState("神谷先生不是在對抗世界，而是在對抗可能讓世界為之側目的事物。")
+  const [translatedText, setTranslatedText] = useState("一乙卜及乏皿舟角其飛鬼麻黃鼎鼻齒龍龠叢藻羹曩囊巖齲鑰驢驤鸚驪麢齾灪麤籲龥")
 
   useEffect(() => {
     if (blockContentRef.current) {

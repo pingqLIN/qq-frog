@@ -1,5 +1,4 @@
 import type { APIProviderConfig, LLMProviderTypes, ProviderSpecificSettingField } from "@/types/config/provider"
-import { i18n } from "#imports"
 import { useStore } from "@tanstack/react-form"
 import { useEffect, useEffectEvent, useMemo, useState } from "react"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/base-ui/field"
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/base-ui/input"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { getProviderSpecificSettingFields, isLLMProvider, PROVIDER_SPECIFIC_SETTINGS_SCHEMAS } from "@/types/config/provider"
 import { compactObject } from "@/types/utils"
+import { i18n } from "@/utils/i18n"
 import { withForm } from "./form"
 
 function getProviderSpecificSettings(providerConfig: APIProviderConfig) {

@@ -2,16 +2,13 @@ import type { JSONValue } from "ai"
 import type { RefObject } from "react"
 import type { SelectionToolbarCustomActionRequestSlice } from "../atoms"
 import type { SelectionToolbarInlineError } from "../inline-error"
-import type { AnalyticsSurface } from "@/types/analytics"
 import type { BackgroundStructuredObjectStreamSnapshot, ThinkingSnapshot } from "@/types/background-stream"
 import type { LLMProviderConfig } from "@/types/config/provider"
 import type { SelectionToolbarCustomAction } from "@/types/config/selection-toolbar"
 import type { CachedWebPageContext } from "@/utils/host/translate/webpage-context"
 import { LANG_CODE_TO_EN_NAME } from "@read-frog/definitions"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ANALYTICS_FEATURE } from "@/types/analytics"
 import { isLLMProviderConfig } from "@/types/config/provider"
-import { createFeatureUsageContext, trackFeatureUsed } from "@/utils/analytics"
 import { streamBackgroundStructuredObject } from "@/utils/content-script/background-stream-client"
 import { getOrCreateWebPageContext } from "@/utils/host/translate/webpage-context"
 import { resolveModelId } from "@/utils/providers/model-id"
@@ -47,11 +44,6 @@ interface ResolvedWebPageContext {
 }
 
 interface CustomActionExecutionRequest {
-  analytics: {
-    actionId: string
-    actionName: string
-    surface: AnalyticsSurface
-  }
   key: string
   payload: {
     outputSchema: Array<{ name: string, type: SelectionToolbarCustomAction["outputSchema"][number]["type"] }>
@@ -193,12 +185,10 @@ export function useCustomActionWebPageContext(open: boolean, popoverSessionKey: 
 }
 
 function buildCustomActionExecutionRequest({
-  analyticsSurface,
   executionContext,
   popoverSessionKey,
   rerunNonce,
 }: {
-  analyticsSurface: AnalyticsSurface
   executionContext: CustomActionExecutionContext
   popoverSessionKey: number
   rerunNonce: number
@@ -219,14 +209,8 @@ function buildCustomActionExecutionRequest({
   const outputSchema = action.outputSchema.map(({ name, type }) => ({ name, type }))
 
   return {
-    analytics: {
-      actionId: action.id,
-      actionName: action.name,
-      surface: analyticsSurface,
-    },
     key: stringifyExecutionRequestKey({
       actionId: action.id,
-      analyticsSurface,
       model: providerConfig.model,
       outputSchema: action.outputSchema.map(({ description, name, type }) => ({ description, name, type })),
       popoverSessionKey,
@@ -251,14 +235,12 @@ function buildCustomActionExecutionRequest({
 }
 
 export function useCustomActionExecution({
-  analyticsSurface,
   bodyRef,
   executionContext,
   open,
   popoverSessionKey,
   rerunNonce,
 }: {
-  analyticsSurface: AnalyticsSurface
   bodyRef: RefObject<HTMLDivElement | null>
   executionContext: CustomActionExecutionContext | null
   open: boolean
@@ -274,7 +256,6 @@ export function useCustomActionExecution({
   bodyRefRef.current = bodyRef
   const executionRequest = executionContext
     ? buildCustomActionExecutionRequest({
-        analyticsSurface,
         executionContext,
         popoverSessionKey,
         rerunNonce,
@@ -309,16 +290,6 @@ export function useCustomActionExecution({
     let isCancelled = false
     const abortController = new AbortController()
 
-    const analyticsContext = createFeatureUsageContext(
-      ANALYTICS_FEATURE.CUSTOM_AI_ACTION,
-      request.analytics.surface,
-      Date.now(),
-      {
-        action_id: request.analytics.actionId,
-        action_name: request.analytics.actionName,
-      },
-    )
-
     const run = async () => {
       setIsRunning(true)
       setResult(null)
@@ -351,10 +322,6 @@ export function useCustomActionExecution({
 
         setResult(finalResult.output)
         setThinking(finalResult.thinking)
-        void trackFeatureUsed({
-          ...analyticsContext,
-          outcome: "success",
-        })
       }
       catch (error) {
         if (isAbortError(error)) {
@@ -367,10 +334,6 @@ export function useCustomActionExecution({
 
         setThinking(prev => prev?.text ? { ...prev, status: "complete" } : null)
         setError(createSelectionToolbarRuntimeError("customAction", error))
-        void trackFeatureUsed({
-          ...analyticsContext,
-          outcome: "failure",
-        })
       }
       finally {
         if (!isCancelled) {

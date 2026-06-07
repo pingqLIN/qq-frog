@@ -8,9 +8,7 @@ import { useAtomValue, useSetAtom } from "jotai"
 import { createContext, use, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import { SelectionPopover } from "@/components/ui/selection-popover"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
 import { isLLMProviderConfig, isTranslateProviderConfig } from "@/types/config/provider"
-import { createFeatureUsageContext, trackFeatureUsed } from "@/utils/analytics"
 import { configFieldsAtomMap, writeConfigAtom } from "@/utils/atoms/config"
 import { filterEnabledProvidersConfig } from "@/utils/config/helpers"
 import { buildFeatureProviderPatch } from "@/utils/constants/feature-providers"
@@ -44,7 +42,6 @@ import { TranslationContent } from "./translation-content"
 interface SelectionTranslatePendingOpenRequest {
   anchor?: { x: number, y: number }
   session: SelectionSession
-  surface: typeof ANALYTICS_SURFACE.SELECTION_TOOLBAR | typeof ANALYTICS_SURFACE.CONTEXT_MENU
 }
 
 async function getSelectionWebPagePromptContext(
@@ -183,9 +180,6 @@ export function SelectionTranslationProvider({
   const [error, setError] = useState<SelectionToolbarInlineError | null>(null)
   const [isTranslating, setIsTranslating] = useState(false)
   const [rerunNonce, setRerunNonce] = useState(0)
-  const [sourceSurface, setSourceSurface] = useState<
-    typeof ANALYTICS_SURFACE.SELECTION_TOOLBAR | typeof ANALYTICS_SURFACE.CONTEXT_MENU
-  >(ANALYTICS_SURFACE.SELECTION_TOOLBAR)
   const [activeSession, setActiveSession] = useState<SelectionSession | null>(null)
   const selectionSession = useAtomValue(selectionSessionAtom)
   const translateRequest = useAtomValue(selectionToolbarTranslateRequestAtom)
@@ -260,11 +254,6 @@ export function SelectionTranslationProvider({
       return
     }
 
-    const analyticsContext = createFeatureUsageContext(
-      ANALYTICS_FEATURE.SELECTION_TRANSLATION,
-      sourceSurface,
-    )
-
     setIsTranslating(true)
     setTranslatedText(undefined)
     setThinking(null)
@@ -276,10 +265,6 @@ export function SelectionTranslationProvider({
         setIsTranslating(false)
         setError(createSelectionToolbarPrecheckError("translate", "providerUnavailable"))
       }
-      void trackFeatureUsed({
-        ...analyticsContext,
-        outcome: "failure",
-      })
       return
     }
 
@@ -288,10 +273,6 @@ export function SelectionTranslationProvider({
         setIsTranslating(false)
         setError(createSelectionToolbarPrecheckError("translate", "providerDisabled"))
       }
-      void trackFeatureUsed({
-        ...analyticsContext,
-        outcome: "failure",
-      })
       return
     }
 
@@ -335,23 +316,11 @@ export function SelectionTranslationProvider({
       if (runIdRef.current === runId) {
         setTranslatedText(nextTranslatedText)
       }
-
-      void trackFeatureUsed({
-        ...analyticsContext,
-        outcome: "success",
-      })
     }
     catch (error) {
       if (!isAbortError(error) && runIdRef.current === runId) {
         setThinking(prev => prev?.text ? { ...prev, status: "complete" } : null)
         setError(createSelectionToolbarRuntimeError("translate", error))
-      }
-
-      if (!isAbortError(error)) {
-        void trackFeatureUsed({
-          ...analyticsContext,
-          outcome: "failure",
-        })
       }
     }
     finally {
@@ -360,7 +329,7 @@ export function SelectionTranslationProvider({
         setIsTranslating(false)
       }
     }
-  }, [resetTranslationState, selectionText, sourceSurface, translateRequest])
+  }, [resetTranslationState, selectionText, translateRequest])
 
   const startTranslation = useEffectEvent((runId: number) => {
     void runTranslation(runId)
@@ -401,7 +370,6 @@ export function SelectionTranslationProvider({
       const nextSession = pendingRequest?.session ?? selectionSession
 
       setActiveSession(nextSession)
-      setSourceSurface(pendingRequest?.surface ?? ANALYTICS_SURFACE.SELECTION_TOOLBAR)
       setPopoverSessionKey(prev => prev + 1)
       if (pendingRequest?.anchor) {
         setAnchor(pendingRequest.anchor)
@@ -426,7 +394,6 @@ export function SelectionTranslationProvider({
 
     commitOpenRequest({
       session: selectionSession,
-      surface: ANALYTICS_SURFACE.SELECTION_TOOLBAR,
     })
   }, [commitOpenRequest, selectionSession])
 
@@ -439,7 +406,6 @@ export function SelectionTranslationProvider({
     return {
       anchor: request.anchor,
       session: request.session,
-      surface: ANALYTICS_SURFACE.CONTEXT_MENU,
     }
   }, [resolveContextMenuSelectionRequest])
 

@@ -6,6 +6,7 @@ import { useHydrateAtoms } from "jotai/utils"
 import * as React from "react"
 import FrogToast from "@/components/frog-toast"
 import { HelpButton } from "@/components/help-button"
+import { I18nProvider } from "@/components/providers/i18n-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { TooltipProvider } from "@/components/ui/base-ui/tooltip"
 import { configAtom } from "@/utils/atoms/config"
@@ -48,13 +49,15 @@ async function initApp() {
       <QueryClientProvider client={queryClient}>
         <JotaiProvider>
           <HydrateAtoms initialValues={[[configAtom, config], [baseThemeModeAtom, themeMode]]}>
-            <ThemeProvider>
-              <TooltipProvider>
-                <App />
-                <FrogToast />
-                <HelpButton />
-              </TooltipProvider>
-            </ThemeProvider>
+            <I18nProvider>
+              <ThemeProvider>
+                <TooltipProvider>
+                  <App />
+                  <FrogToast />
+                  <HelpButton />
+                </TooltipProvider>
+              </ThemeProvider>
+            </I18nProvider>
           </HydrateAtoms>
         </JotaiProvider>
       </QueryClientProvider>

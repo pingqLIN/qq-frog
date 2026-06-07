@@ -1,4 +1,3 @@
-import { i18n } from "#imports"
 import { Icon } from "@iconify/react"
 import { useMutation } from "@tanstack/react-query"
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
@@ -7,12 +6,11 @@ import { toast } from "sonner"
 import ProviderIcon from "@/components/provider-icon"
 import { useTheme } from "@/components/providers/theme-provider"
 import { Button } from "@/components/ui/base-ui/button"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
-import { createFeatureUsageContext, trackFeatureAttempt } from "@/utils/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { getProviderConfigById } from "@/utils/config/helpers"
 import { PROVIDER_ITEMS } from "@/utils/constants/providers"
 import { executeTranslate } from "@/utils/host/translate/execute-translate"
+import { i18n } from "@/utils/i18n"
 import { getTranslatePrompt } from "@/utils/prompts/translate"
 import { cn } from "@/utils/styles/utils"
 import { selectedProviderIdsAtom, translateRequestAtom, translationCardExpandedStateAtom } from "../atoms"
@@ -41,30 +39,22 @@ export function TranslationCard({ providerId, isExpanded, onExpandedChange }: Tr
     mutationKey: ["translate", providerId],
     meta: { suppressToast: true },
     mutationFn: async (req: NonNullable<typeof request>) => {
-      return await trackFeatureAttempt(
-        createFeatureUsageContext(
-          ANALYTICS_FEATURE.TRANSLATION_HUB,
-          ANALYTICS_SURFACE.TRANSLATION_HUB,
-        ),
-        async () => {
-          if (!provider)
-            throw new Error("Provider not found")
+      if (!provider)
+        throw new Error("Provider not found")
 
-          const myRequestId = ++requestIdRef.current
-          const result = await executeTranslate(req.inputText, {
-            sourceCode: req.sourceLanguage,
-            targetCode: req.targetLanguage,
-            level: language.level,
-          }, provider, getTranslatePrompt)
+      const myRequestId = ++requestIdRef.current
+      const result = await executeTranslate(req.inputText, {
+        sourceCode: req.sourceLanguage,
+        targetCode: req.targetLanguage,
+        level: language.level,
+      }, provider, getTranslatePrompt)
 
-          // Ignore stale responses - return undefined to silently discard
-          if (requestIdRef.current !== myRequestId) {
-            return undefined
-          }
+      // Ignore stale responses - return undefined to silently discard
+      if (requestIdRef.current !== myRequestId) {
+        return undefined
+      }
 
-          return result
-        },
-      )
+      return result
     },
   })
 

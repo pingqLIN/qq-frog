@@ -157,7 +157,7 @@ describe("translate-text", () => {
       expect(result).toBe("")
       expect(mockDetectLanguage).toHaveBeenCalledWith(japaneseText, {
         minLength: 10,
-        enableLLM: false,
+        enableLLM: true,
       })
       expect(mockSendMessage).not.toHaveBeenCalled()
     })

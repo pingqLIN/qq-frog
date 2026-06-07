@@ -21,6 +21,10 @@ const googleDriveFileListResponseSchema = z.object({
 export type GoogleDriveFile = z.infer<typeof googleDriveFileSchema>
 export type GoogleDriveFileListResponse = z.infer<typeof googleDriveFileListResponseSchema>
 
+export function escapeDriveQueryStringLiteral(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")
+}
+
 /**
  * Search for file in Google Drive appDataFolder
  */
@@ -30,7 +34,7 @@ export async function findFileInAppData(fileName: string): Promise<GoogleDriveFi
 
     const url = new URL(`${GOOGLE_DRIVE_API_BASE}/files`)
     url.searchParams.set("spaces", "appDataFolder")
-    url.searchParams.set("q", `name='${fileName}'`)
+    url.searchParams.set("q", `name='${escapeDriveQueryStringLiteral(fileName)}' and trashed=false`)
     url.searchParams.set("fields", "files(id, name, mimeType, modifiedTime, size)")
 
     const response = await fetch(url.toString(), {

@@ -22,6 +22,7 @@ type QueuedRequestTask = RequestTask & { hash: string }
 export interface QueueOptions {
   rate: number // tokens/sec
   capacity: number // token bucket size
+  maxConcurrent?: number
   timeoutMs: number
   maxRetries: number
   baseRetryDelayMs: number
@@ -89,6 +90,9 @@ export class RequestQueue {
     if (parseConfigStatus.error) {
       throw new Error(parseConfigStatus.error.issues[0].message)
     }
+    if (queueOptions.maxConcurrent !== undefined && (!Number.isFinite(queueOptions.maxConcurrent) || queueOptions.maxConcurrent < 1)) {
+      throw new Error("maxConcurrent must be a positive finite number")
+    }
     this.options = deepmerge(this.options, queueOptions) as QueueOptions
     if (retryPolicy) {
       this.retryPolicy = retryPolicy
@@ -102,7 +106,7 @@ export class RequestQueue {
   private schedule() {
     this.refillTokens()
 
-    while (this.bucketTokens >= 1 && this.waitingQueue.size() > 0) {
+    while (this.bucketTokens >= 1 && this.hasExecutionCapacity() && this.waitingQueue.size() > 0) {
       const now = Date.now()
 
       const task = this.waitingQueue.peek()
@@ -116,6 +120,10 @@ export class RequestQueue {
       else {
         break
       }
+    }
+
+    if (!this.hasExecutionCapacity()) {
+      return
     }
 
     if (this.nextScheduleTimer) {
@@ -137,6 +145,14 @@ export class RequestQueue {
         }, delay)
       }
     }
+  }
+
+  private hasExecutionCapacity() {
+    return this.executingTasks.size < this.getMaxConcurrent()
+  }
+
+  private getMaxConcurrent() {
+    return this.options.maxConcurrent ?? Number.POSITIVE_INFINITY
   }
 
   private async executeTask(task: QueuedRequestTask) {

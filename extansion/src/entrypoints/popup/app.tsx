@@ -1,8 +1,7 @@
-import { i18n } from "#imports"
 import { Icon } from "@iconify/react"
-import { UserAccount } from "@/components/user-account"
+import readFrogLogo from "@/assets/icons/qq-frog.png?url&no-inline"
+import { i18n } from "@/utils/i18n"
 import { openOptionsPage } from "@/utils/navigation"
-import { version } from "../../../../package.json"
 import { AISmartContext } from "./components/ai-smart-context"
 import { AlwaysTranslate } from "./components/always-translate"
 import LanguageOptionsSelector from "./components/language-options-selector"
@@ -20,7 +19,10 @@ function App() {
     <>
       <div className="bg-background flex flex-col gap-4 px-6 pt-5 pb-4">
         <div className="flex items-center justify-between">
-          <UserAccount />
+          <div className="flex min-w-0 items-center gap-2">
+            <img src={readFrogLogo} alt="QQ Frog" className="size-8 shrink-0 rounded-full" />
+            <span className="truncate text-sm font-semibold">QQ Frog</span>
+          </div>
           <div className="flex items-center">
             <TranslationHubButton />
           </div>
@@ -50,9 +52,6 @@ function App() {
             {i18n.t("popup.options")}
           </span>
         </button>
-        <span className="text-sm text-neutral-500 dark:text-neutral-400">
-          {version}
-        </span>
         <MoreMenu />
       </div>
     </>

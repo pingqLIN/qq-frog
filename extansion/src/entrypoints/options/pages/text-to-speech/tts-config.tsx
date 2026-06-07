@@ -1,7 +1,6 @@
 import type { LangCodeISO6393 } from "@read-frog/definitions"
 import type { FocusEvent } from "react"
 import type { TTSVoice } from "@/types/config/tts"
-import { i18n } from "#imports"
 import { IconLoader2, IconPlayerPlayFilled } from "@tabler/icons-react"
 import { useAtom } from "jotai"
 import { useState } from "react"
@@ -25,7 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/base-ui/select"
 import { useTextToSpeech } from "@/hooks/use-text-to-speech"
-import { ANALYTICS_SURFACE } from "@/types/analytics"
 import {
   EDGE_TTS_VOICES,
   getDefaultTTSVoiceForLanguage,
@@ -40,6 +38,7 @@ import {
   ttsVolumeSchema,
 } from "@/types/config/tts"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
+import { i18n } from "@/utils/i18n"
 import { ConfigCard } from "../../components/config-card"
 
 interface TtsNumberFieldProps {
@@ -125,7 +124,7 @@ function TtsDefaultVoiceField() {
 function TtsLanguageVoiceField() {
   const [ttsConfig, setTtsConfig] = useAtom(configFieldsAtomMap.tts)
   const [selectedLanguage, setSelectedLanguage] = useState<LangCodeISO6393>("eng")
-  const { play, isFetching, isPlaying } = useTextToSpeech(ANALYTICS_SURFACE.TTS_SETTINGS)
+  const { play, isFetching, isPlaying } = useTextToSpeech()
   const isFetchingOrPlaying = isFetching || isPlaying
 
   const selectedLanguageVoice = ttsConfig.languageVoices[selectedLanguage] ?? ttsConfig.defaultVoice

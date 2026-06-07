@@ -1,9 +1,8 @@
-import { browser, i18n } from "#imports"
+import { browser } from "#imports"
 import { useAtom, useAtomValue } from "jotai"
 import { Button } from "@/components/ui/base-ui/button"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
-import { createFeatureUsageContext } from "@/utils/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
+import { i18n } from "@/utils/i18n"
 import { sendMessage } from "@/utils/message"
 import { handleOptionalMessage } from "@/utils/message-errors"
 import { formatHotkey } from "@/utils/os.ts"
@@ -33,9 +32,6 @@ export default function TranslateButton({ className }: { className?: string }) {
         sendMessage("tryToSetEnablePageTranslationByTabId", {
           tabId: currentTab.id,
           enabled: nextEnabled,
-          analyticsContext: nextEnabled
-            ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.POPUP)
-            : undefined,
         }),
         "Failed to toggle page translation from popup",
       )

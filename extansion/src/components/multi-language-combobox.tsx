@@ -1,5 +1,4 @@
 import type { LangCodeISO6393 } from "@read-frog/definitions"
-import { i18n } from "#imports"
 import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 import { Icon } from "@iconify/react"
 import {
@@ -17,6 +16,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/base-ui/combobox"
+import { i18n } from "@/utils/i18n"
 
 interface LanguageItem {
   value: LangCodeISO6393

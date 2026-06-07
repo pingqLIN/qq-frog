@@ -221,17 +221,6 @@ describe("background-stream", () => {
       },
     })
     expect(mockPort.postMessage).toHaveBeenNthCalledWith(2, {
-      type: "chunk",
-      requestId: "req-text-1",
-      data: {
-        output: "Hello world",
-        thinking: {
-          status: "thinking",
-          text: "",
-        },
-      },
-    })
-    expect(mockPort.postMessage).toHaveBeenNthCalledWith(3, {
       type: "done",
       requestId: "req-text-1",
       data: {
@@ -243,6 +232,44 @@ describe("background-stream", () => {
       },
     })
     expect(mockPort.disconnect).toHaveBeenCalledTimes(1)
+  })
+
+  it("throttles high-frequency text stream chunks while preserving the final output", async () => {
+    getModelByIdMock.mockResolvedValue("mock-model")
+    streamTextMock.mockReturnValue({
+      fullStream: (async function* () {
+        for (let index = 0; index < 100; index++) {
+          yield { type: "text-delta", text: `${index},` }
+        }
+      })(),
+      output: Promise.resolve("unused"),
+    })
+
+    const { handleStreamTextPort } = await import("../background-stream")
+    const mockPort = createMockPort("stream-text")
+
+    handleStreamTextPort(mockPort.port as never)
+    await mockPort.emitMessage({
+      type: "start",
+      requestId: "req-text-long",
+      payload: {
+        providerId: "openai-default",
+        prompt: "Translate long text",
+      },
+    })
+
+    const chunkMessages = mockPort.postMessage.mock.calls
+      .map(call => call[0] as { type: string })
+      .filter(message => message.type === "chunk")
+    const doneMessages = mockPort.postMessage.mock.calls
+      .map(call => call[0] as { type: string, data?: { output?: string } })
+      .filter(message => message.type === "done")
+
+    expect(chunkMessages.length).toBeLessThan(100)
+    expect(doneMessages).toHaveLength(1)
+    expect(doneMessages[0].data?.output).toBe(
+      Array.from({ length: 100 }, (_, index) => `${index},`).join(""),
+    )
   })
 
   it("prefers stream onError root cause and posts error once", async () => {

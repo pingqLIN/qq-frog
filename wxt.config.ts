@@ -5,9 +5,11 @@ import { z } from "zod"
 import { createExtensionClientEnvSchema, isLocalPackagesEnabled, resolveExtensionEnv } from "./extansion/src/env/shared"
 
 const WXT_API_KEY_PATTERN = /^WXT_.*API_KEY/
-const ALLOWED_BUNDLED_API_KEYS = new Set([
-  "WXT_POSTHOG_API_KEY",
-])
+const GOOGLE_DRIVE_OAUTH_SCOPES = [
+  "https://www.googleapis.com/auth/drive.appdata",
+  "https://www.googleapis.com/auth/userinfo.email",
+]
+const ALLOWED_BUNDLED_API_KEYS = new Set<string>()
 const useLocalPackages = isLocalPackagesEnabled(process.env)
 // Local-only builds should not require hosted auth or analytics credentials.
 // Set WXT_SKIP_ENV_VALIDATION=false to re-enable the stricter publication gate.
@@ -50,6 +52,12 @@ export default defineConfig({
     host_permissions: [
       "*://*/*", // Required for scripting.executeScript in any frame
     ],
+    ...(process.env.WXT_GOOGLE_CLIENT_ID && {
+      oauth2: {
+        client_id: process.env.WXT_GOOGLE_CLIENT_ID,
+        scopes: GOOGLE_DRIVE_OAUTH_SCOPES,
+      },
+    }),
     // Allow images/SVGs referenced by content-script UI <img> tags to be loaded from
     // moz-extension:// URLs on regular pages. Firefox enforces this more strictly.
     web_accessible_resources: [

@@ -30,10 +30,13 @@ export function shouldUseBatchQueue(providerConfig: ProviderConfig): boolean {
   return isLLMProviderConfig(providerConfig)
 }
 
+export const MAX_CONCURRENT_TRANSLATION_REQUESTS = 4
+export const MAX_CONCURRENT_BROWSER_TRANSLATION_REQUESTS = 2
+
 export function getBrowserTranslateQueueConfig(config: RequestQueueConfig): RequestQueueConfig {
   return {
-    rate: Math.min(config.rate, 2),
-    capacity: Math.min(config.capacity, 2),
+    rate: Math.min(config.rate, MAX_CONCURRENT_BROWSER_TRANSLATION_REQUESTS),
+    capacity: Math.min(config.capacity, MAX_CONCURRENT_BROWSER_TRANSLATION_REQUESTS),
   }
 }
 
@@ -174,6 +177,7 @@ async function createTranslationQueues<TContext>(config: TranslationQueueSetupCo
   const requestQueue = new RequestQueue({
     rate,
     capacity,
+    maxConcurrent: MAX_CONCURRENT_TRANSLATION_REQUESTS,
     timeoutMs: 20_000,
     maxRetries: 2,
     baseRetryDelayMs: 1_000,
@@ -182,6 +186,7 @@ async function createTranslationQueues<TContext>(config: TranslationQueueSetupCo
   const browserTranslateRequestQueue = new RequestQueue({
     rate: browserTranslateQueueConfig.rate,
     capacity: browserTranslateQueueConfig.capacity,
+    maxConcurrent: MAX_CONCURRENT_BROWSER_TRANSLATION_REQUESTS,
     timeoutMs: 20_000,
     maxRetries: 1,
     baseRetryDelayMs: 1_000,

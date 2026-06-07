@@ -1,12 +1,11 @@
 import type { AllProviderTypes, APIProviderTypes, LLMProviderModels, ProviderConfig, ProvidersConfig } from "@/types/config/provider"
 import type { Theme } from "@/types/config/theme"
-import { i18n } from "#imports"
 import customProviderLogo from "@/assets/providers/custom-provider.svg?url&no-inline"
 import deeplxLogoDark from "@/assets/providers/deeplx-dark.svg?url&no-inline"
 import deeplxLogoLight from "@/assets/providers/deeplx-light.svg?url&no-inline"
-import tensdaqLogoColor from "@/assets/providers/tensdaq-color.svg?url&no-inline"
 import { API_PROVIDER_TYPES, CUSTOM_LLM_PROVIDER_TYPES, NON_API_TRANSLATE_PROVIDERS, NON_API_TRANSLATE_PROVIDERS_MAP, NON_CUSTOM_LLM_PROVIDER_TYPES, PURE_API_PROVIDER_TYPES, PURE_TRANSLATE_PROVIDERS, TRANSLATE_PROVIDER_TYPES } from "@/types/config/provider"
 import { omit, pick } from "@/types/utils"
+import { i18n } from "@/utils/i18n"
 import { getLobeIconsCDNUrlFn } from "../logo"
 
 export const DEFAULT_LLM_PROVIDER_MODELS: LLMProviderModels = {
@@ -110,16 +109,6 @@ export const DEFAULT_LLM_PROVIDER_MODELS: LLMProviderModels = {
     isCustomModel: true,
     customModel: null,
   },
-  "tensdaq": {
-    model: "Qwen3-30B-A3B-Instruct-2507",
-    isCustomModel: true,
-    customModel: null,
-  },
-  "ai302": {
-    model: "gpt-4.1-mini",
-    isCustomModel: true,
-    customModel: null,
-  },
   "volcengine": {
     model: "doubao-seed-1-6-flash-250828",
     isCustomModel: true,
@@ -173,11 +162,6 @@ export const PROVIDER_ITEMS: Record<AllProviderTypes, { logo: (theme: Theme) => 
       logo: getLobeIconsCDNUrlFn("siliconcloud-color"),
       name: "SiliconFlow",
       website: "https://siliconflow.cn/",
-    },
-    "ai302": {
-      logo: getLobeIconsCDNUrlFn("ai302-color"),
-      name: "302.AI",
-      website: "https://302.ai/",
     },
     "openrouter": {
       logo: getLobeIconsCDNUrlFn("openrouter"),
@@ -269,11 +253,6 @@ export const PROVIDER_ITEMS: Record<AllProviderTypes, { logo: (theme: Theme) => 
       name: "Vercel",
       website: "https://vercel.com",
     },
-    "tensdaq": {
-      logo: () => tensdaqLogoColor,
-      name: "Tensdaq",
-      website: "https://dashboard.x-aio.com/zh/register?ref=c356c1daba9a4641a18e",
-    },
     "ollama": {
       logo: getLobeIconsCDNUrlFn("ollama"),
       name: "Ollama",
@@ -327,24 +306,6 @@ export const DEFAULT_PROVIDER_CONFIG = {
     provider: "siliconflow",
     baseURL: "https://api.siliconflow.cn/v1",
     model: DEFAULT_LLM_PROVIDER_MODELS.siliconflow,
-  },
-  "tensdaq": {
-    id: "tensdaq-default",
-    name: PROVIDER_ITEMS.tensdaq.name,
-    description: i18n.t("options.apiProviders.providers.description.tensdaq"),
-    enabled: true,
-    provider: "tensdaq",
-    baseURL: "https://tensdaq-api.x-aio.com/v1",
-    model: DEFAULT_LLM_PROVIDER_MODELS.tensdaq,
-  },
-  "ai302": {
-    id: "ai302-default",
-    name: PROVIDER_ITEMS.ai302.name,
-    description: i18n.t("options.apiProviders.providers.description.ai302"),
-    enabled: true,
-    provider: "ai302",
-    baseURL: "https://api.302.ai/v1",
-    model: DEFAULT_LLM_PROVIDER_MODELS.ai302,
   },
   "openai-compatible": {
     id: "openai-compatible-default",
@@ -561,12 +522,18 @@ export const DEFAULT_PROVIDER_CONFIG = {
   },
 } as const satisfies Record<AllProviderTypes, ProviderConfig>
 
+const SENSITIVE_PROVIDER_CONFIG_KEYS = new Set(["apiKey", "headers", "providerOptions"])
+
+export function sanitizeProviderConfigForAppDefault<T extends ProviderConfig>(providerConfig: T): T {
+  return Object.fromEntries(
+    Object.entries(providerConfig).filter(([key]) => !SENSITIVE_PROVIDER_CONFIG_KEYS.has(key)),
+  ) as T
+}
+
 export const DEFAULT_PROVIDER_CONFIG_LIST: ProvidersConfig = [
   DEFAULT_PROVIDER_CONFIG["microsoft-translate"],
   DEFAULT_PROVIDER_CONFIG["google-translate"],
   DEFAULT_PROVIDER_CONFIG.openai,
-  DEFAULT_PROVIDER_CONFIG.tensdaq,
-  DEFAULT_PROVIDER_CONFIG.ai302,
   // DEFAULT_PROVIDER_CONFIG.deepseek,
   DEFAULT_PROVIDER_CONFIG.google,
   // DEFAULT_PROVIDER_CONFIG.openaiCompatible,
@@ -584,7 +551,7 @@ export const DEFAULT_PROVIDER_CONFIG_LIST: ProvidersConfig = [
   // DEFAULT_PROVIDER_CONFIG.replicate,
   // DEFAULT_PROVIDER_CONFIG.perplexity,
   // DEFAULT_PROVIDER_CONFIG.vercel,
-]
+].map(sanitizeProviderConfigForAppDefault)
 
 export const NON_API_TRANSLATE_PROVIDER_ITEMS = pick(
   PROVIDER_ITEMS,

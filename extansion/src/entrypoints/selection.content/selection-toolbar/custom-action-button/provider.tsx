@@ -4,9 +4,7 @@ import { useAtomValue, useSetAtom } from "jotai"
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import { SelectionPopover } from "@/components/ui/selection-popover"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
 import { isLLMProviderConfig } from "@/types/config/provider"
-import { createFeatureUsageContext, trackFeatureUsed } from "@/utils/analytics"
 import { configFieldsAtomMap, writeConfigAtom } from "@/utils/atoms/config"
 import { filterEnabledProvidersConfig, getProviderConfigById } from "@/utils/config/helpers"
 import { onMessage } from "@/utils/message"
@@ -35,7 +33,6 @@ interface SelectionCustomActionPendingOpenRequest {
   actionId: string
   anchor?: { x: number, y: number }
   session: SelectionSession | null
-  surface: typeof ANALYTICS_SURFACE.SELECTION_TOOLBAR | typeof ANALYTICS_SURFACE.CONTEXT_MENU
 }
 
 interface SelectionCustomActionContextValue {
@@ -68,9 +65,6 @@ export function SelectionCustomActionProvider({
   const [rerunNonce, setRerunNonce] = useState(0)
   const [activeSession, setActiveSession] = useState<SelectionSession | null>(null)
   const [activeActionId, setActiveActionId] = useState<string | null>(null)
-  const [sourceSurface, setSourceSurface] = useState<
-    typeof ANALYTICS_SURFACE.SELECTION_TOOLBAR | typeof ANALYTICS_SURFACE.CONTEXT_MENU
-  >(ANALYTICS_SURFACE.SELECTION_TOOLBAR)
   const selectionSession = useAtomValue(selectionSessionAtom)
   const selection = useAtomValue(selectionAtom)
   const context = useAtomValue(contextAtom)
@@ -83,7 +77,6 @@ export function SelectionCustomActionProvider({
   const pendingOpenRequestRef = useRef<SelectionCustomActionPendingOpenRequest | null>(null)
   const reopenFrameRef = useRef<number | null>(null)
   const nextEphemeralSessionIdRef = useRef(0)
-  const trackedPrecheckErrorKeyRef = useRef<string | null>(null)
   const { resolveContextMenuSelectionRequest } = useSelectionContextMenuRequestResolver(selectionSession)
   const selectionText = activeSession?.selectionSnapshot.text ?? null
   const cleanSelection = useMemo(
@@ -128,7 +121,6 @@ export function SelectionCustomActionProvider({
     thinking,
   } = useCustomActionExecution({
     bodyRef,
-    analyticsSurface: sourceSurface,
     executionContext: executionPlan.executionContext,
     open: isOpen,
     popoverSessionKey,
@@ -163,7 +155,6 @@ export function SelectionCustomActionProvider({
 
       setActiveSession(nextSession)
       setActiveActionId(pendingRequest?.actionId ?? null)
-      setSourceSurface(pendingRequest?.surface ?? ANALYTICS_SURFACE.SELECTION_TOOLBAR)
       setPopoverSessionKey(prev => prev + 1)
       if (pendingRequest?.anchor) {
         setAnchor(pendingRequest.anchor)
@@ -209,7 +200,6 @@ export function SelectionCustomActionProvider({
     openActionRequest({
       actionId,
       anchor: { x: rect.left, y: rect.top },
-      surface: ANALYTICS_SURFACE.SELECTION_TOOLBAR,
       session: selectionSession ?? (selection
         ? {
             id: --nextEphemeralSessionIdRef.current,
@@ -230,17 +220,6 @@ export function SelectionCustomActionProvider({
     )
     if (!action) {
       const nextError = createSelectionToolbarPrecheckError("customAction", "actionUnavailable")
-      void trackFeatureUsed({
-        ...createFeatureUsageContext(
-          ANALYTICS_FEATURE.CUSTOM_AI_ACTION,
-          ANALYTICS_SURFACE.CONTEXT_MENU,
-          Date.now(),
-          {
-            action_id: actionId,
-          },
-        ),
-        outcome: "failure",
-      })
       toast.error(nextError.description)
       return
     }
@@ -248,18 +227,6 @@ export function SelectionCustomActionProvider({
     const request = resolveContextMenuSelectionRequest()
     if (!request) {
       const nextError = createSelectionToolbarPrecheckError("customAction", "missingSelection")
-      void trackFeatureUsed({
-        ...createFeatureUsageContext(
-          ANALYTICS_FEATURE.CUSTOM_AI_ACTION,
-          ANALYTICS_SURFACE.CONTEXT_MENU,
-          Date.now(),
-          {
-            action_id: action.id,
-            action_name: action.name,
-          },
-        ),
-        outcome: "failure",
-      })
       toast.error(nextError.description)
       return
     }
@@ -268,7 +235,6 @@ export function SelectionCustomActionProvider({
       actionId: action.id,
       anchor: request.anchor,
       session: request.session,
-      surface: ANALYTICS_SURFACE.CONTEXT_MENU,
     })
   }, [openActionRequest, resolveContextMenuSelectionRequest, selectionToolbarConfig.customActions])
 
@@ -308,46 +274,6 @@ export function SelectionCustomActionProvider({
       }
     }
   }, [])
-
-  useEffect(() => {
-    if (!isOpen || !executionPlan.error || executionPlan.executionContext) {
-      return
-    }
-
-    const analyticsContext = createFeatureUsageContext(
-      ANALYTICS_FEATURE.CUSTOM_AI_ACTION,
-      sourceSurface,
-      Date.now(),
-      {
-        action_id: activeActionId ?? undefined,
-        action_name: activeAction?.name,
-      },
-    )
-    const nextErrorKey = JSON.stringify({
-      actionId: analyticsContext.action_id ?? null,
-      description: executionPlan.error.description,
-      popoverSessionKey,
-      surface: sourceSurface,
-    })
-
-    if (trackedPrecheckErrorKeyRef.current === nextErrorKey) {
-      return
-    }
-    trackedPrecheckErrorKeyRef.current = nextErrorKey
-
-    void trackFeatureUsed({
-      ...analyticsContext,
-      outcome: "failure",
-    })
-  }, [
-    activeAction?.name,
-    activeActionId,
-    executionPlan.error,
-    executionPlan.executionContext,
-    isOpen,
-    popoverSessionKey,
-    sourceSurface,
-  ])
 
   const contextValue = useMemo<SelectionCustomActionContextValue>(() => ({
     openToolbarCustomAction,

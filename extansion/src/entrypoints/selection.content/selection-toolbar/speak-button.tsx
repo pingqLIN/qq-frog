@@ -1,18 +1,17 @@
-import { i18n } from "#imports"
 import { IconLoader2, IconPlayerStopFilled, IconVolume } from "@tabler/icons-react"
 import { useAtomValue } from "jotai"
 import { useCallback } from "react"
 import { toast } from "sonner"
 import { useTextToSpeech } from "@/hooks/use-text-to-speech"
-import { ANALYTICS_SURFACE } from "@/types/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
+import { i18n } from "@/utils/i18n"
 import { SelectionToolbarTooltip, useSelectionTooltipState } from "../components/selection-tooltip"
 import { selectionContentAtom } from "./atoms"
 
 export function SpeakButton() {
   const selectionContent = useAtomValue(selectionContentAtom)
   const ttsConfig = useAtomValue(configFieldsAtomMap.tts)
-  const { play, stop, isFetching, isPlaying } = useTextToSpeech(ANALYTICS_SURFACE.SELECTION_TOOLBAR)
+  const { play, stop, isFetching, isPlaying } = useTextToSpeech()
   const isBusy = isFetching || isPlaying
   const { handlePress, onOpenChange: handleTooltipOpenChange, open: tooltipOpen } = useSelectionTooltipState()
 

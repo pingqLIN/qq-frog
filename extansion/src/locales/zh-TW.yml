@@ -1,5 +1,5 @@
 name: QQ Frog
-extName: QQ Frog - 開源沉浸式翻譯
+extName: QQ Frog - 祖傳三代，目前一代一代沉浸氏衍伸開源軟體
 extDescription: QQ Frog是一款開放源代碼的瀏覽器插件，旨在幫助您從任何網站深入學習語言。
 dataTypes:
   string: 文字
@@ -34,6 +34,7 @@ popup:
   more:
     title: 更多
     translationHub: 翻譯中心
+    sidePanel: 側邊欄
 errorRecovery:
   title: 應用發生異常
   description: 已進入恢復模式。你可以先導出當前設定作為備份，再重置設定後重試。
@@ -71,11 +72,6 @@ options:
   apiProviders:
     title: API 提供商
     description: 配置用於翻譯和詞彙解析功能的 API 提供商。我們內建了 20 多個提供商，並支援任何 OpenAI 相容 API 提供商。
-    promotion:
-      ai302:
-        description: 點擊右方鏈接註冊 302.AI 可以獲得 1 美元 API 額度
-        action: 註冊獲取免費 API Key
-        addProvider: 新增 302.AI 配置
     addProvider: 新增提供商
     badges:
       featureCount: $1 個功能
@@ -148,8 +144,6 @@ options:
         anthropic: 以安全性和推理能力著稱的 Claude 模型
         xai: 馬斯克的 AI 公司，提供具有即時數據存取能力的 Grok 模型
         siliconflow: 面向中國和國際模型的高效能推理平臺
-        tensdaq: 革命性競價 AI MaaS 平臺，價格由市場供需決定，告別高成本固定定價
-        ai302: 提供最新、全面的模型和按量付費 API
         openaiCompatible: OpenAI API 相容的第三方
         deeplx: 非官方 DeepL API
         deepl: 官方 DeepL API
@@ -183,6 +177,18 @@ options:
       system: 跟隨系統
       light: 淺色
       dark: 深色
+    appLanguage:
+      title: 介面語言
+      description: 選擇介面顯示語言。目前生效語言：$1。
+      options:
+        system: 自動偵測系統語言
+        zhTW: 繁體中文
+        zhCN: 簡體中文
+        en: 英文
+      runtime:
+        en: 英文
+        zh_TW: 繁體中文
+        zh_CN: 簡體中文
     featureProviders:
       title: 功能提供商
       description: 為每個功能選擇使用的提供商
@@ -190,7 +196,6 @@ options:
       features:
         translate: 網頁翻譯
         selectionToolbar_translate: 劃詞翻譯
-        tts: 文字轉語音
         inputTranslation: 輸入翻譯
         videoSubtitles: 影片字幕
     translationConfig:
@@ -647,6 +652,10 @@ options:
       googleDrive:
         title: Google Drive 雲端同步
         description: 遠端設定較新時下載，本機設定較新時上傳
+        connect: 連線 Google Drive
+        oauthNotConfigured:
+          title: 尚未設定 Google Drive OAuth
+          description: 使用 Google Drive 同步前，請先以擴充功能的 Google OAuth client ID 設定 WXT_GOOGLE_CLIENT_ID，並重新 build 擴充功能。
         sync: 同步到 Google Drive
         syncing: 同步中...
         syncSuccess:

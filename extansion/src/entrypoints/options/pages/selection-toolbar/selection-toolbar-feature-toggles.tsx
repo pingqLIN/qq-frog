@@ -1,13 +1,11 @@
-import { i18n } from "#imports"
 import { RiTranslate } from "@remixicon/react"
-import { IconVolume } from "@tabler/icons-react"
 import { useAtom } from "jotai"
 import { Switch } from "@/components/ui/base-ui/switch"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
+import { i18n } from "@/utils/i18n"
 import { ConfigCard } from "../../components/config-card"
 
 export function SelectionToolbarFeatureToggles() {
-  const isFirefox = import.meta.env.BROWSER === "firefox"
   const [selectionToolbar, setSelectionToolbar] = useAtom(
     configFieldsAtomMap.selectionToolbar,
   )
@@ -15,7 +13,7 @@ export function SelectionToolbarFeatureToggles() {
   const { features } = selectionToolbar
 
   const setFeatureEnabled = (
-    key: "translate" | "speak",
+    key: "translate",
     enabled: boolean,
   ) => {
     void setSelectionToolbar({
@@ -44,18 +42,6 @@ export function SelectionToolbarFeatureToggles() {
             onCheckedChange={checked => setFeatureEnabled("translate", checked)}
           />
         </div>
-        {!isFirefox && (
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-sm">
-              <IconVolume className="size-4 text-muted-foreground" />
-              {i18n.t("options.floatingButtonAndToolbar.selectionToolbar.featureToggles.speak")}
-            </span>
-            <Switch
-              checked={features.speak.enabled}
-              onCheckedChange={checked => setFeatureEnabled("speak", checked)}
-            />
-          </div>
-        )}
       </div>
     </ConfigCard>
   )
