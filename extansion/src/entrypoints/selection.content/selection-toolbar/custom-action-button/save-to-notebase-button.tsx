@@ -1,8 +1,8 @@
 import type { SelectionToolbarCustomAction } from "@/types/config/selection-toolbar"
-import { i18n } from "#imports"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useAtomValue } from "jotai"
 import { toast } from "sonner"
+import { i18n } from "#imports"
 import { Button } from "@/components/ui/base-ui/button"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { authClient } from "@/utils/auth/auth-client"
@@ -55,22 +55,22 @@ function SaveToNotebaseButtonEnabled({
   const betaStatusQuery = useNotebaseBetaStatus(isAuthenticated)
   const isBetaAllowed = betaStatusQuery.data?.allowed === true
 
-  const schemaQuery = useQuery(orpc.customTable.getSchema.queryOptions({
-    input: { id: connection?.tableId ?? "" },
-    enabled: isAuthenticated && isBetaAllowed && !!connection?.tableId,
+  const schemaQuery = useQuery(orpc.notebase.getSchema.queryOptions({
+    input: { id: connection?.notebaseId ?? "" },
+    enabled: isAuthenticated && isBetaAllowed && !!connection?.notebaseId,
     retry: false,
     meta: {
       suppressToast: true,
     },
   }))
 
-  const saveMutation = useMutation(orpc.row.create.mutationOptions({
+  const saveMutation = useMutation(orpc.notebaseRow.create.mutationOptions({
     meta: {
       suppressToast: true,
     },
     onSuccess: () => {
       toast.success(i18n.t("action.saveToNotebaseSuccess"), {
-        description: connection?.tableNameSnapshot,
+        description: connection?.notebaseNameSnapshot,
       })
     },
     onError: (error: unknown) => {
@@ -128,7 +128,7 @@ function SaveToNotebaseButtonEnabled({
     }
 
     saveMutation.mutate({
-      tableId: connection.tableId,
+      notebaseId: connection.notebaseId,
       data: {
         cells,
       },
