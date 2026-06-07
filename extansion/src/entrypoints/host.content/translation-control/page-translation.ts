@@ -16,6 +16,7 @@ import { translateTextForPageTitle } from "@/utils/host/translate/translate-vari
 import { getOrCreateWebPageContext } from "@/utils/host/translate/webpage-context"
 import { logger } from "@/utils/logger"
 import { sendMessage } from "@/utils/message"
+import { handleOptionalMessage } from "@/utils/message-errors"
 
 type SimpleIntersectionOptions = Omit<IntersectionObserverInit, "threshold"> & {
   threshold?: number
@@ -206,10 +207,13 @@ export class PageTranslationManager implements IPageTranslationManager {
     }
 
     if (notify) {
-      void sendMessage("setAndNotifyPageTranslationStateChangedByManager", {
-        enabled: false,
-        url: window.location.href,
-      })
+      handleOptionalMessage(
+        sendMessage("setAndNotifyPageTranslationStateChangedByManager", {
+          enabled: false,
+          url: window.location.href,
+        }),
+        "Failed to notify page translation manager stop",
+      )
     }
 
     this.isPageTranslating = false

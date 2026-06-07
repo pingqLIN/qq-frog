@@ -16,6 +16,7 @@ import { createFeatureUsageContext } from "@/utils/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { APP_NAME } from "@/utils/constants/app"
 import { sendMessage } from "@/utils/message"
+import { handleOptionalMessage } from "@/utils/message-errors"
 import { cn } from "@/utils/styles/utils"
 import { matchDomainPattern } from "@/utils/url"
 import { enablePageTranslationAtom, isDraggingButtonAtom } from "../../atoms"
@@ -168,20 +169,26 @@ export default function FloatingButton() {
   const handleFloatingButtonClick = () => {
     if (floatingButton.clickAction === "translate") {
       const nextEnabled = !translationState.enabled
-      void sendMessage("tryToSetEnablePageTranslationOnContentScript", {
-        enabled: nextEnabled,
-        analyticsContext: nextEnabled
-          ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.FLOATING_BUTTON)
-          : undefined,
-      })
+      handleOptionalMessage(
+        sendMessage("tryToSetEnablePageTranslationOnContentScript", {
+          enabled: nextEnabled,
+          analyticsContext: nextEnabled
+            ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.FLOATING_BUTTON)
+            : undefined,
+        }),
+        "Failed to toggle page translation from floating button",
+      )
       return
     }
 
-    void Promise.resolve(sendMessage("toggleSidePanel", undefined)).then((result) => {
-      if (result?.ok === false && result.reason === "requires-extension-user-action") {
-        toast.info(<FirefoxSidebarHelpToast />)
-      }
-    })
+    handleOptionalMessage(
+      Promise.resolve(sendMessage("toggleSidePanel", undefined)).then((result) => {
+        if (result?.ok === false && result.reason === "requires-extension-user-action") {
+          toast.info(<FirefoxSidebarHelpToast />)
+        }
+      }),
+      "Failed to toggle side panel from floating button",
+    )
   }
 
   const startActiveDrag = () => {
@@ -413,7 +420,10 @@ export default function FloatingButton() {
           expanded={isFloatingButtonExpanded}
           icon={<IconSettings className="h-5 w-5" />}
           onClick={() => {
-            void sendMessage("openOptionsPage", undefined)
+            handleOptionalMessage(
+              sendMessage("openOptionsPage", undefined),
+              "Failed to open options from floating button",
+            )
           }}
         />
       )}

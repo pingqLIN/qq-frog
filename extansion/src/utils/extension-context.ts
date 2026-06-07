@@ -1,6 +1,7 @@
 const EXTENSION_CONTEXT_INVALIDATED_PATTERNS = [
   "Extension context invalidated",
   "Extension context was invalidated",
+  "'wxt/storage' must be loaded in a web extension environment",
 ]
 
 function getErrorText(error: unknown): string {

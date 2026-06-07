@@ -5,6 +5,7 @@ import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
 import { createFeatureUsageContext } from "@/utils/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { sendMessage } from "@/utils/message"
+import { handleOptionalMessage } from "@/utils/message-errors"
 import { formatHotkey } from "@/utils/os.ts"
 import { isPageTranslationShortcutEmpty } from "@/utils/page-translation-shortcut"
 import { cn } from "@/utils/styles/utils"
@@ -28,13 +29,16 @@ export default function TranslateButton({ className }: { className?: string }) {
 
     if (currentTab.id) {
       const nextEnabled = !isPageTranslated
-      void sendMessage("tryToSetEnablePageTranslationByTabId", {
-        tabId: currentTab.id,
-        enabled: nextEnabled,
-        analyticsContext: nextEnabled
-          ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.POPUP)
-          : undefined,
-      })
+      handleOptionalMessage(
+        sendMessage("tryToSetEnablePageTranslationByTabId", {
+          tabId: currentTab.id,
+          enabled: nextEnabled,
+          analyticsContext: nextEnabled
+            ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.POPUP)
+            : undefined,
+        }),
+        "Failed to toggle page translation from popup",
+      )
 
       setIsPageTranslated(prev => !prev)
     }

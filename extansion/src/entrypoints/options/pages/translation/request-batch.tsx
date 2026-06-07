@@ -13,6 +13,7 @@ import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { calculateAverageSavePercentage } from "@/utils/batch-request-record"
 import { MIN_BATCH_CHARACTERS, MIN_BATCH_ITEMS } from "@/utils/constants/translate"
 import { sendMessage } from "@/utils/message"
+import { handleOptionalMessage } from "@/utils/message-errors"
 import { ConfigCard } from "../../components/config-card"
 
 type KeyOfBatchQueueConfig = keyof BatchQueueConfig
@@ -105,9 +106,12 @@ function BatchNumberSelector({ property }: { property: KeyOfBatchQueueConfig }) 
                 [property]: newConfigValue,
               },
             })
-            void sendMessage("setTranslateBatchQueueConfig", {
-              [property]: newConfigValue,
-            })
+            handleOptionalMessage(
+              sendMessage("setTranslateBatchQueueConfig", {
+                [property]: newConfigValue,
+              }),
+              "Failed to update translate batch queue config",
+            )
           }
           else {
             toast.error(configParseResult.error?.issues[0].message)

@@ -6,6 +6,7 @@ import { createFeatureUsageContext } from "@/utils/analytics"
 import { CONFIG_STORAGE_KEY } from "@/utils/constants/config"
 import { getTranslationStateKey, TRANSLATION_STATE_KEY_PREFIX } from "@/utils/constants/storage-keys"
 import { sendMessage } from "@/utils/message"
+import { handleOptionalMessage } from "@/utils/message-errors"
 import { ensureInitializedConfig } from "./config"
 import { getPageTranslationEnabled, setPageTranslationEnabled } from "./page-translation-state"
 
@@ -200,16 +201,22 @@ async function handleTranslateClick(tabId: number) {
 
   if (!newState) {
     await setPageTranslationEnabled(tabId, false)
-    void sendMessage("notifyTranslationStateChanged", { enabled: false }, tabId)
+    handleOptionalMessage(
+      sendMessage("notifyTranslationStateChanged", { enabled: false }, tabId),
+      "Failed to notify page translation state change from context menu",
+    )
   }
 
   // Notify content script in that specific tab
-  void sendMessage("askManagerToTogglePageTranslation", {
-    enabled: newState,
-    analyticsContext: newState
-      ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.CONTEXT_MENU)
-      : undefined,
-  }, tabId)
+  handleOptionalMessage(
+    sendMessage("askManagerToTogglePageTranslation", {
+      enabled: newState,
+      analyticsContext: newState
+        ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.CONTEXT_MENU)
+        : undefined,
+    }, tabId),
+    "Failed to ask page translation manager from context menu",
+  )
 
   // Update menu title immediately
   await updateTranslateMenuTitle(tabId, newState)
@@ -228,9 +235,12 @@ async function handleSelectionTranslateClick(
     ? { tabId, frameId: info.frameId }
     : tabId
 
-  void sendMessage("openSelectionTranslationFromContextMenu", {
-    selectionText,
-  }, target)
+  handleOptionalMessage(
+    sendMessage("openSelectionTranslationFromContextMenu", {
+      selectionText,
+    }, target),
+    "Failed to open selection translation from context menu",
+  )
 }
 
 async function handleSelectionCustomActionClick(
@@ -247,8 +257,11 @@ async function handleSelectionCustomActionClick(
     ? { tabId, frameId: info.frameId }
     : tabId
 
-  void sendMessage("openSelectionCustomActionFromContextMenu", {
-    actionId,
-    selectionText,
-  }, target)
+  handleOptionalMessage(
+    sendMessage("openSelectionCustomActionFromContextMenu", {
+      actionId,
+      selectionText,
+    }, target),
+    "Failed to open selection custom action from context menu",
+  )
 }

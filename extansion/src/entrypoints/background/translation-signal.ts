@@ -9,6 +9,7 @@ import { getDetectedCodeStateKey, getTranslationStateKey } from "@/utils/constan
 import { shouldEnableAutoTranslation } from "@/utils/host/translate/auto-translation"
 import { logger } from "@/utils/logger"
 import { onMessage, sendMessage } from "@/utils/message"
+import { handleOptionalMessage } from "@/utils/message-errors"
 import { injectHostContentIntoCurrentTabIframesAfterNodeTranslation, injectHostContentIntoTabIframes } from "./iframe-injection"
 import {
   getPageTranslationEnabled,
@@ -18,8 +19,10 @@ import {
 } from "./page-translation-state"
 
 function notifyPageTranslationStateChanged(tabId: number, enabled: boolean) {
-  void sendMessage("notifyTranslationStateChanged", { enabled }, tabId)
-    .catch(error => logger.warn("Failed to notify page translation state change", error))
+  handleOptionalMessage(
+    sendMessage("notifyTranslationStateChanged", { enabled }, tabId),
+    "Failed to notify page translation state change",
+  )
 }
 
 function requestManagerToTogglePageTranslation(
@@ -27,8 +30,10 @@ function requestManagerToTogglePageTranslation(
   enabled: boolean,
   analyticsContext?: FeatureUsageContext,
 ) {
-  void sendMessage("askManagerToTogglePageTranslation", { enabled, analyticsContext }, tabId)
-    .catch(error => logger.warn("Failed to ask page translation manager to toggle", error))
+  handleOptionalMessage(
+    sendMessage("askManagerToTogglePageTranslation", { enabled, analyticsContext }, tabId),
+    "Failed to ask page translation manager to toggle",
+  )
 }
 
 function isIframe(frameId: number | undefined): boolean {
@@ -63,8 +68,10 @@ async function publishCachedDetectedCodeForTab(tabId: number): Promise<void> {
 }
 
 function requestDetectedPageLanguageRefresh(tabId: number) {
-  void sendMessage("refreshDetectedPageLanguage", undefined, tabId)
-    .catch(error => logger.warn("Failed to refresh detected page language", error))
+  handleOptionalMessage(
+    sendMessage("refreshDetectedPageLanguage", undefined, tabId),
+    "Failed to refresh detected page language",
+  )
 }
 
 async function publishAndRefreshActiveTab(tabId: number): Promise<void> {

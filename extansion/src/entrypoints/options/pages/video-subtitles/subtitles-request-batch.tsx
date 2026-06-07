@@ -9,6 +9,7 @@ import { batchQueueConfigSchema } from "@/types/config/translate"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { MIN_BATCH_CHARACTERS, MIN_BATCH_ITEMS } from "@/utils/constants/translate"
 import { sendMessage } from "@/utils/message"
+import { handleOptionalMessage } from "@/utils/message-errors"
 import { ConfigCard } from "../../components/config-card"
 
 type KeyOfBatchQueueConfig = keyof BatchQueueConfig
@@ -78,9 +79,12 @@ function SubtitlesBatchNumberSelector({ property }: { property: KeyOfBatchQueueC
                 [property]: newConfigValue,
               },
             })
-            void sendMessage("setSubtitlesBatchQueueConfig", {
-              [property]: newConfigValue,
-            })
+            handleOptionalMessage(
+              sendMessage("setSubtitlesBatchQueueConfig", {
+                [property]: newConfigValue,
+              }),
+              "Failed to update subtitles batch queue config",
+            )
           }
           else {
             toast.error(configParseResult.error?.issues[0].message)

@@ -9,6 +9,7 @@ import { requestQueueConfigSchema } from "@/types/config/translate"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { MIN_TRANSLATE_CAPACITY, MIN_TRANSLATE_RATE } from "@/utils/constants/translate"
 import { sendMessage } from "@/utils/message"
+import { handleOptionalMessage } from "@/utils/message-errors"
 import { ConfigCard } from "../../components/config-card"
 
 type KeyOfRequestQueueConfig = keyof RequestQueueConfig
@@ -84,9 +85,12 @@ function TranslateNumberSelector({ property }: { property: KeyOfRequestQueueConf
                 [property]: newConfigValue,
               },
             })
-            void sendMessage("setTranslateRequestQueueConfig", {
-              [property]: newConfigValue,
-            })
+            handleOptionalMessage(
+              sendMessage("setTranslateRequestQueueConfig", {
+                [property]: newConfigValue,
+              }),
+              "Failed to update translate request queue config",
+            )
           }
           else {
             toast.error(configParseResult.error?.issues[0].message)

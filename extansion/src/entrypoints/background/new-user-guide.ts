@@ -1,6 +1,7 @@
 import { browser } from "#imports"
 import { env } from "@/env"
 import { onMessage, sendMessage } from "@/utils/message"
+import { handleOptionalMessage } from "@/utils/message-errors"
 
 let lastIsPinned = false
 
@@ -32,7 +33,10 @@ async function checkPinnedAndNotify() {
 
   browser.tabs.query({ url: env.WXT_OFFICIAL_SITE_ORIGINS.map((origin: string) => `${origin}/*`) }, (tabs) => {
     for (const tab of tabs) {
-      void sendMessage("pinStateChanged", { isPinned: isOnToolbar }, tab.id)
+      handleOptionalMessage(
+        sendMessage("pinStateChanged", { isPinned: isOnToolbar }, tab.id),
+        "Failed to notify guide pin state",
+      )
     }
   })
 }

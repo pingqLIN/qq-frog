@@ -2,6 +2,7 @@ import type { TTSOffscreenStopRequest, TTSPlaybackStartResponse } from "@/types/
 import { browser } from "#imports"
 import { logger } from "@/utils/logger"
 import { onMessage, sendMessage } from "@/utils/message"
+import { isMissingMessageReceiverError } from "@/utils/message-errors"
 
 const OFFSCREEN_DOCUMENT_PATH = "/offscreen.html" as const
 const OFFSCREEN_DOCUMENT_URL = browser.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)
@@ -36,13 +37,6 @@ function isSingleOffscreenDocumentError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
   return message.includes("Only a single offscreen document may be created")
     || message.includes("already exists")
-}
-
-function isMissingReceiverError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error)
-  return message.includes("Could not establish connection")
-    || message.includes("Receiving end does not exist")
-    || message.includes("No response")
 }
 
 async function hasOffscreenDocument(): Promise<boolean> {
@@ -98,7 +92,7 @@ async function stopOffscreenPlayback(data: TTSOffscreenStopRequest): Promise<voi
     await sendMessage("ttsOffscreenStop", data)
   }
   catch (error) {
-    if (!isMissingReceiverError(error)) {
+    if (!isMissingMessageReceiverError(error)) {
       throw error
     }
   }
@@ -122,7 +116,7 @@ async function startOffscreenPlayback(
     })
   }
   catch (error) {
-    if (!isMissingReceiverError(error)) {
+    if (!isMissingMessageReceiverError(error)) {
       throw error
     }
 

@@ -107,7 +107,7 @@ export default defineContentScript({
         return
       }
 
-      void mountSelectionUI(ctx)
+      await mountSelectionUI(ctx)
     }
     catch (error) {
       window.__READ_FROG_SELECTION_INJECTED__ = false
