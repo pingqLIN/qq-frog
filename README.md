@@ -22,8 +22,6 @@ It deliberately avoids bundled personal credentials and keeps hosted/runtime ass
 
 ![Selection toolbar](./extansion/src/assets/demo/selection-toolbar.png)
 
-![Floating button](./extansion/src/assets/demo/floating-button.png)
-
 ![Context menu](./extansion/src/assets/demo/context-menu.png)
 
 For the full surface map, see the [interface tour](./docs/interface-tour.md).
@@ -36,7 +34,7 @@ The app reference settings in source include provider definitions and example AI
 
 ## Google Drive Sync
 
-Settings can be synced to the user's Google Drive `appDataFolder` using the Chrome extension OAuth flow.
+Settings can be synced to the user's personal Google Drive `appDataFolder` using the browser extension OAuth flow. QQ Frog does not use a service account or a shared project Drive.
 
 To enable this in a build, create a Google OAuth client for a Chrome extension and set:
 
@@ -44,7 +42,14 @@ To enable this in a build, create a Google OAuth client for a Chrome extension a
 WXT_GOOGLE_CLIENT_ID=your-google-client-id
 ```
 
-The extension requests Drive app-data access and the account email used to separate sync metadata.
+At runtime, the user clicks **Connect Google Drive** in the options page. The extension then uses `chrome.identity.getAuthToken` when available, falling back to `browser.identity.launchWebAuthFlow`, so Google shows the account chooser and consent screen for that user's own Google account.
+
+Requested scopes:
+
+- `https://www.googleapis.com/auth/drive.appdata`: read and write only this extension's hidden app-data file, `qq-frog-config.json`.
+- `https://www.googleapis.com/auth/userinfo.email`: read the selected account email so local sync metadata can detect account changes.
+
+The OAuth token is stored in extension local storage and removed when the user logs out of Google Drive sync.
 
 ## Development
 

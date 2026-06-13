@@ -268,7 +268,6 @@ options:
       error: Value must be between $1 and $2
   floatingButtonAndToolbar:
     title: Floating Button & Toolbar
-    floatingButtonDemoImageAlt: Floating Button Demo
     selectionToolbarDemoImageAlt: Selection Toolbar Demo
     floatingButton:
       globalToggle:
@@ -766,7 +765,7 @@ options:
         collapse: Collapse Config
       googleDrive:
         title: Google Drive Cloud Sync
-        description: Downloads config when remote is newer, uploads config when local is newer
+        description: Connects your Google account through browser OAuth and syncs only this extension's config in Drive app data.
         connect: Connect Google Drive
         oauthNotConfigured:
           title: Google Drive OAuth is not configured

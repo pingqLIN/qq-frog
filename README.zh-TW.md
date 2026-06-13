@@ -22,8 +22,6 @@ QQ Frog 是基於原始 Read Frog 瀏覽器擴充樣板，也就是「伴讀蛙�
 
 ![選取工具列](./extansion/src/assets/demo/selection-toolbar.png)
 
-![浮動按鈕](./extansion/src/assets/demo/floating-button.png)
-
 ![右鍵選單](./extansion/src/assets/demo/context-menu.png)
 
 完整介面地圖請見 [介面導覽](./docs/interface-tour.zh-tw.md)。
@@ -36,7 +34,7 @@ QQ Frog 設計為可單機執行的瀏覽器擴充。Runtime 服務 URL 預設�
 
 ## Google Drive 同步
 
-設定可透過 Chrome extension OAuth flow 同步到使用者 Google Drive 的 `appDataFolder`。
+設定可透過瀏覽器擴充功能 OAuth flow 同步到使用者個人 Google Drive 的 `appDataFolder`。QQ Frog 不使用 service account，也不使用共用的專案 Drive。
 
 若要在 build 中啟用，請建立 Chrome 擴充功能用的 Google OAuth client，並設定：
 
@@ -44,7 +42,14 @@ QQ Frog 設計為可單機執行的瀏覽器擴充。Runtime 服務 URL 預設�
 WXT_GOOGLE_CLIENT_ID=your-google-client-id
 ```
 
-擴充功能會要求 Drive app-data 存取權，並讀取帳號 email 以區分同步 metadata。
+實際使用時，使用者在 options 頁點擊 **連線 Google Drive**。擴充功能會優先使用 `chrome.identity.getAuthToken`，不可用時 fallback 到 `browser.identity.launchWebAuthFlow`，由 Google 顯示帳號選擇與 consent 畫面，讓使用者授權自己的 Google 帳號。
+
+要求的 scopes：
+
+- `https://www.googleapis.com/auth/drive.appdata`：只讀寫此擴充功能自己的隱藏 app-data 檔案 `qq-frog-config.json`。
+- `https://www.googleapis.com/auth/userinfo.email`：讀取被選取帳號的 email，讓本機同步 metadata 能偵測帳號是否更換。
+
+OAuth token 只存於 extension local storage，使用者登出 Google Drive 同步時會移除。
 
 ## 開發
 

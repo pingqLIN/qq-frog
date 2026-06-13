@@ -30,6 +30,7 @@
 ## Google 服務邊界
 
 - Google Drive sync 僅使用 `drive.appdata` scope，檔名為 `qq-frog-config.json`，用途限於同步本擴充功能設定、使用者自訂 prompt/action、語言偏好、provider 設定與同步中繼資料。
+- Google Drive sync 使用使用者個人 Google 帳號授權；build 需提供 Chrome extension OAuth client ID，runtime 由 `chrome.identity.getAuthToken` 或 `browser.identity.launchWebAuthFlow` 觸發 Google 帳號選擇與 consent。
 - Google Drive sync 會讀取 Google userinfo email，用於判斷目前同步帳號與 last-synced metadata 是否一致；不會將 email 寫入遠端備份檔內容。
 - Google Drive OAuth token 只存於 extension local storage 的 `__googleDriveToken`，登出時會同時清除 token 與 `lastSyncedConfig` metadata。
 - Google Translate 只接收使用者要求翻譯的文字 chunk、來源語言與目標語言；不應傳送 extension 設定、API key、OAuth token 或 Google Drive 備份內容。

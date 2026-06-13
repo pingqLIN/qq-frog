@@ -267,7 +267,6 @@ options:
       error: 數值必須在 $1 到 $2 之間
   floatingButtonAndToolbar:
     title: 懸浮按鈕和工具列
-    floatingButtonDemoImageAlt: 懸浮按鈕示範
     selectionToolbarDemoImageAlt: 選擇工具列示範
     floatingButton:
       globalToggle:
@@ -651,7 +650,7 @@ options:
         collapse: 收起設定
       googleDrive:
         title: Google Drive 雲端同步
-        description: 遠端設定較新時下載，本機設定較新時上傳
+        description: 透過瀏覽器 OAuth 連結你的 Google 帳號，只同步本擴充功能在 Drive app data 內的設定。
         connect: 連線 Google Drive
         oauthNotConfigured:
           title: 尚未設定 Google Drive OAuth
