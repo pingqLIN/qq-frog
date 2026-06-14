@@ -54,6 +54,7 @@ coverage/
 .turbo/
 .nx/
 .claude/worktrees/
+.del/
 
 tsconfig.local.json
 
