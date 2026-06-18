@@ -82,14 +82,9 @@ uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 - 目前 extension 端仍是原型接入，會依 provider/config 狀態建立 WebSocket。
 - 後續 Gate 會補上 PDF 翻譯專用設定頁、health check 與手動連線狀態。
 
-### 4. 執行 OpenAI-compatible PDF 翻譯客戶端
+### 4. 執行 PDF 翻譯
 
-```bash
-babeldoc input.pdf \
-  --openai-base-url http://localhost:8001/v1 \
-  --openai-api-key dummy \
-  --openai-model chrome-gemini
-```
+可從 QQ Frog extension 的 PDF Translation 設定頁選擇 PDF，或直接呼叫 `/pdf/translate-file`。
 
 ## 多後端支援與設定
 
@@ -182,6 +177,14 @@ If dependencies are missing, the bridge still starts and returns a `needs_setup`
 
 Expected output includes `pdf ocr smoke ok` and OCR text containing `Hello PDF translation`.
 
+### Real OCR-to-translation smoke
+
+```powershell
+..\.venv-paddleocr\Scripts\python.exe smoke_pdf_translation_e2e.py
+```
+
+This smoke uses real PaddleOCR and a local echo translation backend, so it does not require API keys.
+
 ### PDF OCR smoke
 
 ```bash
@@ -216,28 +219,36 @@ curl -X POST "http://localhost:8001/pdf/translate-file?model=openai/gpt-5-mini&t
 
 ---
 
-## 執行 OpenAI-compatible PDF 翻譯客戶端範例
+## OpenAI-compatible 翻譯端點範例
 
 ### 1. 使用 Chrome AI (Gemini Nano) 本地翻譯
 
 ```bash
-babeldoc input.pdf --openai-base-url http://localhost:8001/v1 --openai-api-key dummy --openai-model chrome-gemini
+curl -X POST http://localhost:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d "{\"model\":\"chrome-gemini\",\"messages\":[{\"role\":\"user\",\"content\":\"Translate this PDF text.\"}]}"
 ```
 
 ### 2. 使用 OpenAI 後端 (需先設定 `OPENAI_API_KEY`)
 
 ```bash
-babeldoc input.pdf --openai-base-url http://localhost:8001/v1 --openai-api-key sk-xxx --openai-model openai/gpt-5-mini
+curl -X POST http://localhost:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d "{\"model\":\"openai/gpt-5-mini\",\"messages\":[{\"role\":\"user\",\"content\":\"Translate this PDF text.\"}]}"
 ```
 
 ### 3. 使用 LM Studio 本地模型 (需先啟動 LM Studio 載入模型)
 
 ```bash
-babeldoc input.pdf --openai-base-url http://localhost:8001/v1 --openai-api-key dummy --openai-model lm-studio/llama-3.2-3b
+curl -X POST http://localhost:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d "{\"model\":\"lm-studio/llama-3.2-3b\",\"messages\":[{\"role\":\"user\",\"content\":\"Translate this PDF text.\"}]}"
 ```
 
 ### 4. 使用 Gemini API (需先設定 `GEMINI_API_KEY`)
 
 ```bash
-babeldoc input.pdf --openai-base-url http://localhost:8001/v1 --openai-api-key dummy --openai-model gemini/gemini-2.5-flash
+curl -X POST http://localhost:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d "{\"model\":\"gemini/gemini-2.5-flash\",\"messages\":[{\"role\":\"user\",\"content\":\"Translate this PDF text.\"}]}"
 ```

@@ -43,7 +43,7 @@ export async function executeTranslate<TContext>(
       translatedText = await microsoftTranslate(preparedText, sourceLang, targetLang)
     }
     else if (provider === "chrome-ai") {
-      throw new Error("chrome-ai provider 僅供 BabelDOC 透過 Bridge Server 使用")
+      throw new Error("chrome-ai provider 僅供 QQ Frog PDF 翻譯 bridge 使用")
     }
   }
   else if (isPureAPIProvider(provider)) {

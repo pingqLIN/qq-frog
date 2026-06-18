@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from fastapi.testclient import TestClient
+
 from models import ChatCompletionRequest, ChatMessage
-from server import resolve_backend
+from server import app, resolve_backend
 
 
 def _request(model: str) -> ChatCompletionRequest:
@@ -31,6 +33,15 @@ def main() -> None:
         pass
     else:
         raise AssertionError("Unsupported provider should raise ValueError")
+
+    client = TestClient(app)
+    model_ids = [model["id"] for model in client.get("/v1/models").json()["data"]]
+    assert model_ids == [
+        "chrome-gemini",
+        "lm-studio/local-model",
+        "openai/gpt-5-mini",
+        "gemini/gemini-2.5-flash",
+    ]
 
     print("provider routing ok")
 

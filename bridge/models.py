@@ -1,7 +1,4 @@
-"""
-BabelDOC × Chrome Gemini Nano Bridge — 資料模型定義
-符合 OpenAI Chat Completion API 格式
-"""
+"""OpenAI-compatible data models for the QQ Frog local PDF translation bridge."""
 
 from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field
@@ -9,7 +6,7 @@ import uuid
 import time
 
 
-# ── 請求格式（BabelDOC 送過來的格式） ─────────────────────────────
+# ── OpenAI-compatible request format ─────────────────────────────
 
 
 class ChatMessage(BaseModel):
@@ -25,12 +22,12 @@ class ChatCompletionRequest(BaseModel):
     temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     max_tokens: Optional[int] = Field(default=None, ge=1)
     stream: Optional[bool] = False
-    # BabelDOC 可能傳入的其他欄位，忽略即可
+    # OpenAI-compatible clients may send optional fields that this bridge ignores.
     top_p: Optional[float] = None
     n: Optional[int] = 1
 
 
-# ── 回應格式（回傳給 BabelDOC 的格式） ───────────────────────────
+# ── OpenAI-compatible response format ───────────────────────────
 
 
 class ChatCompletionChoice(BaseModel):

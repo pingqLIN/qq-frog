@@ -1,5 +1,5 @@
 """
-BabelDOC × Chrome Gemini Nano Bridge — WebSocket 連線管理器
+QQ Frog local PDF translation bridge — WebSocket connection manager.
 
 管理 Chrome Extension 的 WebSocket 連線，
 以及任務的派發與結果等待機制。

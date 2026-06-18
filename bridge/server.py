@@ -252,7 +252,7 @@ async def list_models():
 async def chat_completions(request: ChatCompletionRequest):
     """
     OpenAI Chat Completion 相容端點。
-    根據傳入的 model 分流至 Chrome Extension (chrome-ai), OpenAI 或 LM Studio。
+    根據傳入的 model 分流至 Chrome built-in Gemini, LM Studio, OpenAI 或 Gemini API。
     """
     start_time = time.time()
 
