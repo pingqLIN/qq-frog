@@ -37,8 +37,8 @@ from backends.chrome_ai import ChromeAIBackend
 from backends.gemini_api import GeminiAPIBackend
 from backends.openai_api import OpenAIAPIBackend
 from backends.lm_studio import LMStudioBackend
-from pdf_ocr import get_pdf_ocr_health, run_pdf_page_ocr
-from pdf_translate import PdfTranslateRequest, translate_pdf_ocr_result
+from pdf_ocr import get_pdf_ocr_health, run_pdf_ocr, run_pdf_page_ocr
+from pdf_translate import PdfOutputMode, PdfTranslateRequest, translate_pdf_ocr_result
 
 def resolve_backend(model: str) -> TranslationBackend:
     """Resolve one of the approved PDF translation providers from the model token."""
@@ -122,22 +122,33 @@ async def pdf_ocr_health():
     return get_pdf_ocr_health().model_dump()
 
 
+def _is_supported_pdf_content_type(content_type: str | None) -> bool:
+    if content_type is None:
+        return True
+    return content_type.split(";")[0].strip().lower() in {"application/pdf", "application/octet-stream"}
+
+
+async def _write_request_pdf(request: Request) -> Path:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+        temp_path = Path(temp_file.name)
+        temp_file.write(await request.body())
+    return temp_path
+
+
 @app.post("/pdf/ocr")
-async def pdf_ocr(request: Request, page_index: int = 0):
-    """Run PaddleOCR for one PDF page and return normalized OCR JSON."""
+async def pdf_ocr(request: Request, page_index: int | None = None):
+    """Run PaddleOCR for one page or the full PDF and return normalized OCR JSON."""
     content_type = request.headers.get("content-type")
-    if content_type not in {None, "application/pdf", "application/octet-stream"}:
+    if not _is_supported_pdf_content_type(content_type):
         return JSONResponse(
             status_code=400,
             content={"error": {"message": f"Unsupported content type: {content_type}", "type": "invalid_request_error"}},
         )
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-        temp_path = Path(temp_file.name)
-        temp_file.write(await request.body())
+    temp_path = await _write_request_pdf(request)
 
     try:
-        result = run_pdf_page_ocr(temp_path, page_index=page_index)
+        result = run_pdf_page_ocr(temp_path, page_index=page_index) if page_index is not None else run_pdf_ocr(temp_path)
         return result.model_dump()
     except ValueError as e:
         return JSONResponse(status_code=400, content={"error": {"message": str(e), "type": "invalid_request_error"}})
@@ -158,6 +169,42 @@ async def pdf_translate(request: PdfTranslateRequest):
         return JSONResponse(status_code=400, content={"error": {"message": str(e), "type": "invalid_request_error"}})
     except RuntimeError as e:
         return JSONResponse(status_code=503, content={"error": {"message": str(e), "type": "server_error"}})
+
+
+@app.post("/pdf/translate-file")
+async def pdf_translate_file(
+    request: Request,
+    model: str = "chrome-gemini",
+    target_language: str = "Traditional Chinese",
+    output_mode: PdfOutputMode = "bilingual-markdown",
+):
+    """Run PaddleOCR on the full PDF, translate OCR text, and return Markdown output."""
+    content_type = request.headers.get("content-type")
+    if not _is_supported_pdf_content_type(content_type):
+        return JSONResponse(
+            status_code=400,
+            content={"error": {"message": f"Unsupported content type: {content_type}", "type": "invalid_request_error"}},
+        )
+
+    temp_path = await _write_request_pdf(request)
+
+    try:
+        ocr_result = run_pdf_ocr(temp_path)
+        backend = resolve_backend(model)
+        translate_request = PdfTranslateRequest(
+            model=model,
+            target_language=target_language,
+            output_mode=output_mode,
+            ocr=ocr_result,
+        )
+        result = await translate_pdf_ocr_result(translate_request, backend)
+        return result.model_dump()
+    except ValueError as e:
+        return JSONResponse(status_code=400, content={"error": {"message": str(e), "type": "invalid_request_error"}})
+    except RuntimeError as e:
+        return JSONResponse(status_code=503, content={"error": {"message": str(e), "type": "server_error"}})
+    finally:
+        temp_path.unlink(missing_ok=True)
 
 
 

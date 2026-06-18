@@ -148,10 +148,6 @@ interface PdfHealthResponse {
   warnings?: string[]
 }
 
-interface PdfOcrResponse {
-  pages?: unknown[]
-}
-
 interface PdfTranslateResponse {
   markdown?: string
 }
@@ -169,7 +165,6 @@ function PdfTranslationTool() {
   const [pdfTranslationConfig] = useAtom(configFieldsAtomMap.pdfTranslation)
   const [file, setFile] = useState<File | null>(null)
   const [targetLanguage, setTargetLanguage] = useState("Traditional Chinese")
-  const [pageIndex, setPageIndex] = useState(0)
   const [stage, setStage] = useState<PdfTranslationStage>("idle")
   const [statusMessage, setStatusMessage] = useState(i18n.t("options.pdfTranslation.tool.status.idle"))
   const [errorMessage, setErrorMessage] = useState("")
@@ -186,11 +181,6 @@ function PdfTranslationTool() {
     setErrorMessage("")
     setMarkdown("")
     setStatusMessage(selectedFile ? i18n.t("options.pdfTranslation.tool.status.ready") : i18n.t("options.pdfTranslation.tool.status.idle"))
-  }
-
-  const handlePageIndexChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextPageIndex = Number.parseInt(event.target.value, 10)
-    setPageIndex(Number.isFinite(nextPageIndex) && nextPageIndex >= 0 ? nextPageIndex : 0)
   }
 
   const checkHealth = async () => {
@@ -241,33 +231,17 @@ function PdfTranslationTool() {
       setStage("ocr")
       setStatusMessage(i18n.t("options.pdfTranslation.tool.status.ocr"))
 
-      const ocrResult = await fetchJson<PdfOcrResponse>(`${baseUrl}/pdf/ocr?page_index=${pageIndex}`, {
+      const translateUrl = new URL(`${baseUrl}/pdf/translate-file`)
+      translateUrl.searchParams.set("model", pdfTranslationConfig.provider)
+      translateUrl.searchParams.set("target_language", targetLanguage)
+      translateUrl.searchParams.set("output_mode", pdfTranslationConfig.outputMode)
+
+      const translateResult = await fetchJson<PdfTranslateResponse>(translateUrl.toString(), {
         method: "POST",
         headers: {
           "Content-Type": file.type || "application/pdf",
         },
         body: file,
-        signal: controller.signal,
-      })
-
-      if (!ocrResult.pages?.length) {
-        throw new Error(i18n.t("options.pdfTranslation.tool.emptyOcr"))
-      }
-
-      setStage("translate")
-      setStatusMessage(i18n.t("options.pdfTranslation.tool.status.translate"))
-
-      const translateResult = await fetchJson<PdfTranslateResponse>(`${baseUrl}/pdf/translate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: pdfTranslationConfig.provider,
-          target_language: targetLanguage,
-          output_mode: pdfTranslationConfig.outputMode,
-          ocr: ocrResult,
-        }),
         signal: controller.signal,
       })
 
@@ -333,7 +307,7 @@ function PdfTranslationTool() {
           )}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <Field>
             <FieldLabel htmlFor="pdf-translation-target-language">
               {i18n.t("options.pdfTranslation.tool.targetLanguage")}
@@ -342,20 +316,6 @@ function PdfTranslationTool() {
               id="pdf-translation-target-language"
               value={targetLanguage}
               onChange={event => setTargetLanguage(event.target.value)}
-              disabled={isRunning}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="pdf-translation-page-index">
-              {i18n.t("options.pdfTranslation.tool.pageIndex")}
-            </FieldLabel>
-            <Input
-              id="pdf-translation-page-index"
-              type="number"
-              min={0}
-              value={pageIndex}
-              onChange={handlePageIndexChange}
               disabled={isRunning}
             />
           </Field>
@@ -431,6 +391,14 @@ function extractErrorMessage(payload: unknown) {
     const detail = (payload as { detail?: unknown }).detail
     if (typeof detail === "string")
       return detail
+  }
+  if (payload && typeof payload === "object" && "error" in payload) {
+    const error = (payload as { error?: unknown }).error
+    if (error && typeof error === "object" && "message" in error) {
+      const message = (error as { message?: unknown }).message
+      if (typeof message === "string")
+        return message
+    }
   }
   return null
 }

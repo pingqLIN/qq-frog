@@ -11,7 +11,7 @@ import importlib.util
 import platform
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from pydantic import BaseModel, Field
 
@@ -195,21 +195,58 @@ def _render_pdf_page_to_png(pdf_path: Path, page_index: int, scale: float) -> Pa
     return output
 
 
-def run_pdf_page_ocr(pdf_path: Path, page_index: int = 0, scale: float = 2.0) -> PdfOcrResult:
+def get_pdf_page_count(pdf_path: Path) -> int:
+    assert_pdf_ocr_ready()
+
+    import pypdfium2 as pdfium
+
+    pdf = pdfium.PdfDocument(str(pdf_path))
+    return len(pdf)
+
+
+def _resolve_page_indices(pdf_path: Path, page_indices: Iterable[int] | None) -> list[int]:
+    page_count = get_pdf_page_count(pdf_path)
+    if page_count <= 0:
+        raise ValueError("PDF does not contain any pages.")
+
+    if page_indices is None:
+        return list(range(page_count))
+
+    resolved = list(page_indices)
+    for page_index in resolved:
+        if page_index < 0 or page_index >= page_count:
+            raise ValueError(f"page_index {page_index} is outside the PDF page range 0..{page_count - 1}.")
+    return resolved
+
+
+def run_pdf_ocr(pdf_path: Path, page_indices: Iterable[int] | None = None, scale: float = 2.0) -> PdfOcrResult:
     assert_pdf_ocr_ready()
 
     from paddleocr import PaddleOCR
 
-    image_path = _render_pdf_page_to_png(pdf_path, page_index, scale)
-    try:
-        ocr = PaddleOCR(use_angle_cls=True, lang="en")
-        if hasattr(ocr, "ocr"):
-            raw_result = ocr.ocr(str(image_path), cls=True)
-        else:
-            raw_result = ocr.predict(str(image_path))
+    ocr = PaddleOCR(use_angle_cls=True, lang="en")
+    pages: list[PdfOcrPageResult] = []
 
-        page_result = raw_result[0] if isinstance(raw_result, list) and raw_result else raw_result
-        blocks = _normalize_ocr_lines(page_result, page_index)
-        return PdfOcrResult(pages=[PdfOcrPageResult(page_index=page_index, blocks=blocks)])
-    finally:
-        image_path.unlink(missing_ok=True)
+    for page_index in _resolve_page_indices(pdf_path, page_indices):
+        image_path = _render_pdf_page_to_png(pdf_path, page_index, scale)
+        try:
+            if hasattr(ocr, "ocr"):
+                raw_result = ocr.ocr(str(image_path), cls=True)
+            else:
+                raw_result = ocr.predict(str(image_path))
+
+            page_result = raw_result[0] if isinstance(raw_result, list) and raw_result else raw_result
+            pages.append(
+                PdfOcrPageResult(
+                    page_index=page_index,
+                    blocks=_normalize_ocr_lines(page_result, page_index),
+                )
+            )
+        finally:
+            image_path.unlink(missing_ok=True)
+
+    return PdfOcrResult(pages=pages)
+
+
+def run_pdf_page_ocr(pdf_path: Path, page_index: int = 0, scale: float = 2.0) -> PdfOcrResult:
+    return run_pdf_ocr(pdf_path, page_indices=[page_index], scale=scale)

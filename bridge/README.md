@@ -134,16 +134,17 @@ babeldoc input.pdf \
 
 ## API 端點
 
-| 端點                   | 方法      | 說明                                                          |
-| ---------------------- | --------- | ------------------------------------------------------------- |
-| `/ui`                  | GET       | 本機獨立小工具網頁                                            |
-| `/health`              | GET       | 健康狀態檢查，回傳 Extension/UI 連線與佇列狀態                |
-| `/pdf/health`          | GET       | PaddleOCR / PDF runtime health check                          |
-| `/pdf/ocr`             | POST      | Run PaddleOCR for one PDF page and return normalized OCR JSON |
-| `/pdf/translate`       | POST      | Translate normalized OCR JSON and return MVP Markdown output  |
-| `/v1/models`           | GET       | OpenAI 相容的模型清單                                         |
-| `/v1/chat/completions` | POST      | 原型翻譯端點（自動執行多後端分流與 Chrome AI 分段）           |
-| `/ws`                  | WebSocket | Extension/UI 連線入口                                         |
+| 端點                   | 方法      | 說明                                                         |
+| ---------------------- | --------- | ------------------------------------------------------------ |
+| `/ui`                  | GET       | 本機獨立小工具網頁                                           |
+| `/health`              | GET       | 健康狀態檢查，回傳 Extension/UI 連線與佇列狀態               |
+| `/pdf/health`          | GET       | PaddleOCR / PDF runtime health check                         |
+| `/pdf/ocr`             | POST      | Run PaddleOCR for one PDF page or the full PDF               |
+| `/pdf/translate`       | POST      | Translate normalized OCR JSON and return MVP Markdown output |
+| `/pdf/translate-file`  | POST      | Run full-PDF OCR and translation in one request              |
+| `/v1/models`           | GET       | OpenAI 相容的模型清單                                        |
+| `/v1/chat/completions` | POST      | 原型翻譯端點（自動執行多後端分流與 Chrome AI 分段）          |
+| `/ws`                  | WebSocket | Extension/UI 連線入口                                        |
 
 ### PDF OCR health check
 
@@ -153,10 +154,18 @@ curl http://localhost:8001/pdf/health
 
 If dependencies are missing, the bridge still starts and returns a `needs_setup` status with the missing modules.
 
-### Single-page OCR smoke
+### PDF OCR smoke
 
 ```bash
 curl -X POST "http://localhost:8001/pdf/ocr?page_index=0" \
+  -H "Content-Type: application/pdf" \
+  --data-binary "@input.pdf"
+```
+
+Omit `page_index` to run OCR for the full PDF.
+
+```bash
+curl -X POST "http://localhost:8001/pdf/ocr" \
   -H "Content-Type: application/pdf" \
   --data-binary "@input.pdf"
 ```
@@ -167,6 +176,14 @@ curl -X POST "http://localhost:8001/pdf/ocr?page_index=0" \
 curl -X POST http://localhost:8001/pdf/translate \
   -H "Content-Type: application/json" \
   -d "{\"model\":\"openai/gpt-5-mini\",\"target_language\":\"Traditional Chinese\",\"output_mode\":\"bilingual-markdown\",\"ocr\":{\"pages\":[{\"page_index\":0,\"blocks\":[{\"page_index\":0,\"block_index\":0,\"text\":\"Hello PDF\",\"confidence\":0.98}]}]}}"
+```
+
+### Full PDF translation smoke
+
+```bash
+curl -X POST "http://localhost:8001/pdf/translate-file?model=openai/gpt-5-mini&target_language=Traditional%20Chinese&output_mode=bilingual-markdown" \
+  -H "Content-Type: application/pdf" \
+  --data-binary "@input.pdf"
 ```
 
 ---

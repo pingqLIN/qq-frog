@@ -289,7 +289,6 @@ options:
       description: 上傳單頁 PDF 到本機 PaddleOCR bridge，翻譯 OCR 文字，並下載 Markdown 輸出。
       chooseFile: 選擇 PDF
       targetLanguage: 目標語言
-      pageIndex: 頁碼索引
       checkHealth: 檢查服務
       translate: 翻譯 PDF
       cancel: 取消
@@ -297,14 +296,13 @@ options:
       healthResult: 服務狀態
       errorTitle: PDF 翻譯失敗
       preview: PDF 翻譯 Markdown 預覽
-      emptyOcr: PaddleOCR 沒有回傳任何頁面文字區塊。
       emptyTranslation: PDF 翻譯 bridge 回傳空白結果。
       status:
         idle: 選擇 PDF 後開始。
         ready: PDF 已就緒。
         health: 正在檢查本機 PDF 服務。
         healthDone: 服務檢查完成。
-        ocr: 正在執行 PaddleOCR。
+        ocr: 正在執行 PaddleOCR 並翻譯整份 PDF。
         translate: 正在翻譯 OCR 文字。
         success: 翻譯完成。
         error: 翻譯失敗。
