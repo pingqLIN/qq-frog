@@ -202,6 +202,15 @@ export const SEARCH_ITEMS: SearchItem[] = [
     pageKey: "options.translation.title",
   },
 
+  // PDF Translation page
+  {
+    sectionId: "pdf-translation-config",
+    route: "/pdf-translation",
+    titleKey: "options.pdfTranslation.config.title",
+    descriptionKey: "options.pdfTranslation.config.description",
+    pageKey: "options.pdfTranslation.title",
+  },
+
   // Floating Button page
   {
     sectionId: "floating-button-toggle",

@@ -42,6 +42,9 @@ export async function executeTranslate<TContext>(
     else if (provider === "microsoft-translate") {
       translatedText = await microsoftTranslate(preparedText, sourceLang, targetLang)
     }
+    else if (provider === "chrome-ai") {
+      throw new Error("chrome-ai provider 僅供 BabelDOC 透過 Bridge Server 使用")
+    }
   }
   else if (isPureAPIProvider(provider)) {
     const sourceLang = langConfig.sourceCode === "auto" ? "auto" : (ISO6393_TO_6391[langConfig.sourceCode] ?? "auto")

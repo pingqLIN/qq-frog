@@ -148,6 +148,12 @@ export const PROVIDER_ITEMS: Record<AllProviderTypes, { logo: (theme: Theme) => 
       name: NON_API_TRANSLATE_PROVIDERS_MAP["google-translate"],
       website: "https://translate.google.com",
     },
+    // Chrome AI (Gemini Nano) — 本地無流量翻譯
+    "chrome-ai": {
+      logo: getLobeIconsCDNUrlFn("gemini-color"),
+      name: NON_API_TRANSLATE_PROVIDERS_MAP["chrome-ai"],
+      website: "https://developer.chrome.com/docs/ai/built-in",
+    },
     "deeplx": {
       logo: (theme: Theme) => theme === "light" ? deeplxLogoLight : deeplxLogoDark,
       name: "DeepLX",
@@ -297,6 +303,15 @@ export const DEFAULT_PROVIDER_CONFIG = {
     name: PROVIDER_ITEMS["microsoft-translate"].name,
     enabled: true,
     provider: "microsoft-translate",
+  },
+  // Chrome AI (Gemini Nano) 本地翻譯
+  "chrome-ai": {
+    id: "chrome-ai-default",
+    name: PROVIDER_ITEMS["chrome-ai"].name,
+    description: "使用 Chrome 內建 Gemini Nano 進行本機 PDF 翻譯，需連線至 QQ Frog local PDF translation bridge",
+    enabled: false, // 預設關閉，需要手動啟用
+    provider: "chrome-ai",
+    bridgeUrl: "ws://localhost:8001/ws",
   },
   "siliconflow": {
     id: "siliconflow-default",

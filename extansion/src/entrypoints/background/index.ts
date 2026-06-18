@@ -1,5 +1,6 @@
 import "@/utils/zod-config"
 import { browser, defineBackground } from "#imports"
+import { initChromeAIBridge } from "@/utils/chrome-ai-bridge"
 import { logger } from "@/utils/logger"
 import { onMessage } from "@/utils/message"
 import { openOptionsPage } from "@/utils/navigation"
@@ -21,6 +22,7 @@ export default defineBackground({
   type: "module",
   main: () => {
     logger.info("Hello background!", { id: browser.runtime.id })
+    initChromeAIBridge()
 
     browser.runtime.onInstalled.addListener(async () => {
       await ensureInitializedConfig()

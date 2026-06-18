@@ -266,6 +266,25 @@ options:
       label: Threshold (ms)
       hint: Time in milliseconds between consecutive space presses (100-1000ms)
       error: Value must be between $1 and $2
+  pdfTranslation:
+    title: PDF Translation
+    config:
+      title: Local PDF Translation
+      description: Configure the local PaddleOCR bridge and the provider used for PDF translation.
+      enable: Enable PDF translation
+      enableDescription: Uses the local PDF translation bridge to run PaddleOCR and translate OCR text.
+      serviceUrl: Local service URL
+      serviceUrlDescription: The QQ Frog local PDF translation bridge base URL.
+      provider: Translation provider
+      outputMode: Output mode
+      providers:
+        chrome-gemini: Chrome built-in Gemini
+        lm-studio: LM Studio
+        openai: OpenAI
+        gemini: Gemini API
+      outputModes:
+        bilingual-markdown: Bilingual Markdown
+        text-layer: Text layer
   floatingButtonAndToolbar:
     title: Floating Button & Toolbar
     selectionToolbarDemoImageAlt: Selection Toolbar Demo

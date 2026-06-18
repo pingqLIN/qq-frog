@@ -169,6 +169,12 @@ export const providerConfigSchemaList = [
   baseProviderConfigSchema.extend({
     provider: z.literal("microsoft-translate"),
   }),
+  // chrome-ai：Chrome 內建 Gemini Nano，不需要 apiKey 或 baseURL。
+  // bridgeUrl 指向本機 PDF 翻譯 bridge/service 的 WebSocket 端點。
+  baseProviderConfigSchema.extend({
+    provider: z.literal("chrome-ai"),
+    bridgeUrl: z.string().optional(), // 預設 ws://localhost:8001/ws
+  }),
 ] as const
 
 export const llmProviderConfigItemSchema = z.discriminatedUnion("provider", llmProviderConfigSchemaList)

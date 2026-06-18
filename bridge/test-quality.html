@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BabelDOC × Gemini Nano 翻譯品質測試 (Phase 0)</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: #0f0f13;
+        color: #e2e8f0;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+      h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #a78bfa;
+        margin-bottom: 0.5rem;
+      }
+      .subtitle {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin-bottom: 2rem;
+      }
+      .status-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #1e1e2e;
+        border: 1px solid #2d2d3f;
+        border-radius: 10px;
+        padding: 0.85rem 1.25rem;
+        margin-bottom: 2rem;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .dot.green {
+        background: #22c55e;
+        box-shadow: 0 0 6px #22c55e88;
+      }
+      .dot.red {
+        background: #ef4444;
+        box-shadow: 0 0 6px #ef444488;
+      }
+      .dot.yellow {
+        background: #f59e0b;
+        box-shadow: 0 0 6px #f59e0b88;
+      }
+      .status-text {
+        font-size: 0.9rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .card {
+        background: #1e1e2e;
+        border: 1px solid #2d2d3f;
+        border-radius: 12px;
+        padding: 1.25rem;
+      }
+      .card h3 {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #7c3aed;
+        margin-bottom: 0.75rem;
+      }
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        background: #0f0f13;
+        border: 1px solid #374151;
+        border-radius: 8px;
+        color: #e2e8f0;
+        padding: 0.75rem;
+        font-size: 0.875rem;
+        resize: vertical;
+        font-family: "Cascadia Code", "Consolas", monospace;
+      }
+      .result-box {
+        min-height: 120px;
+        background: #0f0f13;
+        border: 1px solid #374151;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.875rem;
+        font-family: "Cascadia Code", "Consolas", monospace;
+        white-space: pre-wrap;
+        color: #86efac;
+        line-height: 1.6;
+      }
+      .result-box.error {
+        color: #fca5a5;
+      }
+      .result-box.waiting {
+        color: #94a3b8;
+        font-style: italic;
+      }
+      .actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+      }
+      button {
+        padding: 0.6rem 1.25rem;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .btn-primary {
+        background: #7c3aed;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #6d28d9;
+      }
+      .btn-primary:disabled {
+        background: #4c1d95;
+        color: #a78bfa;
+        cursor: not-allowed;
+      }
+      .btn-secondary {
+        background: #1e293b;
+        color: #94a3b8;
+        border: 1px solid #374151;
+      }
+      .btn-secondary:hover {
+        background: #273449;
+      }
+      .test-suite {
+        margin-bottom: 2rem;
+      }
+      .test-suite h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #c4b5fd;
+        margin-bottom: 1rem;
+      }
+      .test-case {
+        background: #1e1e2e;
+        border: 1px solid #2d2d3f;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+      }
+      .test-case-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      .test-case-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #e2e8f0;
+      }
+      .badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        background: #1e293b;
+        color: #7c3aed;
+        border: 1px solid #4c1d95;
+      }
+      .test-text {
+        font-family: "Cascadia Code", monospace;
+        font-size: 0.82rem;
+        color: #94a3b8;
+        background: #0f0f13;
+        border: 1px solid #374151;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        white-space: pre-wrap;
+      }
+      .test-result {
+        font-size: 0.82rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        background: #0f0f13;
+        border: 1px solid #374151;
+        min-height: 60px;
+        white-space: pre-wrap;
+        font-family: "Cascadia Code", monospace;
+      }
+      .test-result.ok {
+        color: #86efac;
+        border-color: #166534;
+      }
+      .test-result.fail {
+        color: #fca5a5;
+        border-color: #991b1b;
+      }
+      .test-result.pending {
+        color: #64748b;
+        font-style: italic;
+      }
+      .metrics {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+      .metrics span {
+        color: #a78bfa;
+      }
+      .log-box {
+        background: #0a0a10;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        padding: 1rem;
+        font-family: monospace;
+        font-size: 0.8rem;
+        max-height: 200px;
+        overflow-y: auto;
+        color: #64748b;
+      }
+      .log-box .log-info {
+        color: #60a5fa;
+      }
+      .log-box .log-ok {
+        color: #22c55e;
+      }
+      .log-box .log-err {
+        color: #ef4444;
+      }
+      .log-box .log-warn {
+        color: #f59e0b;
+      }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .metric-card {
+        background: #1e1e2e;
+        border: 1px solid #2d2d3f;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+      }
+      .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #a78bfa;
+        line-height: 1;
+      }
+      .metric-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🐸 BabelDOC × Gemini Nano 翻譯品質測試</h1>
+    <p class="subtitle">Phase 0 — 驗證 Chrome 內建 Gemini Nano 的翻譯能力（評估是否值得整合）</p>
+
+    <!-- 環境狀態 -->
+    <div class="status-bar" id="statusBar">
+      <div class="dot yellow" id="statusDot"></div>
+      <span class="status-text" id="statusText">正在檢測 Gemini Nano 環境...</span>
+    </div>
+
+    <!-- 統計摘要 -->
+    <div class="summary-grid">
+      <div class="metric-card">
+        <div class="metric-value" id="metricTotal">0</div>
+        <div class="metric-label">總測試數</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="metricPassed" style="color: #22c55e">0</div>
+        <div class="metric-label">通過</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="metricFailed" style="color: #ef4444">0</div>
+        <div class="metric-label">失敗</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="metricAvgTime">—</div>
+        <div class="metric-label">平均耗時 (秒)</div>
+      </div>
+    </div>
+
+    <!-- 自訂翻譯測試 -->
+    <div class="test-suite">
+      <h2>📝 自訂翻譯測試</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>輸入文字（英文）</h3>
+          <textarea id="customInput" placeholder="輸入要翻譯的英文段落...">
+The signal-to-noise ratio (SNR) is defined as $\text{SNR} = \frac{P_\text{signal}}{P_\text{noise}}$, where $P$ denotes power. In practice, this metric is expressed in decibels: $\text{SNR}_{dB} = 10\log_{10}(\text{SNR})$.</textarea
+          >
+        </div>
+        <div class="card">
+          <h3>翻譯結果（繁體中文）</h3>
+          <div class="result-box waiting" id="customResult">等待翻譯...</div>
+          <div class="metrics" id="customMetrics" style="display: none">
+            耗時：<span id="customTime">—</span>s ｜ 輸入長度：<span id="customInputLen">—</span> 字元 ｜
+            輸出長度：<span id="customOutputLen">—</span> 字元
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn-primary" id="btnCustomTranslate" onclick="runCustomTranslate()">▶ 執行翻譯</button>
+        <button
+          class="btn-secondary"
+          onclick="
+            document.getElementById('customResult').textContent = '等待翻譯...'
+            document.getElementById('customResult').className = 'result-box waiting'
+          "
+        >
+          清除結果
+        </button>
+      </div>
+    </div>
+
+    <!-- 預設測試組 -->
+    <div class="test-suite">
+      <h2>🧪 標準測試組（5 個案例）</h2>
+      <div id="testCases"></div>
+      <div class="actions">
+        <button class="btn-primary" id="btnRunAll" onclick="runAllTests()">▶ 執行全部測試</button>
+        <button class="btn-secondary" onclick="resetAllTests()">重置</button>
+      </div>
+    </div>
+
+    <!-- 執行日誌 -->
+    <div class="test-suite">
+      <h2>📋 執行日誌</h2>
+      <div class="log-box" id="logBox"></div>
+    </div>
+
+    <script>
+      // ── 測試案例定義 ────────────────────────────────────────────
+      const TEST_CASES = [
+        {
+          id: "tc1",
+          title: "TC1：一般學術段落",
+          badge: "一般文字",
+          text: `Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. The learning process begins with observations or data, looking for patterns in data so that better decisions can be made in the future.`,
+          check: (result) => result.length > 20 && !/machine learning/i.test(result),
+        },
+        {
+          id: "tc2",
+          title: "TC2：含 inline LaTeX 公式",
+          badge: "LaTeX",
+          text: `The quadratic formula is given by $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$, which solves for all roots of the equation $ax^2 + bx + c = 0$ where $a \\neq 0$.`,
+          check: (result) => {
+            const hasLatex = result.includes("$") || result.includes("\\frac")
+            return result.length > 10 && hasLatex
+          },
+          checkLabel: "需保留 $ 公式標記",
+        },
+        {
+          id: "tc3",
+          title: "TC3：含 display LaTeX 公式",
+          badge: "LaTeX Block",
+          text: `The Fourier transform is defined as:\n$$\\hat{f}(\\xi) = \\int_{-\\infty}^{\\infty} f(x) e^{-2\\pi i x \\xi} \\, dx$$\nThis transform decomposes a function into its constituent frequencies.`,
+          check: (result) => result.includes("$$") || result.includes("\\hat") || result.includes("\\int"),
+          checkLabel: "需保留 $$ 公式區塊",
+        },
+        {
+          id: "tc4",
+          title: "TC4：技術術語密集段落",
+          badge: "術語",
+          text: `Convolutional Neural Networks (CNNs) use backpropagation through stochastic gradient descent (SGD) to optimize the cross-entropy loss function. Dropout regularization with probability p=0.5 is applied to prevent overfitting.`,
+          check: (result) => result.length > 20,
+        },
+        {
+          id: "tc5",
+          title: "TC5：長段落（壓力測試）",
+          badge: "長文",
+          text: `In quantum mechanics, the Schrödinger equation describes how the quantum state of a physical system changes over time. It was formulated in late 1925 and early 1926 by Austrian physicist Erwin Schrödinger. In classical mechanics, Newton's second law ($F=ma$) is used to mathematically predict what a given system will do. In quantum mechanics, the analogue of Newton's law is Schrödinger's equation for a quantum system — usually atoms, molecules, and subatomic particles. The equation is written as $i\\hbar \\frac{\\partial}{\\partial t}\\Psi(\\mathbf{r},t) = \\hat{H}\\Psi(\\mathbf{r},t)$, where $\\hat{H}$ is the Hamiltonian operator.`,
+          check: (result) => result.length > 50,
+        },
+      ]
+
+      // ── 狀態 ────────────────────────────────────────────────────
+      let session = null
+      let isSupported = false
+      const timings = []
+
+      // ── 日誌 ─────────────────────────────────────────────────────
+      function log(msg, type = "info") {
+        const box = document.getElementById("logBox")
+        const ts = new Date().toLocaleTimeString("zh-TW")
+        const cls = { info: "log-info", ok: "log-ok", err: "log-err", warn: "log-warn" }[type] || "log-info"
+        box.innerHTML += `<div class="${cls}">[${ts}] ${msg}</div>`
+        box.scrollTop = box.scrollHeight
+      }
+
+      // ── 環境檢測 ──────────────────────────────────────────────────
+      async function checkEnvironment() {
+        const dot = document.getElementById("statusDot")
+        const text = document.getElementById("statusText")
+
+        if (!window.ai) {
+          dot.className = "dot red"
+          text.textContent = "❌ window.ai 不存在 — 請確認 Chrome 148+ 且已啟用 Prompt API flag"
+          log("window.ai 未定義。請前往 chrome://flags/#prompt-api-for-gemini-nano 啟用", "err")
+          return
+        }
+
+        try {
+          const capabilities = await window.ai.languageModel.capabilities()
+          log(`Prompt API capabilities: ${JSON.stringify(capabilities)}`, "info")
+
+          if (capabilities.available === "no") {
+            dot.className = "dot red"
+            text.textContent = "❌ Gemini Nano 模型未就緒（尚未下載或不支援此硬體）"
+            log("Gemini Nano 不可用，可能需要手動觸發下載", "err")
+            return
+          }
+
+          if (capabilities.available === "after-download") {
+            dot.className = "dot yellow"
+            text.textContent = "⏳ Gemini Nano 正在下載中，請稍候..."
+            log("模型下載中，請等待完成後再測試", "warn")
+            isSupported = true
+            return
+          }
+
+          dot.className = "dot green"
+          text.textContent = `✅ Gemini Nano 就緒 — maxTemperature: ${capabilities.maxTemperature ?? "?"}, defaultTopK: ${capabilities.defaultTopK ?? "?"}`
+          isSupported = true
+          log("Gemini Nano 環境就緒！", "ok")
+        } catch (err) {
+          dot.className = "dot red"
+          text.textContent = `❌ 檢測失敗：${err.message}`
+          log(`環境檢測錯誤：${err.message}`, "err")
+        }
+      }
+
+      // ── 建立翻譯 Session ─────────────────────────────────────────
+      async function getSession() {
+        if (session) return session
+        log("建立 Gemini Nano session...", "info")
+        session = await window.ai.languageModel.create({
+          systemPrompt: `You are a professional academic translator. Translate the given English text into Traditional Chinese (繁體中文).
+Rules:
+1. Preserve ALL LaTeX math expressions exactly as-is (including $...$, $$...$$, \\begin{}...\\end{}, etc.)
+2. Preserve technical terms accurately
+3. Output ONLY the translated text, no explanations
+4. Maintain the original paragraph structure`,
+        })
+        log("Session 建立成功", "ok")
+        return session
+      }
+
+      // ── 翻譯核心 ─────────────────────────────────────────────────
+      async function translateText(text) {
+        if (!isSupported) throw new Error("Gemini Nano 環境未就緒")
+        const s = await getSession()
+        const prompt = `Translate the following English text to Traditional Chinese:\n\n${text}`
+        const t0 = performance.now()
+        const result = await s.prompt(prompt)
+        const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
+        timings.push(parseFloat(elapsed))
+        return { result, elapsed }
+      }
+
+      // ── 自訂翻譯 ─────────────────────────────────────────────────
+      async function runCustomTranslate() {
+        const input = document.getElementById("customInput").value.trim()
+        if (!input) return
+        const btn = document.getElementById("btnCustomTranslate")
+        const resultEl = document.getElementById("customResult")
+        btn.disabled = true
+        resultEl.className = "result-box waiting"
+        resultEl.textContent = "翻譯中..."
+        log(`開始自訂翻譯（${input.length} 字元）`, "info")
+        try {
+          const { result, elapsed } = await translateText(input)
+          resultEl.className = "result-box"
+          resultEl.textContent = result
+          document.getElementById("customMetrics").style.display = "flex"
+          document.getElementById("customTime").textContent = elapsed
+          document.getElementById("customInputLen").textContent = input.length
+          document.getElementById("customOutputLen").textContent = result.length
+          log(`自訂翻譯完成 (${elapsed}s)`, "ok")
+        } catch (err) {
+          resultEl.className = "result-box error"
+          resultEl.textContent = `錯誤：${err.message}`
+          log(`自訂翻譯失敗：${err.message}`, "err")
+        } finally {
+          btn.disabled = false
+        }
+      }
+
+      // ── 測試案例 UI 建構 ──────────────────────────────────────────
+      function buildTestCaseUI() {
+        const container = document.getElementById("testCases")
+        TEST_CASES.forEach((tc) => {
+          container.innerHTML += `
+          <div class="test-case" id="case-${tc.id}">
+            <div class="test-case-header">
+              <span class="test-case-title">${tc.title}</span>
+              <span class="badge">${tc.badge}</span>
+            </div>
+            <div class="test-text">${tc.text}</div>
+            <div class="test-result pending" id="result-${tc.id}">尚未執行</div>
+            <div class="metrics" id="metrics-${tc.id}" style="display:none">
+              耗時：<span id="time-${tc.id}">—</span>s ｜ LaTeX 保留：<span id="latex-${tc.id}">—</span> ｜ 字元數：<span id="chars-${tc.id}">—</span>
+            </div>
+          </div>`
+        })
+      }
+
+      // ── 執行單一測試 ─────────────────────────────────────────────
+      async function runTestCase(tc) {
+        const resultEl = document.getElementById(`result-${tc.id}`)
+        const metricsEl = document.getElementById(`metrics-${tc.id}`)
+        resultEl.className = "test-result pending"
+        resultEl.textContent = "翻譯中..."
+        log(`執行 ${tc.id}...`, "info")
+        try {
+          const { result, elapsed } = await translateText(tc.text)
+          const passed = tc.check ? tc.check(result) : true
+          resultEl.className = `test-result ${passed ? "ok" : "fail"}`
+          resultEl.textContent = `${passed ? "✅ PASS" : "❌ FAIL"}\n\n${result}`
+          metricsEl.style.display = "flex"
+          document.getElementById(`time-${tc.id}`).textContent = elapsed
+          // LaTeX 保留率
+          const latexInSource = (tc.text.match(/\$/g) || []).length
+          const latexInResult = (result.match(/\$/g) || []).length
+          document.getElementById(`latex-${tc.id}`).textContent =
+            latexInSource > 0 ? `${Math.round((latexInResult / latexInSource) * 100)}%` : "N/A"
+          document.getElementById(`chars-${tc.id}`).textContent = result.length
+          log(`${tc.id} ${passed ? "PASS" : "FAIL"} (${elapsed}s)`, passed ? "ok" : "err")
+          return passed
+        } catch (err) {
+          resultEl.className = "test-result fail"
+          resultEl.textContent = `錯誤：${err.message}`
+          log(`${tc.id} 執行錯誤：${err.message}`, "err")
+          return false
+        }
+      }
+
+      // ── 執行全部測試 ─────────────────────────────────────────────
+      async function runAllTests() {
+        const btn = document.getElementById("btnRunAll")
+        btn.disabled = true
+        log("開始執行全部測試組...", "info")
+        let passed = 0
+        for (const tc of TEST_CASES) {
+          const ok = await runTestCase(tc)
+          if (ok) passed++
+          // 短暫暫停，避免 GPU 過熱
+          await new Promise((r) => setTimeout(r, 300))
+        }
+        const total = TEST_CASES.length
+        const avgTime = timings.length > 0 ? (timings.reduce((a, b) => a + b, 0) / timings.length).toFixed(2) : "—"
+        document.getElementById("metricTotal").textContent = total
+        document.getElementById("metricPassed").textContent = passed
+        document.getElementById("metricFailed").textContent = total - passed
+        document.getElementById("metricAvgTime").textContent = avgTime
+        log(`全部測試完成：${passed}/${total} 通過，平均耗時 ${avgTime}s`, passed === total ? "ok" : "warn")
+        btn.disabled = false
+      }
+
+      // ── 重置 ─────────────────────────────────────────────────────
+      function resetAllTests() {
+        TEST_CASES.forEach((tc) => {
+          document.getElementById(`result-${tc.id}`).className = "test-result pending"
+          document.getElementById(`result-${tc.id}`).textContent = "尚未執行"
+          document.getElementById(`metrics-${tc.id}`).style.display = "none"
+        })
+        timings.length = 0
+        document.getElementById("metricTotal").textContent = "0"
+        document.getElementById("metricPassed").textContent = "0"
+        document.getElementById("metricFailed").textContent = "0"
+        document.getElementById("metricAvgTime").textContent = "—"
+        if (session) {
+          session.destroy()
+          session = null
+        }
+        log("已重置所有測試結果", "info")
+      }
+
+      // ── 初始化 ────────────────────────────────────────────────────
+      buildTestCaseUI()
+      checkEnvironment()
+    </script>
+  </body>
+</html>

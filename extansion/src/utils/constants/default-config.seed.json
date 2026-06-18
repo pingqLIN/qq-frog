@@ -557,6 +557,12 @@
       "anchor": "bottom"
     }
   },
+  "pdfTranslation": {
+    "enabled": false,
+    "serviceUrl": "http://localhost:8001",
+    "provider": "chrome-gemini",
+    "outputMode": "bilingual-markdown"
+  },
   "siteControl": {
     "mode": "blacklist",
     "blacklistPatterns": [],

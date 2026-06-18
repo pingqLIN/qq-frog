@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QQ Frog PDF Bridge - 本機 Gemini Nano 翻譯代理</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0b0b0f;
+        color: #e2e8f0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 2rem;
+      }
+      header {
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #1e1e2e;
+        padding-bottom: 1.5rem;
+      }
+      h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #c084fc;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .subtitle {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 2rem;
+        flex-grow: 1;
+      }
+      .panel {
+        background: #13131a;
+        border: 1px solid #232333;
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .panel h2 {
+        font-size: 1.1rem;
+        color: #e2e8f0;
+        border-left: 3px solid #a855f7;
+        padding-left: 0.75rem;
+        margin-bottom: 0.5rem;
+      }
+      .status-group {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .status-card {
+        background: #1c1c27;
+        border: 1px solid #2d2d42;
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .status-icon {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .status-icon.green {
+        background: #10b981;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+      }
+      .status-icon.yellow {
+        background: #f59e0b;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+      }
+      .status-icon.red {
+        background: #ef4444;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      }
+      .status-details {
+        display: flex;
+        flex-direction: column;
+      }
+      .status-title {
+        font-size: 0.8rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .status-val {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-top: 0.1rem;
+      }
+      .queue-card {
+        background: radial-gradient(circle at top left, #231942, #13131a);
+        border: 1px solid #3c1e6d;
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .queue-num {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #d8b4fe;
+        line-height: 1;
+      }
+      .queue-lbl {
+        font-size: 0.85rem;
+        color: #a78bfa;
+        margin-top: 0.5rem;
+      }
+      .log-container {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        height: 100%;
+      }
+      .log-box {
+        flex-grow: 1;
+        background: #07070a;
+        border: 1px solid #1c1c28;
+        border-radius: 12px;
+        padding: 1rem;
+        font-family: "Cascadia Code", Consolas, monospace;
+        font-size: 0.85rem;
+        overflow-y: auto;
+        height: 350px;
+        color: #a0aec0;
+        line-height: 1.5;
+      }
+      .log-item {
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid #14141f;
+        padding-bottom: 0.4rem;
+      }
+      .log-time {
+        color: #585876;
+        margin-right: 0.5rem;
+      }
+      .log-info {
+        color: #60a5fa;
+      }
+      .log-success {
+        color: #34d399;
+      }
+      .log-error {
+        color: #f87171;
+      }
+      .log-warn {
+        color: #fbbf24;
+      }
+      .task-list {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-height: 180px;
+        overflow-y: auto;
+      }
+      .task-item {
+        background: #181825;
+        border: 1px solid #28283d;
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .task-meta {
+        display: flex;
+        flex-direction: column;
+      }
+      .task-id {
+        font-family: monospace;
+        color: #9333ea;
+        font-weight: 600;
+      }
+      .task-preview {
+        color: #64748b;
+        margin-top: 0.1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
+      }
+      .task-status {
+        font-size: 0.75rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 99px;
+        background: #1e1b4b;
+        color: #818cf8;
+      }
+      .task-status.processing {
+        background: #1e293b;
+        color: #94a3b8;
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.6;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>QQ Frog PDF Bridge - Gemini Nano 代理</h1>
+      <p class="subtitle">作為網頁客戶端，提供本機 Gemini Nano 翻譯能力給 local PDF translation bridge</p>
+    </header>
+
+    <div class="grid">
+      <!-- 左側面板：狀態與佇列 -->
+      <div class="panel">
+        <h2>📊 系統狀態</h2>
+
+        <div class="status-group">
+          <!-- WebSocket 伺服器狀態 -->
+          <div class="status-card">
+            <div id="wsDot" class="status-icon red"></div>
+            <div class="status-details">
+              <span class="status-title">Bridge Server 連線</span>
+              <span id="wsVal" class="status-val">尚未連線</span>
+            </div>
+          </div>
+
+          <!-- Gemini Nano 狀態 -->
+          <div class="status-card">
+            <div id="nanoDot" class="status-icon red"></div>
+            <div class="status-details">
+              <span class="status-title">Gemini Nano 狀態</span>
+              <span id="nanoVal" class="status-val">正在檢測...</span>
+            </div>
+          </div>
+        </div>
+
+        <h2>⏳ 任務佇列</h2>
+        <div class="queue-card">
+          <div id="queueNum" class="queue-num">0</div>
+          <div class="queue-lbl">當前待處理任務</div>
+        </div>
+
+        <div class="task-list" id="taskList">
+          <!-- 動態任務項目 -->
+        </div>
+      </div>
+
+      <!-- 右側面板：連線日誌 -->
+      <div class="panel">
+        <div class="log-container">
+          <h2>📋 代理執行日誌</h2>
+          <div class="log-box" id="logBox"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ── 狀態管理 ──────────────────────────────────────────────────
+      let socket = null
+      let isSupported = false
+      let languageModel = null
+      let activeTasks = new Map() // {task_id: {element, start_time}}
+      let reconnectTimeout = null
+
+      // ── 日誌記錄 ──────────────────────────────────────────────────
+      function log(msg, type = "info") {
+        const box = document.getElementById("logBox")
+        const ts = new Date().toLocaleTimeString("zh-TW", { hour12: false })
+        const clsMap = { info: "log-info", success: "log-success", error: "log-error", warn: "log-warn" }
+        const cls = clsMap[type] || "log-info"
+        box.innerHTML += `<div class="log-item"><span class="log-time">[${ts}]</span><span class="${cls}">${msg}</span></div>`
+        box.scrollTop = box.scrollHeight
+      }
+
+      // ── 檢測 Gemini Nano ──────────────────────────────────────────
+      async function checkGeminiNano() {
+        const dot = document.getElementById("nanoDot")
+        const val = document.getElementById("nanoVal")
+
+        const aiObj = window.ai || (typeof globalThis !== "undefined" && globalThis.ai)
+
+        if (!aiObj || !aiObj.languageModel) {
+          dot.className = "status-icon red"
+          val.textContent = "不支援 Prompt API"
+          log("此瀏覽器不支援 Chrome Prompt API (window.ai 未啟用)", "error")
+          return false
+        }
+
+        try {
+          const capabilities = await aiObj.languageModel.capabilities()
+          if (capabilities.available === "no") {
+            dot.className = "status-icon red"
+            val.textContent = "模型尚未就緒"
+            log("Gemini Nano 尚未就緒 (available=no)。請至 chrome://components 檢查 GEMINI_NANO", "error")
+            return false
+          }
+
+          if (capabilities.available === "after-download") {
+            dot.className = "status-icon yellow"
+            val.textContent = "模型下載中..."
+            log("Gemini Nano 正在下載中，完成後將自動就緒", "warn")
+            isSupported = true
+            languageModel = aiObj.languageModel
+            return true
+          }
+
+          dot.className = "status-icon green"
+          val.textContent = "就緒 (Ready)"
+          log("Gemini Nano 環境檢測完成，狀態：Ready", "success")
+          isSupported = true
+          languageModel = aiObj.languageModel
+          return true
+        } catch (err) {
+          dot.className = "status-icon red"
+          val.textContent = "檢測出錯"
+          log(`Gemini Nano 檢測時出錯：${err.message}`, "error")
+          return false
+        }
+      }
+
+      // ── 建立 WebSocket 連線 ────────────────────────────────────────
+      function connectServer() {
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout)
+        }
+
+        const wsDot = document.getElementById("wsDot")
+        const wsVal = document.getElementById("wsVal")
+
+        // 自動根據當前 domain 決定 ws url
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
+        const host = window.location.host || "localhost:8001"
+        const wsUrl = `${protocol}//${host}/ws`
+
+        log(`正在嘗試連線至 Bridge Server (${wsUrl})...`, "info")
+        wsDot.className = "status-icon yellow"
+        wsVal.textContent = "連線中..."
+
+        socket = new WebSocket(wsUrl)
+
+        socket.onopen = () => {
+          wsDot.className = "status-icon green"
+          wsVal.textContent = "已連線"
+          log("與 Bridge Server 連線成功！正在偵聽翻譯任務...", "success")
+        }
+
+        socket.onclose = () => {
+          wsDot.className = "status-icon red"
+          wsVal.textContent = "已斷線"
+          log("與 Bridge Server 連線中斷，將於 3 秒後重新連線...", "warn")
+          // 清除當前佇列與進行中任務
+          activeTasks.forEach((task) => {
+            if (task.element) task.element.remove()
+          })
+          activeTasks.clear()
+          updateQueueDepth()
+
+          reconnectTimeout = setTimeout(connectServer, 3000)
+        }
+
+        socket.onerror = (err) => {
+          log("WebSocket 發生錯誤", "error")
+        }
+
+        socket.onmessage = async (event) => {
+          try {
+            const task = JSON.parse(event.data)
+            if (task.task_id && task.user_prompt) {
+              await handleTask(task)
+            }
+          } catch (err) {
+            log(`解析伺服器訊息失敗: ${err.message}`, "error")
+          }
+        }
+      }
+
+      // ── 處理翻譯任務 ──────────────────────────────────────────────
+      async function handleTask(task) {
+        const taskId = task.task_id
+        log(`收到翻譯任務 [${taskId.slice(0, 8)}] | 長度: ${task.user_prompt.length} 字元`, "info")
+
+        // 新增任務至 UI
+        addTaskToUI(task)
+
+        if (!isSupported || !languageModel) {
+          const errMsg = "Gemini Nano 尚未就緒，拒絕任務"
+          log(errMsg, "error")
+          sendResult(taskId, false, null, errMsg)
+          removeTaskFromUI(taskId)
+          return
+        }
+
+        const startTime = performance.now()
+        let session = null
+        try {
+          const sysPrompt =
+            task.system_prompt ||
+            "You are a professional translator. Translate the following text into Traditional Chinese (繁體中文). Do not include any explanations."
+
+          session = await languageModel.create({
+            systemPrompt: sysPrompt,
+            temperature: task.temperature || 0.3,
+          })
+
+          // 呼叫 Nano
+          const translation = await session.prompt(task.user_prompt)
+          const elapsed = Math.round(performance.now() - startTime)
+
+          log(`[${taskId.slice(0, 8)}] 翻譯成功 | 耗時 ${elapsed}ms`, "success")
+          sendResult(taskId, true, translation, null, elapsed)
+        } catch (err) {
+          const elapsed = Math.round(performance.now() - startTime)
+          log(`[${taskId.slice(0, 8)}] 翻譯失敗: ${err.message}`, "error")
+          sendResult(taskId, false, null, err.message, elapsed)
+        } finally {
+          if (session) {
+            try {
+              session.destroy()
+            } catch (e) {}
+          }
+          removeTaskFromUI(taskId)
+        }
+      }
+
+      // ── 回傳結果給 Bridge Server ──────────────────────────────────
+      function sendResult(taskId, success, resultText, errorMsg, elapsedMs) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          log(`[${taskId.slice(0, 8)}] 無法回傳結果：WebSocket 未連線`, "error")
+          return
+        }
+
+        const payload = {
+          task_id: taskId,
+          success: success,
+          result: resultText,
+          error: errorMsg,
+          elapsed_ms: elapsedMs || 0,
+        }
+
+        socket.send(JSON.stringify(payload))
+      }
+
+      // ── UI 輔助函式 ───────────────────────────────────────────────
+      function updateQueueDepth() {
+        document.getElementById("queueNum").textContent = activeTasks.size
+      }
+
+      function addTaskToUI(task) {
+        const container = document.getElementById("taskList")
+        const item = document.createElement("div")
+        item.className = "task-item"
+        item.id = `task-${task.task_id}`
+
+        const brief = task.user_prompt.substring(0, 30).replace(/[\r\n]+/g, " ") + "..."
+
+        item.innerHTML = `
+        <div class="task-meta">
+          <span class="task-id">${task.task_id.slice(0, 8)}</span>
+          <span class="task-preview" title="${task.user_prompt.replace(/"/g, "&quot;")}">${brief}</span>
+        </div>
+        <span class="task-status processing">處理中...</span>
+      `
+
+        container.appendChild(item)
+        activeTasks.set(task.task_id, { element: item, start_time: performance.now() })
+        updateQueueDepth()
+      }
+
+      function removeTaskFromUI(taskId) {
+        const task = activeTasks.get(taskId)
+        if (task) {
+          if (task.element) task.element.remove()
+          activeTasks.delete(taskId)
+        }
+        updateQueueDepth()
+      }
+
+      // ── 初始化 ────────────────────────────────────────────────────
+      async function init() {
+        log("啟動 BabelDOC 本機代理客戶端...", "info")
+        await checkGeminiNano()
+        connectServer()
+      }
+
+      window.onload = init
+    </script>
+  </body>
+</html>

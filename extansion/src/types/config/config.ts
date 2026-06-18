@@ -9,6 +9,7 @@ import {
 import { MIN_SIDE_CONTENT_WIDTH } from "@/utils/constants/side"
 import { floatingButtonSchema } from "./floating-button"
 import { languageDetectionConfigSchema } from "./language-detection"
+import { pdfTranslationConfigSchema } from "./pdf-translation"
 import { isLLMProvider, NON_API_TRANSLATE_PROVIDERS_MAP, providersConfigSchema } from "./provider"
 import { selectionToolbarCustomActionsSchema } from "./selection-toolbar"
 import { videoSubtitlesSchema } from "./subtitles"
@@ -100,6 +101,7 @@ export const configSchema = z.object({
   contextMenu: contextMenuSchema,
   inputTranslation: inputTranslationSchema,
   videoSubtitles: videoSubtitlesSchema,
+  pdfTranslation: pdfTranslationConfigSchema,
   siteControl: siteControlSchema,
 }).superRefine((data, ctx) => {
   const providerIdsSet = new Set(data.providersConfig.map(p => p.id))

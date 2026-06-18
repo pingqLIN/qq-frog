@@ -58,6 +58,13 @@ export function SettingsNav() {
           </SidebarMenuItem>
 
           <SidebarMenuItem>
+            <SidebarMenuButton render={<Link to="/pdf-translation" />} isActive={pathname === "/pdf-translation"}>
+              <Icon icon="tabler:file-type-pdf" />
+              <span>{i18n.t("options.pdfTranslation.title")}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
             <SidebarMenuButton render={<Link to="/video-subtitles" />} isActive={pathname === "/video-subtitles"}>
               <Icon icon="tabler:subtitles" />
               <span>{i18n.t("options.videoSubtitles.title")}</span>

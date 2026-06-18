@@ -265,6 +265,25 @@ options:
       label: 閾值 (毫秒)
       hint: 連續空格按鍵之間的時間間隔 (100-1000毫秒)
       error: 數值必須在 $1 到 $2 之間
+  pdfTranslation:
+    title: PDF 翻譯
+    config:
+      title: 本機 PDF 翻譯
+      description: 設定本機 PaddleOCR bridge，以及 PDF 翻譯要使用的提供者。
+      enable: 啟用 PDF 翻譯
+      enableDescription: 使用本機 PDF 翻譯 bridge 執行 PaddleOCR，並翻譯 OCR 文字。
+      serviceUrl: 本機服務 URL
+      serviceUrlDescription: QQ Frog 本機 PDF 翻譯 bridge 的 base URL。
+      provider: 翻譯提供者
+      outputMode: 輸出模式
+      providers:
+        chrome-gemini: Chrome 內建 Gemini
+        lm-studio: LM Studio
+        openai: OpenAI
+        gemini: Gemini API
+      outputModes:
+        bilingual-markdown: 雙語 Markdown
+        text-layer: 文字層
   floatingButtonAndToolbar:
     title: 懸浮按鈕和工具列
     selectionToolbarDemoImageAlt: 選擇工具列示範
