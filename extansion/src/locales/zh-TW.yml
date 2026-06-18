@@ -277,13 +277,13 @@ options:
       provider: 翻譯提供者
       outputMode: 輸出模式
       providers:
-        chrome-gemini: Chrome 內建 Gemini
-        lm-studio: LM Studio
+        chromeGemini: Chrome 內建 Gemini
+        lmStudio: LM Studio
         openai: OpenAI
         gemini: Gemini API
       outputModes:
-        bilingual-markdown: 雙語 Markdown
-        text-layer: 文字層
+        bilingualMarkdown: 雙語 Markdown
+        textLayer: 文字層
     tool:
       title: PDF 翻譯工具
       description: 上傳單頁 PDF 到本機 PaddleOCR bridge，翻譯 OCR 文字，並下載 Markdown 輸出。

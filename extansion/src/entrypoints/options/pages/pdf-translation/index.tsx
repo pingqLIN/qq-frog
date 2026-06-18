@@ -28,6 +28,18 @@ import { i18n } from "@/utils/i18n"
 import { ConfigCard } from "../../components/config-card"
 import { PageLayout } from "../../components/page-layout"
 
+const PDF_TRANSLATION_PROVIDER_I18N_KEYS: Record<PdfTranslationProvider, string> = {
+  "chrome-gemini": "chromeGemini",
+  "lm-studio": "lmStudio",
+  "openai": "openai",
+  "gemini": "gemini",
+}
+
+const PDF_TRANSLATION_OUTPUT_MODE_I18N_KEYS: Record<PdfTranslationOutputMode, string> = {
+  "bilingual-markdown": "bilingualMarkdown",
+  "text-layer": "textLayer",
+}
+
 export function PdfTranslationPage() {
   return (
     <PageLayout title={i18n.t("options.pdfTranslation.title")}>
@@ -98,14 +110,14 @@ function PdfTranslationConfig() {
           <Select value={pdfTranslationConfig.provider} onValueChange={handleProviderChange}>
             <SelectTrigger className="w-56">
               <SelectValue render={<span />}>
-                {i18n.t(`options.pdfTranslation.config.providers.${pdfTranslationConfig.provider}`)}
+                {i18n.t(`options.pdfTranslation.config.providers.${PDF_TRANSLATION_PROVIDER_I18N_KEYS[pdfTranslationConfig.provider]}`)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
                 {PDF_TRANSLATION_PROVIDERS.map(provider => (
                   <SelectItem key={provider} value={provider}>
-                    {i18n.t(`options.pdfTranslation.config.providers.${provider}`)}
+                    {i18n.t(`options.pdfTranslation.config.providers.${PDF_TRANSLATION_PROVIDER_I18N_KEYS[provider]}`)}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -120,14 +132,14 @@ function PdfTranslationConfig() {
           <Select value={pdfTranslationConfig.outputMode} onValueChange={handleOutputModeChange}>
             <SelectTrigger className="w-56">
               <SelectValue render={<span />}>
-                {i18n.t(`options.pdfTranslation.config.outputModes.${pdfTranslationConfig.outputMode}`)}
+                {i18n.t(`options.pdfTranslation.config.outputModes.${PDF_TRANSLATION_OUTPUT_MODE_I18N_KEYS[pdfTranslationConfig.outputMode]}`)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
                 {PDF_TRANSLATION_OUTPUT_MODES.map(outputMode => (
                   <SelectItem key={outputMode} value={outputMode}>
-                    {i18n.t(`options.pdfTranslation.config.outputModes.${outputMode}`)}
+                    {i18n.t(`options.pdfTranslation.config.outputModes.${PDF_TRANSLATION_OUTPUT_MODE_I18N_KEYS[outputMode]}`)}
                   </SelectItem>
                 ))}
               </SelectGroup>

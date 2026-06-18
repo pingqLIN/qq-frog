@@ -278,13 +278,13 @@ options:
       provider: Translation provider
       outputMode: Output mode
       providers:
-        chrome-gemini: Chrome built-in Gemini
-        lm-studio: LM Studio
+        chromeGemini: Chrome built-in Gemini
+        lmStudio: LM Studio
         openai: OpenAI
         gemini: Gemini API
       outputModes:
-        bilingual-markdown: Bilingual Markdown
-        text-layer: Text layer
+        bilingualMarkdown: Bilingual Markdown
+        textLayer: Text layer
     tool:
       title: PDF Translation Tool
       description: Upload one PDF page to the local PaddleOCR bridge, translate OCR text, and download Markdown output.
