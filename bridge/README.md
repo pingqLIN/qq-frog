@@ -86,7 +86,7 @@ uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 
 Chrome extension 不能直接啟動本機程式；若要從 QQ Frog Options 的 PDF Translation 設定頁按「Start bridge」啟動本機 `bridge/server.py`，需要先安裝 Native Messaging host。
 
-1. 到 `chrome://extensions` 開啟 QQ Frog 詳細資訊，複製 extension ID。
+1. 到 `chrome://extensions` 開啟 QQ Frog 詳細資訊，複製真實 extension ID（32 個字元）。不要照抄 `<QQ_FROG_EXTENSION_ID>` placeholder。
 2. 在 PowerShell 執行：
 
 ```powershell

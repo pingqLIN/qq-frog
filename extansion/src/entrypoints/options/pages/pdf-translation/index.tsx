@@ -494,5 +494,9 @@ function isAbortError(error: unknown) {
 }
 
 function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error)
+  if (error instanceof TypeError && error.message === "Failed to fetch")
+    return i18n.t("options.pdfTranslation.tool.connectionFailedHint")
+  if (error instanceof Error)
+    return error.message
+  return String(error)
 }

@@ -10,6 +10,10 @@ if (-not $ExtensionId) {
   throw "ExtensionId is required. Open chrome://extensions, copy QQ Frog's ID, then rerun with -ExtensionId <id>."
 }
 
+if ($ExtensionId -eq "<QQ_FROG_EXTENSION_ID>" -or $ExtensionId -notmatch "^[a-p]{32}$") {
+  throw "ExtensionId must be the real 32-character Chrome extension ID from chrome://extensions, not a placeholder."
+}
+
 $bridgeDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $hostName = "com.qq_frog.pdf_bridge"
 $manifestDir = Join-Path $bridgeDir "native-messaging"

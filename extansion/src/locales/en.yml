@@ -309,6 +309,7 @@ options:
       errorTitle: PDF translation failed
       preview: PDF translation Markdown preview
       emptyTranslation: The PDF translation bridge returned an empty result.
+      connectionFailedHint: Failed to connect to the local PDF bridge. Confirm http://localhost:8001 is running, or install the Native Messaging host with the real extension ID and use Start bridge.
       status:
         idle: Choose a PDF to start.
         ready: PDF ready.
