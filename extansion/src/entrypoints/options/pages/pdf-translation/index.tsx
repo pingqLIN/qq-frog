@@ -198,6 +198,7 @@ function PdfTranslationTool() {
 
   const isRunning = stage === "health" || stage === "ocr" || stage === "translate"
   const canTranslate = Boolean(file) && !isRunning
+  const canUseNativeHost = isLocalBridgeServiceUrl(pdfTranslationConfig.serviceUrl)
 
   const runNativeHostAction = async (action: "status" | "start" | "stop") => {
     setStage("health")
@@ -370,15 +371,15 @@ function PdfTranslationTool() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => void runNativeHostAction("status")} disabled={isRunning}>
+          <Button variant="outline" onClick={() => void runNativeHostAction("status")} disabled={isRunning || !canUseNativeHost}>
             <IconRefresh className="size-4" />
             {i18n.t("options.pdfTranslation.nativeHost.checkStatus")}
           </Button>
-          <Button variant="outline" onClick={() => void runNativeHostAction("start")} disabled={isRunning || isNativeHostRunning}>
+          <Button variant="outline" onClick={() => void runNativeHostAction("start")} disabled={isRunning || isNativeHostRunning || !canUseNativeHost}>
             <IconPower className="size-4" />
             {i18n.t("options.pdfTranslation.nativeHost.start")}
           </Button>
-          <Button variant="outline" onClick={() => void runNativeHostAction("stop")} disabled={isRunning || !isNativeHostRunning}>
+          <Button variant="outline" onClick={() => void runNativeHostAction("stop")} disabled={isRunning || !isNativeHostRunning || !canUseNativeHost}>
             <IconServer className="size-4" />
             {i18n.t("options.pdfTranslation.nativeHost.stop")}
           </Button>
@@ -472,6 +473,16 @@ function extractErrorMessage(payload: unknown) {
 
 function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, "")
+}
+
+function isLocalBridgeServiceUrl(value: string) {
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" && ["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname)
+  }
+  catch {
+    return false
+  }
 }
 
 function sanitizeFilename(value: string) {

@@ -75,16 +75,38 @@ python server.py
 uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 ```
 
-啟動後，Server 會在 `http://localhost:8001` 提供服務。
+啟動後，Server 會在 `http://localhost:8001` 提供服務。若使用 `--host 0.0.0.0`，同一內網的其他裝置也可透過 `http://<bridge-host-lan-ip>:8001` 存取。
 
 ### 3. 在 Chrome 中啟用 Extension Bridge
 
-- Extension 端可透過 PDF Translation 設定頁設定本機 bridge。
+- Extension 端可透過 PDF Translation 設定頁設定 bridge service URL；可以是此電腦的 `http://localhost:8001`，也可以是只暴露在內網的 `http://192.168.x.x:8001`。
 - 使用 `chrome-gemini` provider 時，需保持 extension bridge 或 `/ui` 代理頁與本機 bridge 連線。
+
+Bridge Server 也有直接可用的 Web 頁面：
+
+- `http://<bridge-host>:8001/ui`：Chrome Gemini Nano 代理頁。適合在不方便載入 extension bridge 時，讓 Chrome 頁面連到 bridge 的 WebSocket。
+- `http://<bridge-host>:8001/pdf/health`：PDF/OCR health check。
+
+若採用內網 Web service 模式，請在 bridge 主機上啟動：
+
+```powershell
+cd Q:\Projects\qq-frog\bridge
+..\.venv-paddleocr\Scripts\python.exe -m uvicorn server:app --host 0.0.0.0 --port 8001
+```
+
+然後在 QQ Frog Options → **PDF Translation** 的 **Bridge service URL** 填入：
+
+```text
+http://<bridge-host-lan-ip>:8001
+```
+
+此模式下 extension 會直接 fetch 內網 bridge URL，不需要 Native Messaging host。
 
 ### 4. 允許 Extension 啟動本機 Bridge Server
 
 Chrome extension 不能直接啟動本機程式；若要從 QQ Frog Options 的 PDF Translation 設定頁按「Start bridge」啟動本機 `bridge/server.py`，需要先安裝 Native Messaging host。
+
+Native Messaging 只適合同一台電腦上的 localhost bridge。若你已經把 bridge server 放在內網 Web 位置，請直接使用上面的內網 URL 模式。
 
 1. 到 `chrome://extensions` 開啟 QQ Frog 詳細資訊，複製真實 extension ID（32 個字元）。不要照抄 `<QQ_FROG_EXTENSION_ID>` placeholder。
 2. 在 PowerShell 執行：

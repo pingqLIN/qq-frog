@@ -269,12 +269,12 @@ options:
   pdfTranslation:
     title: PDF Translation
     config:
-      title: Local PDF Translation
-      description: Configure the local PaddleOCR bridge and the provider used for PDF translation.
+      title: PDF Translation Bridge
+      description: Configure the PaddleOCR bridge service and the provider used for PDF translation.
       enable: Enable PDF translation
       enableDescription: Uses the local PDF translation bridge to run PaddleOCR and translate OCR text.
-      serviceUrl: Local service URL
-      serviceUrlDescription: The QQ Frog local PDF translation bridge base URL.
+      serviceUrl: Bridge service URL
+      serviceUrlDescription: The QQ Frog PDF translation bridge base URL. Use localhost for this computer, or a LAN URL such as http://192.168.1.10:8001.
       provider: Translation provider
       outputMode: Output mode
       providers:
@@ -309,7 +309,7 @@ options:
       errorTitle: PDF translation failed
       preview: PDF translation Markdown preview
       emptyTranslation: The PDF translation bridge returned an empty result.
-      connectionFailedHint: Failed to connect to the local PDF bridge. Confirm http://localhost:8001 is running, or install the Native Messaging host with the real extension ID and use Start bridge.
+      connectionFailedHint: Failed to connect to the PDF bridge service. Confirm the configured bridge service URL is reachable from Chrome. For this computer, start localhost:8001 or install the Native Messaging host. For LAN mode, use the bridge machine's intranet URL.
       status:
         idle: Choose a PDF to start.
         ready: PDF ready.

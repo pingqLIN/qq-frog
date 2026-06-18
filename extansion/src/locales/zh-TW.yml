@@ -268,12 +268,12 @@ options:
   pdfTranslation:
     title: PDF 翻譯
     config:
-      title: 本機 PDF 翻譯
-      description: 設定本機 PaddleOCR bridge，以及 PDF 翻譯要使用的提供者。
+      title: PDF 翻譯 Bridge
+      description: 設定 PaddleOCR bridge 服務，以及 PDF 翻譯要使用的提供者。
       enable: 啟用 PDF 翻譯
       enableDescription: 使用本機 PDF 翻譯 bridge 執行 PaddleOCR，並翻譯 OCR 文字。
-      serviceUrl: 本機服務 URL
-      serviceUrlDescription: QQ Frog 本機 PDF 翻譯 bridge 的 base URL。
+      serviceUrl: Bridge 服務 URL
+      serviceUrlDescription: QQ Frog PDF 翻譯 bridge 的 base URL。可使用此電腦的 localhost，或 http://192.168.1.10:8001 這類內網 URL。
       provider: 翻譯提供者
       outputMode: 輸出模式
       providers:
@@ -308,7 +308,7 @@ options:
       errorTitle: PDF 翻譯失敗
       preview: PDF 翻譯 Markdown 預覽
       emptyTranslation: PDF 翻譯 bridge 回傳空白結果。
-      connectionFailedHint: 無法連線到本機 PDF bridge。請確認 http://localhost:8001 已啟動，或使用真實 extension ID 安裝 Native Messaging host 後按「啟動 bridge」。
+      connectionFailedHint: 無法連線到 PDF bridge 服務。請確認 Chrome 可以連到目前設定的 bridge 服務 URL；此電腦模式請啟動 localhost:8001 或安裝 Native Messaging host，內網模式請填 bridge 主機的內網 URL。
       status:
         idle: 選擇 PDF 後開始。
         ready: PDF 已就緒。
