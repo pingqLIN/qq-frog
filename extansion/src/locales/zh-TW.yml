@@ -295,11 +295,33 @@ options:
         stop: 正在停止本機 PDF bridge。
         done: Native bridge 指令完成。
         error: Native bridge 指令失敗。
+    bridgeAgent:
+      title: Chrome Gemini 代理執行日誌
+      connect: 連線代理
+      disconnect: 中斷代理
+      queue: 任務佇列
+      emptyLog: 尚無代理執行日誌。
+      promptApi: Prompt API
+      promptApiUnavailable: 此 Chrome 環境不支援 Prompt API，或 Gemini Nano 尚未就緒。
+      connecting: 正在連線至 Bridge WebSocket
+      connected: Bridge WebSocket 已連線，正在偵聽翻譯任務。
+      disconnected: Bridge WebSocket 已中斷。
+      socketError: Bridge WebSocket 發生錯誤。
+      lanMode: 內網 URL 模式不透過 Native Messaging 啟動服務，僅檢查目前 URL。
+      taskReceived: 收到翻譯任務
+      taskSucceeded: 翻譯任務完成
+      taskFailed: 翻譯任務失敗
+      status:
+        disconnected: 代理未連線
+        connecting: 代理連線中
+        connected: 代理已連線
+        error: 代理錯誤
     tool:
       title: PDF 翻譯工具
       description: 上傳 PDF 到本機 PaddleOCR bridge，翻譯 OCR 文字，並下載 Markdown 輸出。
       chooseFile: 選擇 PDF
       targetLanguage: 目標語言
+      ensureService: 檢查並啟動服務
       checkHealth: 檢查服務
       translate: 翻譯 PDF
       cancel: 取消
@@ -314,6 +336,8 @@ options:
         ready: PDF 已就緒。
         health: 正在檢查本機 PDF 服務。
         healthDone: 服務檢查完成。
+        ensureService: 正在檢查並啟動 PDF bridge 服務。
+        ensureDone: PDF bridge 服務已就緒。
         ocr: 正在執行 PaddleOCR 並翻譯整份 PDF。
         translate: 正在翻譯 OCR 文字。
         success: 翻譯完成。

@@ -1,10 +1,10 @@
 import type { ChangeEvent } from "react"
 import type { PdfTranslationOutputMode, PdfTranslationProvider } from "@/types/config/pdf-translation"
-import { IconDownload, IconHeartbeat, IconPlayerPlayFilled, IconPower, IconRefresh, IconServer, IconUpload, IconX } from "@tabler/icons-react"
+import { IconActivity, IconDownload, IconHeartbeat, IconPlayerPlayFilled, IconPower, IconRefresh, IconServer, IconUpload, IconX } from "@tabler/icons-react"
 import { deepmerge } from "deepmerge-ts"
 import { saveAs } from "file-saver"
 import { useAtom } from "jotai"
-import { useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { HelpTooltip } from "@/components/help-tooltip"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/base-ui/alert"
 import { Button } from "@/components/ui/base-ui/button"
@@ -156,8 +156,8 @@ type PdfTranslationStage = "idle" | "health" | "ocr" | "translate" | "success" |
 
 interface PdfHealthResponse {
   status?: string
-  python?: string
-  dependencies?: Record<string, string>
+  python_version?: string
+  dependencies?: Array<{ name: string, installed: boolean }>
   warnings?: string[]
 }
 
@@ -173,6 +173,19 @@ interface PdfBridgeNativeHostResponse {
   error?: string | null
   logPath?: string
 }
+
+interface PromptApiAdapter {
+  name: string
+  model: any
+}
+
+interface WSTranslateTask {
+  task_id: string
+  system_prompt?: string
+  user_prompt: string
+}
+
+type BridgeAgentStatus = "disconnected" | "connecting" | "connected" | "error"
 
 const PDF_TRANSLATION_PROGRESS: Record<PdfTranslationStage, number> = {
   idle: 0,
@@ -193,12 +206,37 @@ function PdfTranslationTool() {
   const [healthSummary, setHealthSummary] = useState("")
   const [nativeHostSummary, setNativeHostSummary] = useState("")
   const [isNativeHostRunning, setIsNativeHostRunning] = useState(false)
+  const [bridgeAgentStatus, setBridgeAgentStatus] = useState<BridgeAgentStatus>("disconnected")
+  const [promptApiSummary, setPromptApiSummary] = useState("")
+  const [activeTaskIds, setActiveTaskIds] = useState<string[]>([])
+  const [bridgeLogs, setBridgeLogs] = useState<string[]>([])
   const [markdown, setMarkdown] = useState("")
   const abortControllerRef = useRef<AbortController | null>(null)
+  const bridgeSocketRef = useRef<WebSocket | null>(null)
 
   const isRunning = stage === "health" || stage === "ocr" || stage === "translate"
   const canTranslate = Boolean(file) && !isRunning
   const canUseNativeHost = isLocalBridgeServiceUrl(pdfTranslationConfig.serviceUrl)
+  const isChromeGeminiProvider = pdfTranslationConfig.provider === "chrome-gemini"
+
+  const appendBridgeLog = useCallback((message: string) => {
+    const time = new Date().toLocaleTimeString("zh-TW", { hour12: false })
+    setBridgeLogs(previous => [...previous.slice(-79), `[${time}] ${message}`])
+  }, [])
+
+  const disconnectBridgeAgent = useCallback(() => {
+    const socket = bridgeSocketRef.current
+    bridgeSocketRef.current = null
+    if (socket && socket.readyState !== WebSocket.CLOSED) {
+      socket.close()
+    }
+    setBridgeAgentStatus("disconnected")
+    setActiveTaskIds([])
+  }, [])
+
+  useEffect(() => {
+    return () => disconnectBridgeAgent()
+  }, [disconnectBridgeAgent])
 
   const runNativeHostAction = async (action: "status" | "start" | "stop") => {
     setStage("health")
@@ -224,6 +262,118 @@ function PdfTranslationTool() {
     }
   }
 
+  const checkPromptApi = async () => {
+    const promptApi = getPromptApi()
+    if (!promptApi) {
+      const message = i18n.t("options.pdfTranslation.bridgeAgent.promptApiUnavailable")
+      setPromptApiSummary(message)
+      appendBridgeLog(message)
+      throw new Error(message)
+    }
+
+    const availability = await getPromptAvailability(promptApi)
+    const summary = `${promptApi.name}: ${availability}`
+    setPromptApiSummary(summary)
+    appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.promptApi")} ${summary}`)
+
+    if (isPromptUnavailable(availability)) {
+      throw new Error(i18n.t("options.pdfTranslation.bridgeAgent.promptApiUnavailable"))
+    }
+
+    return promptApi
+  }
+
+  const connectBridgeAgent = async () => {
+    try {
+      disconnectBridgeAgent()
+
+      const promptApi = await checkPromptApi()
+      const wsUrl = toBridgeWebSocketUrl(pdfTranslationConfig.serviceUrl)
+      appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.connecting")} ${wsUrl}`)
+      setBridgeAgentStatus("connecting")
+
+      const socket = new WebSocket(wsUrl)
+      bridgeSocketRef.current = socket
+
+      socket.onopen = () => {
+        setBridgeAgentStatus("connected")
+        appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.connected"))
+      }
+
+      socket.onclose = () => {
+        if (bridgeSocketRef.current === socket) {
+          bridgeSocketRef.current = null
+          setBridgeAgentStatus("disconnected")
+          setActiveTaskIds([])
+        }
+        appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.disconnected"))
+      }
+
+      socket.onerror = () => {
+        setBridgeAgentStatus("error")
+        appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.socketError"))
+      }
+
+      socket.onmessage = (event) => {
+        void handleBridgeTask(event, promptApi, socket, appendBridgeLog, setActiveTaskIds)
+      }
+    }
+    catch (error) {
+      setBridgeAgentStatus("error")
+      const message = getErrorMessage(error)
+      setErrorMessage(message)
+      appendBridgeLog(message)
+    }
+  }
+
+  const ensureBridgeService = async () => {
+    setStage("health")
+    setErrorMessage("")
+    setStatusMessage(i18n.t("options.pdfTranslation.tool.status.ensureService"))
+    appendBridgeLog(i18n.t("options.pdfTranslation.tool.status.ensureService"))
+
+    try {
+      if (canUseNativeHost) {
+        const status = await sendMessage("pdfBridgeNativeHost", {
+          action: "status",
+          serviceUrl: pdfTranslationConfig.serviceUrl,
+        }) as PdfBridgeNativeHostResponse
+
+        setIsNativeHostRunning(status.status === "running")
+        setNativeHostSummary(formatNativeHostSummary(status))
+        appendBridgeLog(formatNativeHostSummary(status))
+
+        if (status.status !== "running") {
+          const start = await sendMessage("pdfBridgeNativeHost", {
+            action: "start",
+            serviceUrl: pdfTranslationConfig.serviceUrl,
+          }) as PdfBridgeNativeHostResponse
+          setIsNativeHostRunning(start.status === "running")
+          setNativeHostSummary(formatNativeHostSummary(start))
+          appendBridgeLog(formatNativeHostSummary(start))
+        }
+      }
+      else {
+        appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.lanMode"))
+      }
+
+      const health = await fetchBridgeHealth(pdfTranslationConfig.serviceUrl)
+      const summary = formatBridgeHealthSummary(health)
+      setHealthSummary(summary)
+      appendBridgeLog(`${i18n.t("options.pdfTranslation.tool.healthResult")}: ${summary}`)
+      if (isChromeGeminiProvider) {
+        await connectBridgeAgent()
+      }
+      setStatusMessage(i18n.t("options.pdfTranslation.tool.status.ensureDone"))
+      setStage("idle")
+    }
+    catch (error) {
+      setErrorMessage(getErrorMessage(error))
+      setStatusMessage(i18n.t("options.pdfTranslation.tool.status.error"))
+      setStage("error")
+    }
+  }
+
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null
     setFile(selectedFile)
@@ -241,14 +391,10 @@ function PdfTranslationTool() {
     abortControllerRef.current = controller
 
     try {
-      const health = await fetchJson<PdfHealthResponse>(`${trimTrailingSlash(pdfTranslationConfig.serviceUrl)}/pdf/health`, {
-        signal: controller.signal,
-      })
-      const dependencies = health.dependencies
-        ? Object.entries(health.dependencies).map(([name, value]) => `${name}: ${value}`).join(", ")
-        : ""
-      const warnings = health.warnings?.length ? ` ${health.warnings.join(" ")}` : ""
-      setHealthSummary(`${health.status ?? "unknown"}${health.python ? ` / Python ${health.python}` : ""}${dependencies ? ` / ${dependencies}` : ""}${warnings}`)
+      const health = await fetchBridgeHealth(pdfTranslationConfig.serviceUrl, controller.signal)
+      const summary = formatBridgeHealthSummary(health)
+      setHealthSummary(summary)
+      appendBridgeLog(`${i18n.t("options.pdfTranslation.tool.healthResult")}: ${health.status ?? "unknown"}`)
       setStatusMessage(i18n.t("options.pdfTranslation.tool.status.healthDone"))
       setStage("idle")
     }
@@ -371,6 +517,10 @@ function PdfTranslationTool() {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <Button onClick={() => void ensureBridgeService()} disabled={isRunning}>
+            <IconActivity className="size-4" />
+            {i18n.t("options.pdfTranslation.tool.ensureService")}
+          </Button>
           <Button variant="outline" onClick={() => void runNativeHostAction("status")} disabled={isRunning || !canUseNativeHost}>
             <IconRefresh className="size-4" />
             {i18n.t("options.pdfTranslation.nativeHost.checkStatus")}
@@ -386,6 +536,14 @@ function PdfTranslationTool() {
           <Button variant="outline" onClick={checkHealth} disabled={isRunning}>
             <IconHeartbeat className="size-4" />
             {i18n.t("options.pdfTranslation.tool.checkHealth")}
+          </Button>
+          <Button variant="outline" onClick={() => void connectBridgeAgent()} disabled={isRunning || !isChromeGeminiProvider || bridgeAgentStatus === "connected"}>
+            <IconServer className="size-4" />
+            {i18n.t("options.pdfTranslation.bridgeAgent.connect")}
+          </Button>
+          <Button variant="outline" onClick={disconnectBridgeAgent} disabled={isRunning || bridgeAgentStatus === "disconnected"}>
+            <IconX className="size-4" />
+            {i18n.t("options.pdfTranslation.bridgeAgent.disconnect")}
           </Button>
           <Button onClick={translatePdf} disabled={!canTranslate}>
             <IconPlayerPlayFilled className="size-4" />
@@ -422,6 +580,28 @@ function PdfTranslationTool() {
           </Alert>
         )}
 
+        <div className="grid gap-3 rounded-md border p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-sm font-medium">{i18n.t("options.pdfTranslation.bridgeAgent.title")}</div>
+              <div className="text-xs text-muted-foreground">
+                {i18n.t(`options.pdfTranslation.bridgeAgent.status.${bridgeAgentStatus}`)}
+                {promptApiSummary ? ` / ${promptApiSummary}` : ""}
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {i18n.t("options.pdfTranslation.bridgeAgent.queue")}
+              :
+              {activeTaskIds.length}
+            </div>
+          </div>
+          <div className="min-h-32 max-h-56 overflow-y-auto rounded-md bg-muted p-3 font-mono text-xs">
+            {bridgeLogs.length
+              ? bridgeLogs.map((entry, index) => <div key={`${entry}-${index}`}>{entry}</div>)
+              : <div className="text-muted-foreground">{i18n.t("options.pdfTranslation.bridgeAgent.emptyLog")}</div>}
+          </div>
+        </div>
+
         {errorMessage && (
           <Alert variant="destructive">
             <AlertTitle>{i18n.t("options.pdfTranslation.tool.errorTitle")}</AlertTitle>
@@ -452,6 +632,119 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   }
 
   return payload as T
+}
+
+async function fetchBridgeHealth(serviceUrl: string, signal?: AbortSignal) {
+  return await fetchJson<PdfHealthResponse>(`${trimTrailingSlash(serviceUrl)}/pdf/health`, { signal })
+}
+
+function formatBridgeHealthSummary(health: PdfHealthResponse) {
+  const dependencies = health.dependencies
+    ? health.dependencies.map(dependency => `${dependency.name}: ${dependency.installed ? "installed" : "missing"}`).join(", ")
+    : ""
+  const warnings = health.warnings?.length ? ` ${health.warnings.join(" ")}` : ""
+  return `${health.status ?? "unknown"}${health.python_version ? ` / Python ${health.python_version}` : ""}${dependencies ? ` / ${dependencies}` : ""}${warnings}`
+}
+
+function toBridgeWebSocketUrl(serviceUrl: string) {
+  const url = new URL(trimTrailingSlash(serviceUrl))
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:"
+  url.pathname = "/ws"
+  url.search = ""
+  url.hash = ""
+  return url.toString()
+}
+
+function getPromptApi(): PromptApiAdapter | null {
+  const root = globalThis as any
+
+  if (root.LanguageModel && typeof root.LanguageModel.create === "function") {
+    return { name: "LanguageModel", model: root.LanguageModel }
+  }
+
+  const aiObj = root.chrome?.ai || root.ai
+  if (aiObj?.languageModel && typeof aiObj.languageModel.create === "function") {
+    return { name: "chrome.ai.languageModel", model: aiObj.languageModel }
+  }
+
+  return null
+}
+
+async function getPromptAvailability(promptApi: PromptApiAdapter) {
+  if (typeof promptApi.model.availability === "function") {
+    return await promptApi.model.availability() as string
+  }
+
+  if (typeof promptApi.model.capabilities === "function") {
+    const capabilities = await promptApi.model.capabilities()
+    return capabilities.available as string
+  }
+
+  return "available"
+}
+
+function isPromptUnavailable(availability: string) {
+  return availability === "no" || availability === "unavailable"
+}
+
+async function createPromptSession(promptApi: PromptApiAdapter, systemPrompt: string) {
+  if (promptApi.name === "LanguageModel") {
+    return await promptApi.model.create({
+      initialPrompts: [{ role: "system", content: systemPrompt }],
+    })
+  }
+
+  return await promptApi.model.create({ systemPrompt })
+}
+
+async function handleBridgeTask(
+  event: MessageEvent,
+  promptApi: PromptApiAdapter,
+  socket: WebSocket,
+  appendBridgeLog: (message: string) => void,
+  setActiveTaskIds: (updater: (previous: string[]) => string[]) => void,
+) {
+  const task = JSON.parse(event.data) as WSTranslateTask
+  const taskLabel = task.task_id.slice(0, 8)
+  setActiveTaskIds(previous => [...previous, task.task_id])
+  appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.taskReceived")} ${taskLabel}`)
+
+  const startedAt = performance.now()
+  let session: any = null
+
+  try {
+    const systemPrompt = task.system_prompt || "You are a professional translator. Translate the following text into Traditional Chinese. Output only the translated text."
+    session = await createPromptSession(promptApi, systemPrompt)
+    const result = await session.prompt(task.user_prompt)
+    const elapsedMs = Math.round(performance.now() - startedAt)
+    socket.send(JSON.stringify({
+      task_id: task.task_id,
+      success: true,
+      result,
+      elapsed_ms: elapsedMs,
+    }))
+    appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.taskSucceeded")} ${taskLabel} / ${elapsedMs}ms`)
+  }
+  catch (error) {
+    const elapsedMs = Math.round(performance.now() - startedAt)
+    const message = getErrorMessage(error)
+    socket.send(JSON.stringify({
+      task_id: task.task_id,
+      success: false,
+      error: message,
+      elapsed_ms: elapsedMs,
+    }))
+    appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.taskFailed")} ${taskLabel}: ${message}`)
+  }
+  finally {
+    if (session && typeof session.destroy === "function") {
+      try {
+        await session.destroy()
+      }
+      catch {}
+    }
+    setActiveTaskIds(previous => previous.filter(taskId => taskId !== task.task_id))
+  }
 }
 
 function extractErrorMessage(payload: unknown) {

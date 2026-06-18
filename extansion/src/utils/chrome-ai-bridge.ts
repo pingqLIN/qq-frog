@@ -18,6 +18,54 @@ interface WSTranslateResult {
   elapsed_ms?: number
 }
 
+interface PromptApiAdapter {
+  name: string
+  model: any
+}
+
+function getPromptApi(): PromptApiAdapter | null {
+  const root = globalThis as any
+  if (root.LanguageModel && typeof root.LanguageModel.create === "function") {
+    return { name: "LanguageModel", model: root.LanguageModel }
+  }
+
+  const aiObj = root.chrome?.ai || root.ai
+  if (aiObj?.languageModel && typeof aiObj.languageModel.create === "function") {
+    return { name: "chrome.ai.languageModel", model: aiObj.languageModel }
+  }
+
+  return null
+}
+
+async function getPromptAvailability(promptApi: PromptApiAdapter): Promise<string> {
+  if (typeof promptApi.model.availability === "function") {
+    return await promptApi.model.availability()
+  }
+
+  if (typeof promptApi.model.capabilities === "function") {
+    const capabilities = await promptApi.model.capabilities()
+    return capabilities.available
+  }
+
+  return "available"
+}
+
+function isPromptUnavailable(availability: string) {
+  return availability === "no" || availability === "unavailable"
+}
+
+async function createPromptSession(promptApi: PromptApiAdapter, systemPrompt: string) {
+  if (promptApi.name === "LanguageModel") {
+    return await promptApi.model.create({
+      initialPrompts: [{ role: "system", content: systemPrompt }],
+    })
+  }
+
+  return await promptApi.model.create({
+    systemPrompt,
+  })
+}
+
 export class ChromeAIBridge {
   public url: string
   private socket: WebSocket | null = null
@@ -39,9 +87,9 @@ export class ChromeAIBridge {
     logger.info(`[ChromeAIBridge] 正在連線至 ${this.url}`)
 
     // 主動檢查 Prompt API 支援性並警告
-    const aiObj = (globalThis as any).chrome?.ai || (globalThis as any).ai
-    if (!aiObj || !aiObj.languageModel) {
-      logger.error("[ChromeAIBridge] ❌ 此 Chrome 環境不支援 Prompt API (chrome.ai.languageModel)")
+    const promptApi = getPromptApi()
+    if (!promptApi) {
+      logger.error("[ChromeAIBridge] ❌ 此 Chrome 環境不支援 Prompt API (LanguageModel/chrome.ai.languageModel)")
     }
 
     try {
@@ -134,22 +182,19 @@ export class ChromeAIBridge {
     let session: any = null
 
     try {
-      const aiObj = (globalThis as any).chrome?.ai || (globalThis as any).ai
-      if (!aiObj || !aiObj.languageModel) {
-        throw new Error("此 Chrome 環境不支援 Prompt API (chrome.ai.languageModel)")
+      const promptApi = getPromptApi()
+      if (!promptApi) {
+        throw new Error("此 Chrome 環境不支援 Prompt API (LanguageModel/chrome.ai.languageModel)")
       }
 
-      const capabilities = await aiObj.languageModel.capabilities()
-      if (capabilities.available === "no") {
-        throw new Error("Gemini Nano 尚未就緒 (capabilities.available is 'no')")
+      const availability = await getPromptAvailability(promptApi)
+      if (isPromptUnavailable(availability)) {
+        throw new Error(`Gemini Nano 尚未就緒 (availability is '${availability}')`)
       }
 
       const sysPrompt = task.system_prompt || "You are a professional academic translator. Translate the given English text into Traditional Chinese (繁體中文). Preserve LaTeX math expressions exactly as-is. Output only the translated text, no explanations."
 
-      session = await aiObj.languageModel.create({
-        systemPrompt: sysPrompt,
-        temperature: task.temperature ?? 0.3,
-      })
+      session = await createPromptSession(promptApi, sysPrompt)
 
       const translation = await session.prompt(task.user_prompt)
       const elapsed = Date.now() - startTime

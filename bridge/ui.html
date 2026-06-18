@@ -302,35 +302,85 @@
         box.scrollTop = box.scrollHeight
       }
 
+      function getPromptApi() {
+        const root = typeof globalThis !== "undefined" ? globalThis : window
+
+        if (root.LanguageModel && typeof root.LanguageModel.create === "function") {
+          return { name: "LanguageModel", model: root.LanguageModel }
+        }
+
+        const aiObj = root.chrome?.ai || root.ai || window.ai
+        if (aiObj?.languageModel && typeof aiObj.languageModel.create === "function") {
+          return { name: "window.ai.languageModel", model: aiObj.languageModel }
+        }
+
+        return null
+      }
+
+      async function getPromptAvailability(promptApi) {
+        if (typeof promptApi.model.availability === "function") {
+          return await promptApi.model.availability()
+        }
+
+        if (typeof promptApi.model.capabilities === "function") {
+          const capabilities = await promptApi.model.capabilities()
+          return capabilities.available
+        }
+
+        return "available"
+      }
+
+      function isPromptUnavailable(availability) {
+        return availability === "no" || availability === "unavailable"
+      }
+
+      function isPromptDownloading(availability) {
+        return availability === "after-download" || availability === "downloadable" || availability === "downloading"
+      }
+
+      async function createPromptSession(promptApi, systemPrompt) {
+        if (promptApi.name === "LanguageModel") {
+          return await promptApi.model.create({
+            initialPrompts: [{ role: "system", content: systemPrompt }],
+          })
+        }
+
+        return await promptApi.model.create({
+          systemPrompt,
+        })
+      }
+
       // ── 檢測 Gemini Nano ──────────────────────────────────────────
       async function checkGeminiNano() {
         const dot = document.getElementById("nanoDot")
         const val = document.getElementById("nanoVal")
 
-        const aiObj = window.ai || (typeof globalThis !== "undefined" && globalThis.ai)
+        const promptApi = getPromptApi()
 
-        if (!aiObj || !aiObj.languageModel) {
+        if (!promptApi) {
           dot.className = "status-icon red"
           val.textContent = "不支援 Prompt API"
-          log("此瀏覽器不支援 Chrome Prompt API (window.ai 未啟用)", "error")
+          log("此瀏覽器不支援 Chrome Prompt API (LanguageModel/window.ai 均未啟用)", "error")
           return false
         }
 
         try {
-          const capabilities = await aiObj.languageModel.capabilities()
-          if (capabilities.available === "no") {
+          const availability = await getPromptAvailability(promptApi)
+          log(`Prompt API 入口：${promptApi.name}，可用狀態：${availability}`, "info")
+
+          if (isPromptUnavailable(availability)) {
             dot.className = "status-icon red"
             val.textContent = "模型尚未就緒"
-            log("Gemini Nano 尚未就緒 (available=no)。請至 chrome://components 檢查 GEMINI_NANO", "error")
+            log("Gemini Nano 尚未就緒。請至 chrome://on-device-internals/ 檢查模型狀態", "error")
             return false
           }
 
-          if (capabilities.available === "after-download") {
+          if (isPromptDownloading(availability)) {
             dot.className = "status-icon yellow"
             val.textContent = "模型下載中..."
             log("Gemini Nano 正在下載中，完成後將自動就緒", "warn")
             isSupported = true
-            languageModel = aiObj.languageModel
+            languageModel = promptApi
             return true
           }
 
@@ -338,7 +388,7 @@
           val.textContent = "就緒 (Ready)"
           log("Gemini Nano 環境檢測完成，狀態：Ready", "success")
           isSupported = true
-          languageModel = aiObj.languageModel
+          languageModel = promptApi
           return true
         } catch (err) {
           dot.className = "status-icon red"
@@ -427,10 +477,7 @@
             task.system_prompt ||
             "You are a professional translator. Translate the following text into Traditional Chinese (繁體中文). Do not include any explanations."
 
-          session = await languageModel.create({
-            systemPrompt: sysPrompt,
-            temperature: task.temperature || 0.3,
-          })
+          session = await createPromptSession(languageModel, sysPrompt)
 
           // 呼叫 Nano
           const translation = await session.prompt(task.user_prompt)

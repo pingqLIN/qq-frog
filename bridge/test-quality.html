@@ -398,6 +398,7 @@ The signal-to-noise ratio (SNR) is defined as $\text{SNR} = \frac{P_\text{signal
 
       // ── 狀態 ────────────────────────────────────────────────────
       let session = null
+      let languageModel = null
       let isSupported = false
       const timings = []
 
@@ -410,40 +411,92 @@ The signal-to-noise ratio (SNR) is defined as $\text{SNR} = \frac{P_\text{signal
         box.scrollTop = box.scrollHeight
       }
 
+      function getPromptApi() {
+        const root = typeof globalThis !== "undefined" ? globalThis : window
+
+        if (root.LanguageModel && typeof root.LanguageModel.create === "function") {
+          return { name: "LanguageModel", model: root.LanguageModel }
+        }
+
+        const aiObj = root.chrome?.ai || root.ai || window.ai
+        if (aiObj?.languageModel && typeof aiObj.languageModel.create === "function") {
+          return { name: "window.ai.languageModel", model: aiObj.languageModel }
+        }
+
+        return null
+      }
+
+      async function getPromptAvailability(promptApi) {
+        if (typeof promptApi.model.availability === "function") {
+          return await promptApi.model.availability()
+        }
+
+        if (typeof promptApi.model.capabilities === "function") {
+          const capabilities = await promptApi.model.capabilities()
+          return capabilities.available
+        }
+
+        return "available"
+      }
+
+      function isPromptUnavailable(availability) {
+        return availability === "no" || availability === "unavailable"
+      }
+
+      function isPromptDownloading(availability) {
+        return availability === "after-download" || availability === "downloadable" || availability === "downloading"
+      }
+
+      async function createPromptSession(promptApi, systemPrompt) {
+        if (promptApi.name === "LanguageModel") {
+          return await promptApi.model.create({
+            initialPrompts: [{ role: "system", content: systemPrompt }],
+          })
+        }
+
+        return await promptApi.model.create({
+          systemPrompt,
+        })
+      }
+
       // ── 環境檢測 ──────────────────────────────────────────────────
       async function checkEnvironment() {
         const dot = document.getElementById("statusDot")
         const text = document.getElementById("statusText")
 
-        if (!window.ai) {
+        const promptApi = getPromptApi()
+
+        if (!promptApi) {
           dot.className = "dot red"
-          text.textContent = "❌ window.ai 不存在 — 請確認 Chrome 148+ 且已啟用 Prompt API flag"
-          log("window.ai 未定義。請前往 chrome://flags/#prompt-api-for-gemini-nano 啟用", "err")
+          text.textContent = "❌ Prompt API 不存在 — 請確認 Chrome 已啟用 Prompt API"
+          log("LanguageModel/window.ai 均未定義。請確認 Chrome Prompt API 已啟用", "err")
           return
         }
 
         try {
-          const capabilities = await window.ai.languageModel.capabilities()
-          log(`Prompt API capabilities: ${JSON.stringify(capabilities)}`, "info")
+          const availability = await getPromptAvailability(promptApi)
+          log(`Prompt API 入口：${promptApi.name}，可用狀態：${availability}`, "info")
 
-          if (capabilities.available === "no") {
+          if (isPromptUnavailable(availability)) {
             dot.className = "dot red"
             text.textContent = "❌ Gemini Nano 模型未就緒（尚未下載或不支援此硬體）"
             log("Gemini Nano 不可用，可能需要手動觸發下載", "err")
             return
           }
 
-          if (capabilities.available === "after-download") {
+          if (isPromptDownloading(availability)) {
             dot.className = "dot yellow"
             text.textContent = "⏳ Gemini Nano 正在下載中，請稍候..."
             log("模型下載中，請等待完成後再測試", "warn")
             isSupported = true
+            languageModel = promptApi
             return
           }
 
           dot.className = "dot green"
-          text.textContent = `✅ Gemini Nano 就緒 — maxTemperature: ${capabilities.maxTemperature ?? "?"}, defaultTopK: ${capabilities.defaultTopK ?? "?"}`
+          text.textContent = `✅ Gemini Nano 就緒 — ${promptApi.name}`
           isSupported = true
+          languageModel = promptApi
           log("Gemini Nano 環境就緒！", "ok")
         } catch (err) {
           dot.className = "dot red"
@@ -456,14 +509,15 @@ The signal-to-noise ratio (SNR) is defined as $\text{SNR} = \frac{P_\text{signal
       async function getSession() {
         if (session) return session
         log("建立 Gemini Nano session...", "info")
-        session = await window.ai.languageModel.create({
-          systemPrompt: `You are a professional academic translator. Translate the given English text into Traditional Chinese (繁體中文).
+        session = await createPromptSession(
+          languageModel,
+          `You are a professional academic translator. Translate the given English text into Traditional Chinese (繁體中文).
 Rules:
 1. Preserve ALL LaTeX math expressions exactly as-is (including $...$, $$...$$, \\begin{}...\\end{}, etc.)
 2. Preserve technical terms accurately
 3. Output ONLY the translated text, no explanations
 4. Maintain the original paragraph structure`,
-        })
+        )
         log("Session 建立成功", "ok")
         return session
       }

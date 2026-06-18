@@ -14,7 +14,7 @@ bridge/server.py  (FastAPI, port 8001)
     │  WebSocket
     ▼
 QQ Frog Extension (Chrome Extension Background SW)
-    │  window.ai.languageModel Prompt API
+    │  LanguageModel / window.ai.languageModel Prompt API
     ▼
 Chrome Gemini Nano（本地推論）
 ```

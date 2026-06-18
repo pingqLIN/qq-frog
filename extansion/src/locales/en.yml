@@ -296,11 +296,33 @@ options:
         stop: Stopping local PDF bridge.
         done: Native bridge command completed.
         error: Native bridge command failed.
+    bridgeAgent:
+      title: Chrome Gemini agent log
+      connect: Connect agent
+      disconnect: Disconnect agent
+      queue: Task queue
+      emptyLog: No agent log yet.
+      promptApi: Prompt API
+      promptApiUnavailable: This Chrome environment does not support Prompt API, or Gemini Nano is not ready.
+      connecting: Connecting to Bridge WebSocket
+      connected: Bridge WebSocket connected and listening for translation tasks.
+      disconnected: Bridge WebSocket disconnected.
+      socketError: Bridge WebSocket error.
+      lanMode: LAN URL mode does not start the service through Native Messaging; it only checks the configured URL.
+      taskReceived: Received translation task
+      taskSucceeded: Translation task completed
+      taskFailed: Translation task failed
+      status:
+        disconnected: Agent disconnected
+        connecting: Agent connecting
+        connected: Agent connected
+        error: Agent error
     tool:
       title: PDF Translation Tool
       description: Upload a PDF to the local PaddleOCR bridge, translate OCR text, and download Markdown output.
       chooseFile: Choose PDF
       targetLanguage: Target language
+      ensureService: Check and start service
       checkHealth: Check service
       translate: Translate PDF
       cancel: Cancel
@@ -315,6 +337,8 @@ options:
         ready: PDF ready.
         health: Checking local PDF service.
         healthDone: Service check completed.
+        ensureService: Checking and starting the PDF bridge service.
+        ensureDone: PDF bridge service is ready.
         ocr: Running PaddleOCR and translating the PDF.
         translate: Translating OCR text.
         success: Translation completed.
