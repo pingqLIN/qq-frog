@@ -287,7 +287,7 @@ options:
         textLayer: Text layer
     tool:
       title: PDF Translation Tool
-      description: Upload one PDF page to the local PaddleOCR bridge, translate OCR text, and download Markdown output.
+      description: Upload a PDF to the local PaddleOCR bridge, translate OCR text, and download Markdown output.
       chooseFile: Choose PDF
       targetLanguage: Target language
       checkHealth: Check service
