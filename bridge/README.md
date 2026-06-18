@@ -1,8 +1,8 @@
-# QQ Frog Local PDF Translation Bridge Prototype
+# QQ Frog Local PDF Translation Bridge
 
-本目錄目前是 PDF 翻譯工作的 Phase 0 橋接原型，用來驗證本機服務如何以 OpenAI-compatible API 串接 Chrome 內建 Gemini、LM Studio、OpenAI 與 Gemini API。
+本目錄提供 QQ Frog 的本機 PDF 翻譯 bridge，負責以 PaddlePaddle/PaddleOCR 執行 PDF OCR，並透過明確的 PDF 翻譯 provider 路由串接 Chrome 內建 Gemini、LM Studio OpenAI-compatible API、OpenAI 與 Gemini API。
 
-此目錄尚不是最終的 QQ Frog PDF 翻譯功能。目標架構仍需加入 PaddlePaddle/PaddleOCR 作為 OCR 核心，並把 PDF 翻譯設定與一般網頁翻譯 provider 分開建模。
+PDF 翻譯設定已和一般網頁翻譯 provider 分開建模；extension 的 PDF Translation 設定頁會使用獨立的本機服務 URL、provider 與輸出模式設定。
 
 ## 架構說明
 
@@ -26,7 +26,7 @@ Chrome Gemini Nano（本地推論）
 1. Chrome 瀏覽器版本 **148 或更新**
 2. 開啟 `chrome://flags/#prompt-api-for-gemini-nano`，設定為 **Enabled**
 3. 重新啟動 Chrome，並等待 Gemini Nano 模型下載完成（約 4 GB）
-4. 安裝 **QQ Frog Extension**。完整設定入口會在後續 PDF 翻譯 Gate 中補齊。
+4. 安裝 **QQ Frog Extension**，並在 Options 的 **PDF Translation** 設定頁設定本機 bridge URL 與 PDF 翻譯 provider。
 
 ### Bridge Server 端
 
@@ -79,8 +79,8 @@ uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 
 ### 3. 在 Chrome 中啟用 Extension Bridge
 
-- 目前 extension 端仍是原型接入，會依 provider/config 狀態建立 WebSocket。
-- 後續 Gate 會補上 PDF 翻譯專用設定頁、health check 與手動連線狀態。
+- Extension 端可透過 PDF Translation 設定頁設定本機 bridge。
+- 使用 `chrome-gemini` provider 時，需保持 extension bridge 或 `/ui` 代理頁與本機 bridge 連線。
 
 ### 4. 執行 PDF 翻譯
 
@@ -88,7 +88,7 @@ uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 
 ## 多後端支援與設定
 
-本 Bridge Server 原型支援四種 PDF 翻譯後端，會依據 OpenAI-compatible request 的 `model` 參數進行明確路由。未知 provider 會回傳錯誤，不會自動 fallback。
+本 Bridge Server 支援四種 PDF 翻譯後端，會依據 OpenAI-compatible request 的 `model` 參數進行明確路由。未知 provider 會回傳錯誤，不會自動 fallback。
 
 1. **`chrome-gemini`（預設）**
    - 路由條件：model 為 `chrome-gemini`、`chrome-ai`、`gemini-nano`，或以 `chrome-gemini/` 開頭。
@@ -137,7 +137,7 @@ uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 
 ---
 
-## 翻譯品質測試（Phase 0）
+## Chrome Gemini Nano 翻譯品質測試
 
 在開始完整整合前，建議先驗證瀏覽器的 Gemini Nano 是否就緒：
 
@@ -149,17 +149,17 @@ uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 
 ## API 端點
 
-| 端點                   | 方法      | 說明                                                         |
-| ---------------------- | --------- | ------------------------------------------------------------ |
-| `/ui`                  | GET       | 本機獨立小工具網頁                                           |
-| `/health`              | GET       | 健康狀態檢查，回傳 Extension/UI 連線與佇列狀態               |
-| `/pdf/health`          | GET       | PaddleOCR / PDF runtime health check                         |
-| `/pdf/ocr`             | POST      | Run PaddleOCR for one PDF page or the full PDF               |
-| `/pdf/translate`       | POST      | Translate normalized OCR JSON and return MVP Markdown output |
-| `/pdf/translate-file`  | POST      | Run full-PDF OCR and translation in one request              |
-| `/v1/models`           | GET       | OpenAI 相容的模型清單                                        |
-| `/v1/chat/completions` | POST      | 原型翻譯端點（自動執行多後端分流與 Chrome AI 分段）          |
-| `/ws`                  | WebSocket | Extension/UI 連線入口                                        |
+| 端點                   | 方法      | 說明                                                              |
+| ---------------------- | --------- | ----------------------------------------------------------------- |
+| `/ui`                  | GET       | 本機獨立小工具網頁                                                |
+| `/health`              | GET       | 健康狀態檢查，回傳 Extension/UI 連線與佇列狀態                    |
+| `/pdf/health`          | GET       | PaddleOCR / PDF runtime health check                              |
+| `/pdf/ocr`             | POST      | Run PaddleOCR for one PDF page or the full PDF                    |
+| `/pdf/translate`       | POST      | Translate normalized OCR JSON and return MVP Markdown output      |
+| `/pdf/translate-file`  | POST      | Run full-PDF OCR and translation in one request                   |
+| `/v1/models`           | GET       | OpenAI 相容的模型清單                                             |
+| `/v1/chat/completions` | POST      | OpenAI-compatible 翻譯端點（自動執行多後端分流與 Chrome AI 分段） |
+| `/ws`                  | WebSocket | Extension/UI 連線入口                                             |
 
 ### PDF OCR health check
 
