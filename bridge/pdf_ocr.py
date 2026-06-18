@@ -8,6 +8,7 @@ report actionable setup status before the OCR runtime is installed.
 from __future__ import annotations
 
 import importlib.util
+import os
 import platform
 import tempfile
 from pathlib import Path
@@ -98,7 +99,10 @@ def assert_pdf_ocr_ready() -> None:
 
 
 def _normalize_bbox(raw_bbox: Any) -> OcrBoundingBox | None:
-    if not isinstance(raw_bbox, list):
+    if hasattr(raw_bbox, "tolist"):
+        raw_bbox = raw_bbox.tolist()
+
+    if not isinstance(raw_bbox, (list, tuple)):
         return None
 
     points: list[list[float]] = []
@@ -112,6 +116,14 @@ def _normalize_bbox(raw_bbox: Any) -> OcrBoundingBox | None:
             points.append([float(point[0]), float(point[1])])
 
     return OcrBoundingBox(points=points) if points else None
+
+
+def _first_present(raw_result: dict[str, Any], keys: list[str]) -> Any:
+    for key in keys:
+        value = raw_result.get(key)
+        if value is not None:
+            return value
+    return []
 
 
 def _normalize_ocr_lines(raw_result: Any, page_index: int) -> list[OcrTextBlock]:
@@ -154,18 +166,25 @@ def _normalize_ocr_lines(raw_result: Any, page_index: int) -> list[OcrTextBlock]
     # PaddleOCR v3-style dict result. Keep this intentionally tolerant because
     # minor output keys differ by pipeline.
     if isinstance(raw_result, dict):
-        texts = raw_result.get("rec_texts") or raw_result.get("texts") or []
-        scores = raw_result.get("rec_scores") or raw_result.get("scores") or []
-        boxes = raw_result.get("rec_boxes") or raw_result.get("dt_polys") or raw_result.get("boxes") or []
+        texts = _first_present(raw_result, ["rec_texts", "texts"])
+        scores = _first_present(raw_result, ["rec_scores", "scores"])
+        boxes = _first_present(raw_result, ["rec_boxes", "dt_polys", "boxes"])
 
-        if isinstance(texts, list):
+        if hasattr(texts, "tolist"):
+            texts = texts.tolist()
+        if hasattr(scores, "tolist"):
+            scores = scores.tolist()
+        if hasattr(boxes, "tolist"):
+            boxes = boxes.tolist()
+
+        if isinstance(texts, (list, tuple)):
             for index, text_value in enumerate(texts):
                 text = str(text_value)
                 if not text:
                     continue
 
-                score = scores[index] if isinstance(scores, list) and index < len(scores) else None
-                box = boxes[index] if isinstance(boxes, list) and index < len(boxes) else None
+                score = scores[index] if isinstance(scores, (list, tuple)) and index < len(scores) else None
+                box = boxes[index] if isinstance(boxes, (list, tuple)) and index < len(boxes) else None
                 blocks.append(
                     OcrTextBlock(
                         page_index=page_index,
@@ -183,16 +202,30 @@ def _render_pdf_page_to_png(pdf_path: Path, page_index: int, scale: float) -> Pa
     import pypdfium2 as pdfium
 
     pdf = pdfium.PdfDocument(str(pdf_path))
-    if page_index < 0 or page_index >= len(pdf):
-        raise ValueError(f"page_index {page_index} is outside the PDF page range 0..{len(pdf) - 1}.")
+    try:
+        if page_index < 0 or page_index >= len(pdf):
+            raise ValueError(f"page_index {page_index} is outside the PDF page range 0..{len(pdf) - 1}.")
 
-    page = pdf[page_index]
-    bitmap = page.render(scale=scale)
-    image = bitmap.to_pil()
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
-        output = Path(temp_file.name)
-    image.save(output)
-    return output
+        page = pdf[page_index]
+        try:
+            bitmap = page.render(scale=scale)
+            try:
+                image = bitmap.to_pil()
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+                    output = Path(temp_file.name)
+                image.save(output)
+                return output
+            finally:
+                if hasattr(bitmap, "close"):
+                    bitmap.close()
+        finally:
+            if hasattr(page, "close"):
+                page.close()
+    finally:
+        if hasattr(pdf, "close"):
+            pdf.close()
+
+    raise RuntimeError("Failed to render PDF page.")
 
 
 def get_pdf_page_count(pdf_path: Path) -> int:
@@ -201,7 +234,11 @@ def get_pdf_page_count(pdf_path: Path) -> int:
     import pypdfium2 as pdfium
 
     pdf = pdfium.PdfDocument(str(pdf_path))
-    return len(pdf)
+    try:
+        return len(pdf)
+    finally:
+        if hasattr(pdf, "close"):
+            pdf.close()
 
 
 def _resolve_page_indices(pdf_path: Path, page_indices: Iterable[int] | None) -> list[int]:
@@ -219,21 +256,37 @@ def _resolve_page_indices(pdf_path: Path, page_indices: Iterable[int] | None) ->
     return resolved
 
 
-def run_pdf_ocr(pdf_path: Path, page_indices: Iterable[int] | None = None, scale: float = 2.0) -> PdfOcrResult:
-    assert_pdf_ocr_ready()
+def _create_paddle_ocr() -> Any:
+    os.environ.setdefault("PADDLE_PDX_ENABLE_MKLDNN_BYDEFAULT", "0")
 
     from paddleocr import PaddleOCR
 
-    ocr = PaddleOCR(use_angle_cls=True, lang="en")
+    try:
+        return PaddleOCR(
+            use_doc_orientation_classify=False,
+            use_doc_unwarping=False,
+            use_textline_orientation=False,
+            lang="en",
+        )
+    except ValueError:
+        return PaddleOCR(use_angle_cls=False, lang="en")
+
+
+def run_pdf_ocr(pdf_path: Path, page_indices: Iterable[int] | None = None, scale: float = 2.0) -> PdfOcrResult:
+    assert_pdf_ocr_ready()
+
+    ocr = _create_paddle_ocr()
     pages: list[PdfOcrPageResult] = []
 
     for page_index in _resolve_page_indices(pdf_path, page_indices):
         image_path = _render_pdf_page_to_png(pdf_path, page_index, scale)
         try:
-            if hasattr(ocr, "ocr"):
-                raw_result = ocr.ocr(str(image_path), cls=True)
-            else:
+            if hasattr(ocr, "predict"):
                 raw_result = ocr.predict(str(image_path))
+            elif hasattr(ocr, "ocr"):
+                raw_result = ocr.ocr(str(image_path), cls=False)
+            else:
+                raise RuntimeError("Unsupported PaddleOCR runtime: missing predict/ocr method.")
 
             page_result = raw_result[0] if isinstance(raw_result, list) and raw_result else raw_result
             pages.append(

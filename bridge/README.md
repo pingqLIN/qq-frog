@@ -32,6 +32,7 @@ Chrome Gemini Nano（本地推論）
 
 - Python 3.9-3.13 is recommended for PaddlePaddle compatibility.
 - PaddlePaddle installed for your platform and accelerator.
+- Windows CPU smoke has been verified with Python 3.11, `paddlepaddle 3.3.1`, and `paddleocr 3.7.0`.
 
 ## 安裝與啟動
 
@@ -42,6 +43,25 @@ cd bridge
 # Install PaddlePaddle first by following the official PaddlePaddle guide for your platform.
 pip install -r requirements.txt
 ```
+
+Windows CPU example:
+
+```powershell
+py -3.11 -m venv ..\.venv-paddleocr
+..\.venv-paddleocr\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+..\.venv-paddleocr\Scripts\python.exe -m pip install paddlepaddle -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
+..\.venv-paddleocr\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+For PaddleOCR model downloads on Windows, these environment variables avoid two common local setup failures:
+
+```powershell
+$env:PADDLE_PDX_MODEL_SOURCE = "bos"
+$env:PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK = "True"
+$env:PADDLE_PDX_ENABLE_MKLDNN_BYDEFAULT = "0"
+```
+
+`PADDLE_PDX_ENABLE_MKLDNN_BYDEFAULT=0` avoids a PaddlePaddle CPU/oneDNN inference failure seen on Windows with PaddlePaddle 3.3.x.
 
 ### 2. 啟動 Bridge Server
 
@@ -153,6 +173,14 @@ curl http://localhost:8001/pdf/health
 ```
 
 If dependencies are missing, the bridge still starts and returns a `needs_setup` status with the missing modules.
+
+### Real PaddleOCR smoke
+
+```powershell
+..\.venv-paddleocr\Scripts\python.exe smoke_pdf_ocr.py
+```
+
+Expected output includes `pdf ocr smoke ok` and OCR text containing `Hello PDF translation`.
 
 ### PDF OCR smoke
 
