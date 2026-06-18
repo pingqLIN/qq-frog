@@ -285,6 +285,31 @@ options:
       outputModes:
         bilingual-markdown: Bilingual Markdown
         text-layer: Text layer
+    tool:
+      title: PDF Translation Tool
+      description: Upload one PDF page to the local PaddleOCR bridge, translate OCR text, and download Markdown output.
+      chooseFile: Choose PDF
+      targetLanguage: Target language
+      pageIndex: Page index
+      checkHealth: Check service
+      translate: Translate PDF
+      cancel: Cancel
+      downloadMarkdown: Download Markdown
+      healthResult: Service status
+      errorTitle: PDF translation failed
+      preview: PDF translation Markdown preview
+      emptyOcr: PaddleOCR did not return any page blocks.
+      emptyTranslation: The PDF translation bridge returned an empty result.
+      status:
+        idle: Choose a PDF to start.
+        ready: PDF ready.
+        health: Checking local PDF service.
+        healthDone: Service check completed.
+        ocr: Running PaddleOCR.
+        translate: Translating OCR text.
+        success: Translation completed.
+        error: Translation failed.
+        cancelled: Translation cancelled.
   floatingButtonAndToolbar:
     title: Floating Button & Toolbar
     selectionToolbarDemoImageAlt: Selection Toolbar Demo
