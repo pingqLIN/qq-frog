@@ -1,4 +1,5 @@
 import "@/utils/zod-config"
+import type { PdfBridgeNativeHostResponse } from "@/utils/message"
 import { browser, defineBackground } from "#imports"
 import { initChromeAIBridge } from "@/utils/chrome-ai-bridge"
 import { logger } from "@/utils/logger"
@@ -37,6 +38,23 @@ export default defineBackground({
     onMessage("openOptionsPage", async () => {
       logger.info("openOptionsPage")
       await openOptionsPage()
+    })
+
+    onMessage("pdfBridgeNativeHost", async (message) => {
+      const hostName = "com.qq_frog.pdf_bridge"
+      try {
+        const response = await browser.runtime.sendNativeMessage(hostName, message.data)
+        return response as PdfBridgeNativeHostResponse
+      }
+      catch (error) {
+        logger.error("[Background] PDF bridge native host failed", error)
+        const response: PdfBridgeNativeHostResponse = {
+          ok: false,
+          status: "error",
+          message: error instanceof Error ? error.message : String(error),
+        }
+        return response
+      }
     })
 
     setupSidePanelMessageHandler({

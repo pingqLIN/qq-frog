@@ -1,6 +1,6 @@
 import type { ChangeEvent } from "react"
 import type { PdfTranslationOutputMode, PdfTranslationProvider } from "@/types/config/pdf-translation"
-import { IconDownload, IconHeartbeat, IconPlayerPlayFilled, IconUpload, IconX } from "@tabler/icons-react"
+import { IconDownload, IconHeartbeat, IconPlayerPlayFilled, IconPower, IconRefresh, IconServer, IconUpload, IconX } from "@tabler/icons-react"
 import { deepmerge } from "deepmerge-ts"
 import { saveAs } from "file-saver"
 import { useAtom } from "jotai"
@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/base-ui/textarea"
 import { PDF_TRANSLATION_OUTPUT_MODES, PDF_TRANSLATION_PROVIDERS } from "@/types/config/pdf-translation"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { i18n } from "@/utils/i18n"
+import { sendMessage } from "@/utils/message"
 import { ConfigCard } from "../../components/config-card"
 import { PageLayout } from "../../components/page-layout"
 
@@ -164,6 +165,15 @@ interface PdfTranslateResponse {
   markdown?: string
 }
 
+interface PdfBridgeNativeHostResponse {
+  ok: boolean
+  status: "running" | "stopped" | "starting" | "error"
+  message: string
+  pid?: number | null
+  error?: string | null
+  logPath?: string
+}
+
 const PDF_TRANSLATION_PROGRESS: Record<PdfTranslationStage, number> = {
   idle: 0,
   health: 15,
@@ -181,11 +191,37 @@ function PdfTranslationTool() {
   const [statusMessage, setStatusMessage] = useState(i18n.t("options.pdfTranslation.tool.status.idle"))
   const [errorMessage, setErrorMessage] = useState("")
   const [healthSummary, setHealthSummary] = useState("")
+  const [nativeHostSummary, setNativeHostSummary] = useState("")
+  const [isNativeHostRunning, setIsNativeHostRunning] = useState(false)
   const [markdown, setMarkdown] = useState("")
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const isRunning = stage === "health" || stage === "ocr" || stage === "translate"
   const canTranslate = Boolean(file) && !isRunning
+
+  const runNativeHostAction = async (action: "status" | "start" | "stop") => {
+    setStage("health")
+    setErrorMessage("")
+    setStatusMessage(i18n.t(`options.pdfTranslation.nativeHost.status.${action}`))
+
+    try {
+      const response = await sendMessage("pdfBridgeNativeHost", {
+        action,
+        serviceUrl: pdfTranslationConfig.serviceUrl,
+      }) as PdfBridgeNativeHostResponse
+
+      setIsNativeHostRunning(response.status === "running")
+      setNativeHostSummary(formatNativeHostSummary(response))
+      setStatusMessage(i18n.t("options.pdfTranslation.nativeHost.status.done"))
+      setStage("idle")
+    }
+    catch (error) {
+      setIsNativeHostRunning(false)
+      setErrorMessage(getErrorMessage(error))
+      setStatusMessage(i18n.t("options.pdfTranslation.nativeHost.status.error"))
+      setStage("error")
+    }
+  }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null
@@ -334,6 +370,18 @@ function PdfTranslationTool() {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => void runNativeHostAction("status")} disabled={isRunning}>
+            <IconRefresh className="size-4" />
+            {i18n.t("options.pdfTranslation.nativeHost.checkStatus")}
+          </Button>
+          <Button variant="outline" onClick={() => void runNativeHostAction("start")} disabled={isRunning || isNativeHostRunning}>
+            <IconPower className="size-4" />
+            {i18n.t("options.pdfTranslation.nativeHost.start")}
+          </Button>
+          <Button variant="outline" onClick={() => void runNativeHostAction("stop")} disabled={isRunning || !isNativeHostRunning}>
+            <IconServer className="size-4" />
+            {i18n.t("options.pdfTranslation.nativeHost.stop")}
+          </Button>
           <Button variant="outline" onClick={checkHealth} disabled={isRunning}>
             <IconHeartbeat className="size-4" />
             {i18n.t("options.pdfTranslation.tool.checkHealth")}
@@ -363,6 +411,13 @@ function PdfTranslationTool() {
           <Alert>
             <AlertTitle>{i18n.t("options.pdfTranslation.tool.healthResult")}</AlertTitle>
             <AlertDescription>{healthSummary}</AlertDescription>
+          </Alert>
+        )}
+
+        {nativeHostSummary && (
+          <Alert>
+            <AlertTitle>{i18n.t("options.pdfTranslation.nativeHost.title")}</AlertTitle>
+            <AlertDescription>{nativeHostSummary}</AlertDescription>
           </Alert>
         )}
 
@@ -422,6 +477,16 @@ function trimTrailingSlash(value: string) {
 function sanitizeFilename(value: string) {
   const withoutControlCharacters = Array.from(value).filter(char => char.charCodeAt(0) >= 32).join("")
   return withoutControlCharacters.replace(/[<>:"/\\|?*]/g, "_") || "qq-frog-pdf-translation"
+}
+
+function formatNativeHostSummary(response: PdfBridgeNativeHostResponse) {
+  const details = [
+    response.message,
+    response.pid ? `PID: ${response.pid}` : "",
+    response.error ? `Error: ${response.error}` : "",
+    response.logPath ? `Log: ${response.logPath}` : "",
+  ].filter(Boolean)
+  return details.join(" ")
 }
 
 function isAbortError(error: unknown) {

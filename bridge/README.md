@@ -82,7 +82,23 @@ uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 - Extension 端可透過 PDF Translation 設定頁設定本機 bridge。
 - 使用 `chrome-gemini` provider 時，需保持 extension bridge 或 `/ui` 代理頁與本機 bridge 連線。
 
-### 4. 執行 PDF 翻譯
+### 4. 允許 Extension 啟動本機 Bridge Server
+
+Chrome extension 不能直接啟動本機程式；若要從 QQ Frog Options 的 PDF Translation 設定頁按「Start bridge」啟動本機 `bridge/server.py`，需要先安裝 Native Messaging host。
+
+1. 到 `chrome://extensions` 開啟 QQ Frog 詳細資訊，複製 extension ID。
+2. 在 PowerShell 執行：
+
+```powershell
+cd Q:\Projects\qq-frog\bridge
+.\install_native_host_windows.ps1 -ExtensionId "<QQ_FROG_EXTENSION_ID>"
+```
+
+3. 回到 QQ Frog Options → **PDF Translation**，按 **Bridge status** 或 **Start bridge**。
+
+Native host 名稱固定為 `com.qq_frog.pdf_bridge`。它只會啟動本 repo 的 `bridge/server.py`，並只接受 localhost bridge URL。若要指定 Python，可先設定 `QQ_FROG_PYTHON` 環境變數；未設定時會優先使用 repo 根目錄的 `.venv-paddleocr`。
+
+### 5. 執行 PDF 翻譯
 
 可從 QQ Frog extension 的 PDF Translation 設定頁選擇 PDF，或直接呼叫 `/pdf/translate-file`。
 

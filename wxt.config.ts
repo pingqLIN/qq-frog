@@ -47,7 +47,7 @@ export default defineConfig({
       "identity",
       "scripting",
       "webNavigation",
-      ...(browser !== "firefox" ? ["offscreen", "sidePanel"] : []),
+      ...(browser !== "firefox" ? ["offscreen", "sidePanel", "nativeMessaging"] : []),
     ],
     host_permissions: [
       "*://*/*", // Required for scripting.executeScript in any frame

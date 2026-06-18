@@ -285,6 +285,17 @@ options:
       outputModes:
         bilingualMarkdown: Bilingual Markdown
         textLayer: Text layer
+    nativeHost:
+      title: Local bridge launcher
+      checkStatus: Bridge status
+      start: Start bridge
+      stop: Stop bridge
+      status:
+        status: Checking native bridge status.
+        start: Starting local PDF bridge.
+        stop: Stopping local PDF bridge.
+        done: Native bridge command completed.
+        error: Native bridge command failed.
     tool:
       title: PDF Translation Tool
       description: Upload a PDF to the local PaddleOCR bridge, translate OCR text, and download Markdown output.

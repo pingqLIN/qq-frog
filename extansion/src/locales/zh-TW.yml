@@ -284,6 +284,17 @@ options:
       outputModes:
         bilingualMarkdown: 雙語 Markdown
         textLayer: 文字層
+    nativeHost:
+      title: 本機 bridge 啟動器
+      checkStatus: Bridge 狀態
+      start: 啟動 bridge
+      stop: 停止 bridge
+      status:
+        status: 正在檢查 native bridge 狀態。
+        start: 正在啟動本機 PDF bridge。
+        stop: 正在停止本機 PDF bridge。
+        done: Native bridge 指令完成。
+        error: Native bridge 指令失敗。
     tool:
       title: PDF 翻譯工具
       description: 上傳 PDF 到本機 PaddleOCR bridge，翻譯 OCR 文字，並下載 Markdown 輸出。

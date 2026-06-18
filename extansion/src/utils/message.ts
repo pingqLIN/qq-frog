@@ -28,6 +28,8 @@ interface ProtocolMap {
   toggleSidePanel: (data?: { source?: "content-script" | "extension-user-action" }) => Promise<{ ok: true, action: "opened" | "closed" } | { ok: false, reason: "missing-window" | "unsupported" | "toggle-failed" | "requires-extension-user-action" }>
   // config
   getInitialConfig: () => Config | null
+  // local PDF bridge
+  pdfBridgeNativeHost: (data: PdfBridgeNativeHostRequest) => Promise<PdfBridgeNativeHostResponse>
   // translation state
   getEnablePageTranslationByTabId: (data: { tabId: number }) => boolean | undefined
   getEnablePageTranslationFromContentScript: () => Promise<boolean>
@@ -78,6 +80,21 @@ interface ProtocolMap {
   // offscreen internal
   ttsOffscreenPlay: (data: TTSPlaybackStartRequest) => Promise<TTSPlaybackStartResponse>
   ttsOffscreenStop: (data: TTSOffscreenStopRequest) => Promise<{ ok: true }>
+}
+
+export interface PdfBridgeNativeHostRequest {
+  action: "status" | "start" | "stop"
+  serviceUrl: string
+}
+
+export interface PdfBridgeNativeHostResponse {
+  ok: boolean
+  status: "running" | "stopped" | "starting" | "error"
+  message: string
+  pid?: number | null
+  health?: unknown
+  error?: string | null
+  logPath?: string
 }
 
 export const { sendMessage, onMessage }
