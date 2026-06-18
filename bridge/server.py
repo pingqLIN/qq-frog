@@ -19,7 +19,7 @@ import tempfile
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 
 from models import (
     ChatCompletionRequest,
@@ -101,8 +101,13 @@ app.add_middleware(
 @app.get("/ui")
 async def serve_ui():
     """提供獨立本機小工具 HTML 頁面"""
-    from fastapi.responses import FileResponse
-    return FileResponse("ui.html")
+    return FileResponse(Path(__file__).with_name("ui.html"))
+
+
+@app.get("/")
+async def root():
+    """Send browser users to the built-in bridge UI."""
+    return RedirectResponse(url="/ui")
 
 
 @app.get("/health")
@@ -148,7 +153,10 @@ async def pdf_ocr(request: Request, page_index: int | None = None):
     temp_path = await _write_request_pdf(request)
 
     try:
-        result = run_pdf_page_ocr(temp_path, page_index=page_index) if page_index is not None else run_pdf_ocr(temp_path)
+        if page_index is not None:
+            result = await asyncio.to_thread(run_pdf_page_ocr, temp_path, page_index=page_index)
+        else:
+            result = await asyncio.to_thread(run_pdf_ocr, temp_path)
         return result.model_dump()
     except ValueError as e:
         return JSONResponse(status_code=400, content={"error": {"message": str(e), "type": "invalid_request_error"}})
@@ -189,7 +197,7 @@ async def pdf_translate_file(
     temp_path = await _write_request_pdf(request)
 
     try:
-        ocr_result = run_pdf_ocr(temp_path)
+        ocr_result = await asyncio.to_thread(run_pdf_ocr, temp_path)
         backend = resolve_backend(model)
         translate_request = PdfTranslateRequest(
             model=model,
