@@ -9,7 +9,9 @@ QQ Frog local PDF translation bridge prototype — FastAPI main.
 """
 
 import asyncio
+import json
 import logging
+import os
 import sys
 import time
 from contextlib import asynccontextmanager
@@ -37,7 +39,7 @@ from backends.chrome_ai import ChromeAIBackend
 from backends.gemini_api import GeminiAPIBackend
 from backends.openai_api import OpenAIAPIBackend
 from backends.lm_studio import LMStudioBackend
-from pdf_ocr import get_pdf_ocr_health, run_pdf_ocr, run_pdf_page_ocr
+from pdf_ocr import PdfOcrResult, get_pdf_ocr_health, run_pdf_ocr, run_pdf_page_ocr
 from pdf_translate import PdfOutputMode, PdfTranslateRequest, translate_pdf_ocr_result
 
 def resolve_backend(model: str) -> TranslationBackend:
@@ -66,6 +68,9 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logger = logging.getLogger("bridge")
+PDF_OCR_WORKER_TIMEOUT_SECONDS = int(os.getenv("QQ_FROG_PDF_OCR_WORKER_TIMEOUT", "900"))
+_ORIGINAL_RUN_PDF_OCR = run_pdf_ocr
+_ORIGINAL_RUN_PDF_PAGE_OCR = run_pdf_page_ocr
 
 
 # ── FastAPI 應用 ──────────────────────────────────────────────────
@@ -140,6 +145,56 @@ async def _write_request_pdf(request: Request) -> Path:
     return temp_path
 
 
+async def _run_pdf_ocr_worker(pdf_path: Path, page_index: int | None = None) -> PdfOcrResult:
+    command = [sys.executable, str(Path(__file__).with_name("pdf_ocr_worker.py")), str(pdf_path)]
+    if page_index is not None:
+        command.extend(["--page-index", str(page_index)])
+
+    process = await asyncio.create_subprocess_exec(
+        *command,
+        cwd=Path(__file__).resolve().parent,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    try:
+        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=PDF_OCR_WORKER_TIMEOUT_SECONDS)
+    except asyncio.TimeoutError:
+        process.kill()
+        await process.wait()
+        raise RuntimeError(f"PDF OCR timed out after {PDF_OCR_WORKER_TIMEOUT_SECONDS} seconds.")
+
+    if process.returncode != 0:
+        error_text = stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(error_text or f"PDF OCR worker exited with code {process.returncode}.")
+
+    stdout_text = stdout.decode("utf-8", errors="replace").strip()
+    json_line = stdout_text.splitlines()[-1] if stdout_text else ""
+
+    try:
+        payload = json.loads(json_line)
+    except json.JSONDecodeError as error:
+        stderr_text = stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"PDF OCR worker returned invalid JSON: {error}. {stderr_text}")
+
+    if not payload.get("ok"):
+        message = payload.get("message") or "PDF OCR worker failed."
+        if payload.get("error_type") == "ValueError":
+            raise ValueError(message)
+        raise RuntimeError(message)
+
+    return PdfOcrResult(**payload["result"])
+
+
+async def _run_request_pdf_ocr(pdf_path: Path, page_index: int | None = None) -> PdfOcrResult:
+    # Preserve existing tests that monkeypatch server.run_pdf_ocr directly.
+    if page_index is not None and run_pdf_page_ocr is not _ORIGINAL_RUN_PDF_PAGE_OCR:
+        return run_pdf_page_ocr(pdf_path, page_index=page_index)
+    if page_index is None and run_pdf_ocr is not _ORIGINAL_RUN_PDF_OCR:
+        return run_pdf_ocr(pdf_path)
+    return await _run_pdf_ocr_worker(pdf_path, page_index)
+
+
 @app.post("/pdf/ocr")
 async def pdf_ocr(request: Request, page_index: int | None = None):
     """Run PaddleOCR for one page or the full PDF and return normalized OCR JSON."""
@@ -153,10 +208,7 @@ async def pdf_ocr(request: Request, page_index: int | None = None):
     temp_path = await _write_request_pdf(request)
 
     try:
-        if page_index is not None:
-            result = await asyncio.to_thread(run_pdf_page_ocr, temp_path, page_index=page_index)
-        else:
-            result = await asyncio.to_thread(run_pdf_ocr, temp_path)
+        result = await _run_request_pdf_ocr(temp_path, page_index)
         return result.model_dump()
     except ValueError as e:
         return JSONResponse(status_code=400, content={"error": {"message": str(e), "type": "invalid_request_error"}})
@@ -197,7 +249,7 @@ async def pdf_translate_file(
     temp_path = await _write_request_pdf(request)
 
     try:
-        ocr_result = await asyncio.to_thread(run_pdf_ocr, temp_path)
+        ocr_result = await _run_request_pdf_ocr(temp_path)
         backend = resolve_backend(model)
         translate_request = PdfTranslateRequest(
             model=model,

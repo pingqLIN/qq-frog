@@ -41,6 +41,10 @@ const PDF_TRANSLATION_OUTPUT_MODE_I18N_KEYS: Record<PdfTranslationOutputMode, st
   "text-layer": "textLayer",
 }
 
+const BRIDGE_HEALTH_TIMEOUT_MS = 5000
+const PDF_OCR_TIMEOUT_MS = 15 * 60 * 1000
+const PDF_TRANSLATE_TIMEOUT_MS = 15 * 60 * 1000
+
 export function PdfTranslationPage() {
   return (
     <PageLayout title={i18n.t("options.pdfTranslation.title")}>
@@ -164,6 +168,8 @@ interface PdfHealthResponse {
 interface PdfTranslateResponse {
   markdown?: string
 }
+
+type PdfOcrResponse = unknown
 
 interface PdfBridgeNativeHostResponse {
   ok: boolean
@@ -357,7 +363,7 @@ function PdfTranslationTool() {
         appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.lanMode"))
       }
 
-      const health = await fetchBridgeHealth(pdfTranslationConfig.serviceUrl)
+      const health = await fetchBridgeHealth(pdfTranslationConfig.serviceUrl, undefined, BRIDGE_HEALTH_TIMEOUT_MS)
       const summary = formatBridgeHealthSummary(health)
       setHealthSummary(summary)
       appendBridgeLog(`${i18n.t("options.pdfTranslation.tool.healthResult")}: ${summary}`)
@@ -391,7 +397,7 @@ function PdfTranslationTool() {
     abortControllerRef.current = controller
 
     try {
-      const health = await fetchBridgeHealth(pdfTranslationConfig.serviceUrl, controller.signal)
+      const health = await fetchBridgeHealth(pdfTranslationConfig.serviceUrl, controller.signal, BRIDGE_HEALTH_TIMEOUT_MS)
       const summary = formatBridgeHealthSummary(health)
       setHealthSummary(summary)
       appendBridgeLog(`${i18n.t("options.pdfTranslation.tool.healthResult")}: ${health.status ?? "unknown"}`)
@@ -425,20 +431,34 @@ function PdfTranslationTool() {
       const baseUrl = trimTrailingSlash(pdfTranslationConfig.serviceUrl)
       setStage("ocr")
       setStatusMessage(i18n.t("options.pdfTranslation.tool.status.ocr"))
+      appendBridgeLog(i18n.t("options.pdfTranslation.tool.status.ocr"))
 
-      const translateUrl = new URL(`${baseUrl}/pdf/translate-file`)
-      translateUrl.searchParams.set("model", pdfTranslationConfig.provider)
-      translateUrl.searchParams.set("target_language", targetLanguage)
-      translateUrl.searchParams.set("output_mode", pdfTranslationConfig.outputMode)
-
-      const translateResult = await fetchJson<PdfTranslateResponse>(translateUrl.toString(), {
+      const ocrResult = await fetchJson<PdfOcrResponse>(`${baseUrl}/pdf/ocr`, {
         method: "POST",
         headers: {
           "Content-Type": file.type || "application/pdf",
         },
         body: file,
         signal: controller.signal,
-      })
+      }, PDF_OCR_TIMEOUT_MS)
+
+      setStage("translate")
+      setStatusMessage(i18n.t("options.pdfTranslation.tool.status.translate"))
+      appendBridgeLog(i18n.t("options.pdfTranslation.tool.status.translate"))
+
+      const translateResult = await fetchJson<PdfTranslateResponse>(`${baseUrl}/pdf/translate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: pdfTranslationConfig.provider,
+          target_language: targetLanguage,
+          output_mode: pdfTranslationConfig.outputMode,
+          ocr: ocrResult,
+        }),
+        signal: controller.signal,
+      }, PDF_TRANSLATE_TIMEOUT_MS)
 
       if (!translateResult.markdown) {
         throw new Error(i18n.t("options.pdfTranslation.tool.emptyTranslation"))
@@ -622,20 +642,42 @@ function PdfTranslationTool() {
   )
 }
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init)
-  const responseText = await response.text()
-  const payload = responseText ? JSON.parse(responseText) as unknown : null
+async function fetchJson<T>(url: string, init?: RequestInit, timeoutMs = PDF_TRANSLATE_TIMEOUT_MS): Promise<T> {
+  const controller = new AbortController()
+  let timedOut = false
+  const timeout = window.setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, timeoutMs)
+  const parentSignal = init?.signal
+  const abortFromParent = () => controller.abort()
+  parentSignal?.addEventListener("abort", abortFromParent, { once: true })
 
-  if (!response.ok) {
-    throw new Error(extractErrorMessage(payload) ?? `${response.status} ${response.statusText}`)
+  try {
+    const response = await fetch(url, { ...init, signal: controller.signal })
+    const responseText = await response.text()
+    const payload = responseText ? JSON.parse(responseText) as unknown : null
+
+    if (!response.ok) {
+      throw new Error(extractErrorMessage(payload) ?? `${response.status} ${response.statusText}`)
+    }
+
+    return payload as T
   }
-
-  return payload as T
+  catch (error) {
+    if (timedOut) {
+      throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)} seconds.`)
+    }
+    throw error
+  }
+  finally {
+    window.clearTimeout(timeout)
+    parentSignal?.removeEventListener("abort", abortFromParent)
+  }
 }
 
-async function fetchBridgeHealth(serviceUrl: string, signal?: AbortSignal) {
-  return await fetchJson<PdfHealthResponse>(`${trimTrailingSlash(serviceUrl)}/pdf/health`, { signal })
+async function fetchBridgeHealth(serviceUrl: string, signal?: AbortSignal, timeoutMs = BRIDGE_HEALTH_TIMEOUT_MS) {
+  return await fetchJson<PdfHealthResponse>(`${trimTrailingSlash(serviceUrl)}/pdf/health`, { signal }, timeoutMs)
 }
 
 function formatBridgeHealthSummary(health: PdfHealthResponse) {

@@ -70,6 +70,20 @@ def check_health(service_url: str) -> tuple[bool, dict[str, Any] | None, str | N
         return False, None, str(error)
 
 
+def is_service_port_accepting(service_url: str) -> bool:
+    parsed = urllib.parse.urlparse(service_url)
+    host = parsed.hostname or "localhost"
+    port = parsed.port
+    if port is None:
+        return False
+
+    try:
+        with socket.create_connection((host, port), timeout=1):
+            return True
+    except OSError:
+        return False
+
+
 def is_pid_running(pid: int) -> bool:
     if pid <= 0:
         return False
@@ -120,6 +134,14 @@ def start_bridge(service_url: str) -> dict[str, Any]:
             "status": "running",
             "message": "PDF bridge is already running.",
             "health": health,
+            "pid": read_pid_file(),
+        }
+
+    if is_service_port_accepting(service_url):
+        return {
+            "ok": False,
+            "status": "error",
+            "message": "PDF bridge port is occupied, but /pdf/health is not reachable. Stop the existing hung process and start again.",
             "pid": read_pid_file(),
         }
 
@@ -195,10 +217,11 @@ def handle_message(message: dict[str, Any]) -> dict[str, Any]:
 
     if action == "status":
         running, health, error = check_health(service_url)
+        port_accepting = is_service_port_accepting(service_url) if not running else False
         return {
-            "ok": True,
-            "status": "running" if running else "stopped",
-            "message": "PDF bridge is running." if running else "PDF bridge is not reachable.",
+            "ok": not port_accepting,
+            "status": "running" if running else "error" if port_accepting else "stopped",
+            "message": "PDF bridge is running." if running else "PDF bridge port is occupied, but health is not reachable." if port_accepting else "PDF bridge is not reachable.",
             "health": health,
             "error": error,
             "pid": read_pid_file(),
