@@ -330,6 +330,10 @@ options:
       translate: Translate PDF
       cancel: Cancel
       downloadMarkdown: Download Markdown
+      outputLocationTitle: Translated file location
+      outputLocationPending: No file has been written yet. The translated Markdown stays in this page after translation finishes.
+      outputLocationReady: "Result is ready in the preview. Click Download Markdown to let Chrome save it to your browser's default downloads folder as $1."
+      outputLocationDownloaded: "Last download requested: $1. Check Chrome downloads if the browser asks where to save it."
       healthResult: Service status
       errorTitle: PDF translation failed
       preview: PDF translation Markdown preview
@@ -348,6 +352,7 @@ options:
         success: Translation completed.
         error: Translation failed.
         cancelled: Translation cancelled.
+        downloaded: "Download requested: $1"
       readinessStates:
         unknown: Not checked yet. Check and start service verifies OCR, the bridge, and the selected provider.
         checking: Checking the service, OCR runtime, and provider connection.

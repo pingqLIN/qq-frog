@@ -5,7 +5,13 @@ QQ Frog local PDF translation bridge prototype — FastAPI main.
 並透過 WebSocket 橋接至 Chrome Extension 執行 Chrome 內建 Gemini 翻譯。
 
 啟動方式：
-    uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+    python server.py
+
+或手動指定本機服務：
+    uvicorn server:app --host 127.0.0.1 --port 8001
+
+若要提供給信任的內網裝置，需明確使用：
+    uvicorn server:app --host 0.0.0.0 --port 8001
 """
 
 import asyncio
@@ -73,14 +79,48 @@ _ORIGINAL_RUN_PDF_OCR = run_pdf_ocr
 _ORIGINAL_RUN_PDF_PAGE_OCR = run_pdf_page_ocr
 
 
+def parse_bool_env(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+BRIDGE_HOST = os.getenv("QQ_FROG_BRIDGE_HOST", "127.0.0.1")
+BRIDGE_PORT = int(os.getenv("QQ_FROG_BRIDGE_PORT", "8001"))
+BRIDGE_RELOAD = parse_bool_env("QQ_FROG_BRIDGE_RELOAD", False)
+
+
+def get_display_host(host: str) -> str:
+    return "localhost" if host in {"0.0.0.0", "127.0.0.1"} else host
+
+
+def resolve_cors_origins() -> list[str]:
+    raw_origins = os.getenv("QQ_FROG_BRIDGE_CORS_ORIGINS")
+    if raw_origins:
+        return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
+    origins = [
+        f"http://localhost:{BRIDGE_PORT}",
+        f"http://127.0.0.1:{BRIDGE_PORT}",
+    ]
+    extension_id = os.getenv("QQ_FROG_EXTENSION_ID")
+    if extension_id:
+        origins.append(f"chrome-extension://{extension_id}")
+    return origins
+
+
+DISPLAY_HOST = get_display_host(BRIDGE_HOST)
+
+
 # ── FastAPI 應用 ──────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用程式生命週期"""
     logger.info("QQ Frog local PDF translation bridge 啟動中...")
-    logger.info("   等待 Chrome Extension 連線至 ws://localhost:8001/ws")
-    logger.info("   OpenAI-compatible client 請設定：--openai-base-url http://localhost:8001/v1")
+    logger.info(f"   等待 Chrome Extension 連線至 ws://{DISPLAY_HOST}:{BRIDGE_PORT}/ws")
+    logger.info(f"   OpenAI-compatible client 請設定：--openai-base-url http://{DISPLAY_HOST}:{BRIDGE_PORT}/v1")
     yield
     logger.info("Bridge Server 關閉")
 
@@ -92,10 +132,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# 允許本機 PDF 翻譯客戶端跨來源存取。
+# 允許本機 PDF 翻譯客戶端跨來源存取。若要放寬給其他來源，可設定
+# QQ_FROG_BRIDGE_CORS_ORIGINS="*" 或逗號分隔的 origin 清單。
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=resolve_cors_origins(),
+    allow_origin_regex=r"^chrome-extension://[a-p]{32}$",
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -394,12 +436,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 # ── 主程式進入點 ──────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    port = 8001
-    logger.info(f"啟動 Bridge Server — http://localhost:{port}")
+    logger.info(f"啟動 Bridge Server — http://{DISPLAY_HOST}:{BRIDGE_PORT}")
     uvicorn.run(
         "server:app",
-        host="0.0.0.0",
-        port=port,
-        reload=True,
+        host=BRIDGE_HOST,
+        port=BRIDGE_PORT,
+        reload=BRIDGE_RELOAD,
         log_level="info",
     )

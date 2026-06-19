@@ -37,7 +37,7 @@ py -3.11 -m venv ..\.venv-paddleocr
 ..\.venv-paddleocr\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
 ..\.venv-paddleocr\Scripts\python.exe -m pip install paddlepaddle -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
 ..\.venv-paddleocr\Scripts\python.exe -m pip install -r requirements-paddleocr.txt
-..\.venv-paddleocr\Scripts\python.exe -m uvicorn server:app --host 0.0.0.0 --port 8001
+..\.venv-paddleocr\Scripts\python.exe -m uvicorn server:app --host 127.0.0.1 --port 8001
 ```
 
 > 注意：安裝 Native Messaging host 時不要照抄 placeholder extension ID。請使用 `chrome://extensions` 顯示的真實 ID。

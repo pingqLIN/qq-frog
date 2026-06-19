@@ -219,6 +219,7 @@ export function PdfTranslationTool() {
   const [activeTaskIds, setActiveTaskIds] = useState<string[]>([])
   const [bridgeLogs, setBridgeLogs] = useState<string[]>([])
   const [markdown, setMarkdown] = useState("")
+  const [lastDownloadedFileName, setLastDownloadedFileName] = useState("")
   const abortControllerRef = useRef<AbortController | null>(null)
   const bridgeSocketRef = useRef<WebSocket | null>(null)
 
@@ -226,6 +227,7 @@ export function PdfTranslationTool() {
   const canTranslate = Boolean(file) && !isRunning
   const canUseNativeHost = isLocalBridgeServiceUrl(pdfTranslationConfig.serviceUrl)
   const isChromeGeminiProvider = pdfTranslationConfig.provider === "chrome-gemini"
+  const downloadFileName = getDownloadFileName(file)
 
   const appendBridgeLog = useCallback((message: string) => {
     const time = new Date().toLocaleTimeString("zh-TW", { hour12: false })
@@ -425,6 +427,7 @@ export function PdfTranslationTool() {
     setFile(selectedFile)
     setErrorMessage("")
     setMarkdown("")
+    setLastDownloadedFileName("")
     setStatusMessage(selectedFile ? i18n.t("options.pdfTranslation.tool.status.ready") : i18n.t("options.pdfTranslation.tool.status.idle"))
   }
 
@@ -472,6 +475,7 @@ export function PdfTranslationTool() {
     abortControllerRef.current = controller
     setErrorMessage("")
     setMarkdown("")
+    setLastDownloadedFileName("")
 
     try {
       if (bridgeReadiness !== "ready") {
@@ -542,8 +546,9 @@ export function PdfTranslationTool() {
   const downloadMarkdown = () => {
     if (!markdown)
       return
-    const baseName = file ? sanitizeFilename(file.name.replace(/\.pdf$/i, "")) : "qq-frog-pdf-translation"
-    saveAs(new Blob([markdown], { type: "text/markdown;charset=utf-8" }), `${baseName}.translated.md`)
+    saveAs(new Blob([markdown], { type: "text/markdown;charset=utf-8" }), downloadFileName)
+    setLastDownloadedFileName(downloadFileName)
+    setStatusMessage(i18n.t("options.pdfTranslation.tool.status.downloaded", [downloadFileName]))
   }
 
   return (
@@ -634,6 +639,20 @@ export function PdfTranslationTool() {
             <AlertDescription>{nativeHostSummary}</AlertDescription>
           </Alert>
         )}
+
+        <Alert>
+          <AlertTitle>{i18n.t("options.pdfTranslation.tool.outputLocationTitle")}</AlertTitle>
+          <AlertDescription className="space-y-1">
+            <div>
+              {markdown
+                ? i18n.t("options.pdfTranslation.tool.outputLocationReady", [downloadFileName])
+                : i18n.t("options.pdfTranslation.tool.outputLocationPending")}
+            </div>
+            {lastDownloadedFileName && (
+              <div>{i18n.t("options.pdfTranslation.tool.outputLocationDownloaded", [lastDownloadedFileName])}</div>
+            )}
+          </AlertDescription>
+        </Alert>
 
         <details className="rounded-md border p-3">
           <summary className="cursor-pointer text-sm font-medium">
@@ -892,6 +911,11 @@ function isLocalBridgeServiceUrl(value: string) {
 function sanitizeFilename(value: string) {
   const withoutControlCharacters = Array.from(value).filter(char => char.charCodeAt(0) >= 32).join("")
   return withoutControlCharacters.replace(/[<>:"/\\|?*]/g, "_") || "qq-frog-pdf-translation"
+}
+
+function getDownloadFileName(file: File | null) {
+  const baseName = file ? sanitizeFilename(file.name.replace(/\.pdf$/i, "")) : "qq-frog-pdf-translation"
+  return `${baseName}.translated.md`
 }
 
 function formatNativeHostSummary(response: PdfBridgeNativeHostResponse) {

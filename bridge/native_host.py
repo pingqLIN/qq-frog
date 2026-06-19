@@ -29,6 +29,7 @@ PID_FILE = BRIDGE_DIR / ".qq-frog-pdf-bridge.pid"
 LOG_DIR = BRIDGE_DIR / "logs"
 STDOUT_LOG = LOG_DIR / "pdf-bridge-native-start.log"
 STDERR_LOG = LOG_DIR / "pdf-bridge-native-error.log"
+SERVER_PATH = BRIDGE_DIR / "server.py"
 
 
 def read_message() -> dict[str, Any]:
@@ -103,11 +104,104 @@ def is_pid_running(pid: int) -> bool:
         return False
 
 
-def read_pid_file() -> int | None:
+def read_pid_record() -> dict[str, Any] | None:
     try:
-        return int(PID_FILE.read_text(encoding="utf-8").strip())
-    except (FileNotFoundError, ValueError):
+        raw_value = PID_FILE.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
         return None
+
+    try:
+        parsed = json.loads(raw_value)
+        if isinstance(parsed, dict) and isinstance(parsed.get("pid"), int):
+            return parsed
+    except json.JSONDecodeError:
+        pass
+
+    try:
+        pid = int(raw_value)
+    except ValueError:
+        return None
+    return {"pid": pid, "legacy": True}
+
+
+def read_pid_file() -> int | None:
+    record = read_pid_record()
+    if not record:
+        return None
+    pid = record.get("pid")
+    return pid if isinstance(pid, int) else None
+
+
+def write_pid_record(pid: int, command: list[str], service_url: str) -> None:
+    record = {
+        "pid": pid,
+        "command": command,
+        "cwd": str(BRIDGE_DIR),
+        "serverPath": str(SERVER_PATH.resolve()),
+        "serviceUrl": service_url,
+        "startedAt": time.time(),
+    }
+    PID_FILE.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def normalize_command_text(value: str) -> str:
+    return value.replace("\\", "/").lower()
+
+
+def get_process_command_line(pid: int) -> str | None:
+    if os.name == "nt":
+        result = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                f"(Get-CimInstance Win32_Process -Filter \"ProcessId = {pid}\").CommandLine",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+        command_line = result.stdout.strip()
+        return command_line or None
+
+    try:
+        raw_cmdline = Path(f"/proc/{pid}/cmdline").read_bytes()
+    except OSError:
+        return None
+    return raw_cmdline.replace(b"\x00", b" ").decode("utf-8", errors="ignore").strip()
+
+
+def is_owned_bridge_process(record: dict[str, Any] | None) -> bool:
+    if not record or record.get("legacy"):
+        return False
+
+    pid = record.get("pid")
+    if not isinstance(pid, int) or not is_pid_running(pid):
+        return False
+
+    recorded_server_path = record.get("serverPath")
+    if not isinstance(recorded_server_path, str):
+        return False
+
+    expected_server_path = str(SERVER_PATH.resolve())
+    if Path(recorded_server_path) != SERVER_PATH.resolve():
+        return False
+
+    command_line = get_process_command_line(pid)
+    if not command_line:
+        return False
+
+    return normalize_command_text(expected_server_path) in normalize_command_text(command_line)
+
+
+def build_child_environment(service_url: str) -> dict[str, str]:
+    parsed = urllib.parse.urlparse(service_url)
+    child_env = os.environ.copy()
+    child_env["QQ_FROG_BRIDGE_HOST"] = parsed.hostname if parsed.hostname in {"127.0.0.1", "::1"} else "127.0.0.1"
+    child_env["QQ_FROG_BRIDGE_PORT"] = str(parsed.port or 8001)
+    child_env.setdefault("QQ_FROG_BRIDGE_RELOAD", "0")
+    return child_env
 
 
 def choose_python_executable() -> str:
@@ -151,12 +245,13 @@ def start_bridge(service_url: str) -> dict[str, Any]:
     stdout.write(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] Starting QQ Frog PDF bridge\n")
     stdout.flush()
 
-    command = [choose_python_executable(), str(BRIDGE_DIR / "server.py")]
+    command = [choose_python_executable(), str(SERVER_PATH)]
     popen_kwargs: dict[str, Any] = {
         "cwd": str(BRIDGE_DIR),
         "stdout": stdout,
         "stderr": stderr,
         "stdin": subprocess.DEVNULL,
+        "env": build_child_environment(service_url),
     }
     if os.name == "nt":
         popen_kwargs["creationflags"] = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
@@ -164,7 +259,7 @@ def start_bridge(service_url: str) -> dict[str, Any]:
         popen_kwargs["start_new_session"] = True
 
     process = subprocess.Popen(command, **popen_kwargs)
-    PID_FILE.write_text(str(process.pid), encoding="utf-8")
+    write_pid_record(process.pid, command, service_url)
 
     for _ in range(20):
         running, health, _error = check_health(service_url)
@@ -188,13 +283,23 @@ def start_bridge(service_url: str) -> dict[str, Any]:
 
 
 def stop_bridge() -> dict[str, Any]:
-    pid = read_pid_file()
+    record = read_pid_record()
+    pid = record.get("pid") if record else None
     if not pid:
         return {"ok": True, "status": "stopped", "message": "No bridge PID file was found."}
 
     if not is_pid_running(pid):
         PID_FILE.unlink(missing_ok=True)
         return {"ok": True, "status": "stopped", "message": "Stored bridge process is not running."}
+
+    if not is_owned_bridge_process(record):
+        PID_FILE.unlink(missing_ok=True)
+        return {
+            "ok": True,
+            "status": "stopped",
+            "message": "Stored PID did not match the QQ Frog PDF bridge process. Stale PID file was removed.",
+            "pid": pid,
+        }
 
     if os.name == "nt":
         subprocess.run(

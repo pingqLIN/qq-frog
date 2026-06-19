@@ -79,10 +79,10 @@ python server.py
 或使用 uvicorn 直接啟動：
 
 ```bash
-uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+uvicorn server:app --host 127.0.0.1 --port 8001 --reload
 ```
 
-啟動後，Server 會在 `http://localhost:8001` 提供服務。若使用 `--host 0.0.0.0`，同一內網的其他裝置也可透過 `http://<bridge-host-lan-ip>:8001` 存取。
+啟動後，Server 會在 `http://localhost:8001` 提供服務。`python server.py` 與 Native Messaging host 預設只綁定本機介面。
 
 ### 3. 在 Chrome 中啟用 Extension Bridge
 
@@ -107,7 +107,7 @@ cd Q:\Projects\qq-frog\bridge
 http://<bridge-host-lan-ip>:8001
 ```
 
-此模式下 extension 會直接 fetch 內網 bridge URL，不需要 Native Messaging host。
+此模式下 extension 會直接 fetch 內網 bridge URL，不需要 Native Messaging host。請只在可信任內網使用，並用防火牆限制存取範圍；bridge endpoints 目前不提供登入驗證。CORS 預設允許本機 Web UI 與 Chrome extension origin；若要允許其他瀏覽器來源跨來源存取，可設定 `QQ_FROG_BRIDGE_CORS_ORIGINS` 為逗號分隔的 origin 清單；測試環境才建議使用 `QQ_FROG_BRIDGE_CORS_ORIGINS=*`。
 
 ### 4. 允許 Extension 啟動本機 Bridge Server
 
@@ -125,7 +125,7 @@ cd Q:\Projects\qq-frog\bridge
 
 3. 回到 QQ Frog Options → **PDF Translation**，按 **Bridge status** 或 **Start bridge**。
 
-Native host 名稱固定為 `com.qq_frog.pdf_bridge`。它只會啟動本 repo 的 `bridge/server.py`，並只接受 localhost bridge URL。若要指定 Python，可先設定 `QQ_FROG_PYTHON` 環境變數；未設定時會優先使用 repo 根目錄的 `.venv-paddleocr`。
+Native host 名稱固定為 `com.qq_frog.pdf_bridge`。它只會啟動本 repo 的 `bridge/server.py`，預設綁定 `127.0.0.1`，並只接受 localhost bridge URL。若要指定 Python，可先設定 `QQ_FROG_PYTHON` 環境變數；未設定時會優先使用 repo 根目錄的 `.venv-paddleocr`。Native host 的 Stop bridge 只會停止它自己以 JSON PID 記錄啟動、且命令列仍指向本 repo `bridge/server.py` 的程序。
 
 ### 5. 執行 PDF 翻譯
 

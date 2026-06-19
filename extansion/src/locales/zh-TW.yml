@@ -329,6 +329,10 @@ options:
       translate: 翻譯 PDF
       cancel: 取消
       downloadMarkdown: 下載 Markdown
+      outputLocationTitle: 翻譯檔案位置
+      outputLocationPending: 目前尚未寫入任何檔案。翻譯完成後，Markdown 會先保留在此頁面的預覽區。
+      outputLocationReady: 結果已在預覽區。按「下載 Markdown」後，Chrome 會將檔案存到瀏覽器預設下載資料夾，檔名為 $1。
+      outputLocationDownloaded: 最後一次已要求下載：$1。若 Chrome 詢問儲存位置，請以瀏覽器下載提示為準。
       healthResult: 服務狀態
       errorTitle: PDF 翻譯失敗
       preview: PDF 翻譯 Markdown 預覽
@@ -347,6 +351,7 @@ options:
         success: 翻譯完成。
         error: 翻譯失敗。
         cancelled: 翻譯已取消。
+        downloaded: 已要求下載：$1
       readinessStates:
         unknown: 尚未檢查。按「檢查並啟動服務」會確認 OCR、bridge 與目前 provider 是否真的可用。
         checking: 正在檢查服務、OCR runtime 與 provider 連線。
