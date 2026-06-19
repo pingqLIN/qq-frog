@@ -57,6 +57,13 @@ export function MoreMenu() {
           {i18n.t("popup.more.translationHub")}
         </DropdownMenuItem>
         <DropdownMenuItem
+          onClick={() => void browser.tabs.create({ url: browser.runtime.getURL("/options.html#/pdf-translation") })}
+          className="cursor-pointer"
+        >
+          <Icon icon="tabler:file-type-pdf" className="size-4" strokeWidth={1.6} />
+          {i18n.t("popup.more.pdfTranslation")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
           onClick={() => void openSidePanelFromPopup()}
           className="cursor-pointer"
         >

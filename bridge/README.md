@@ -40,9 +40,16 @@ Chrome Gemini Nano（本地推論）
 
 ```bash
 cd bridge
-# Install PaddlePaddle first by following the official PaddlePaddle guide for your platform.
+# Full PDF translation install. Install PaddlePaddle first by following the
+# official PaddlePaddle guide for your platform.
 pip install -r requirements.txt
 ```
+
+Dependency profiles:
+
+- `requirements-base.txt`: FastAPI bridge shell and provider plumbing only.
+- `requirements-paddleocr.txt`: base bridge plus PDF rendering and PaddleOCR runtime.
+- `requirements.txt`: backward-compatible full PDF translation install.
 
 Windows CPU example:
 
@@ -50,7 +57,7 @@ Windows CPU example:
 py -3.11 -m venv ..\.venv-paddleocr
 ..\.venv-paddleocr\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
 ..\.venv-paddleocr\Scripts\python.exe -m pip install paddlepaddle -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
-..\.venv-paddleocr\Scripts\python.exe -m pip install -r requirements.txt
+..\.venv-paddleocr\Scripts\python.exe -m pip install -r requirements-paddleocr.txt
 ```
 
 For PaddleOCR model downloads on Windows, these environment variables avoid two common local setup failures:
@@ -122,7 +129,14 @@ Native host 名稱固定為 `com.qq_frog.pdf_bridge`。它只會啟動本 repo �
 
 ### 5. 執行 PDF 翻譯
 
-可從 QQ Frog extension 的 PDF Translation 設定頁選擇 PDF，或直接呼叫 `/pdf/translate-file`。
+可從 QQ Frog extension 的 PDF Translation 設定頁、Side panel 的 PDF Translation tab、Popup 右下角 **More / 更多** 選單進入 PDF 翻譯流程，也可以直接呼叫 `/pdf/translate-file`。
+
+Extension 內建的一鍵流程會檢查真實可用性，而不是只檢查 process 是否存在：
+
+- bridge `/pdf/health` 必須可回應。
+- OCR runtime 必須回報 `ready`。
+- 使用 `chrome-gemini` 時，extension 內的 WebSocket agent 必須已連線，且 Chrome Prompt API 可用。
+- 若 localhost port 被卡住但 health 不通，Native Messaging 會回報 port occupied / health unreachable，而不是盲目再啟動一個服務。
 
 ## 多後端支援與設定
 
@@ -161,6 +175,19 @@ Native host 名稱固定為 `com.qq_frog.pdf_bridge`。它只會啟動本 repo �
 | `LM_STUDIO_BASE_URL` | LM Studio API 端點                       | `http://localhost:1234/v1`                         |
 | `REQUEST_TIMEOUT`    | API 請求逾時時間 (秒)                    | `60`                                               |
 | `DEFAULT_BACKEND`    | 預設 provider 標記                       | `chrome-gemini`                                    |
+
+## PaddleOCR Runtime Boundary
+
+QQ Frog does not vendor PaddleOCR, PaddlePaddle wheels, or OCR model files into the extension bundle. The browser extension and bridge service remain usable as project code without bundling the OCR runtime; PDF OCR becomes available only after the user installs the optional PaddleOCR profile.
+
+Licensing posture:
+
+- QQ Frog project code is GPL-3.0-only.
+- PaddleOCR is a third-party Apache-2.0 project.
+- Keep PaddleOCR copyright and license notices with any redistributed PaddleOCR material.
+- Users keep the choice to install PaddleOCR locally, run a LAN-only bridge, or avoid PDF OCR entirely.
+
+See [PaddleOCR runtime separation](../docs/audit/paddleocr-runtime-separation.md).
 
 ---
 

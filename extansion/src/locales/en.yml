@@ -34,6 +34,7 @@ popup:
   more:
     title: More
     translationHub: Translation Hub
+    pdfTranslation: PDF Translation
     sidePanel: Side Panel
 errorRecovery:
   title: Something went wrong
@@ -324,6 +325,8 @@ options:
       targetLanguage: Target language
       ensureService: Check and start service
       checkHealth: Check service
+      readiness: Real service status
+      advanced: Advanced maintenance and logs
       translate: Translate PDF
       cancel: Cancel
       downloadMarkdown: Download Markdown
@@ -339,11 +342,18 @@ options:
         healthDone: Service check completed.
         ensureService: Checking and starting the PDF bridge service.
         ensureDone: PDF bridge service is ready.
+        blocked: PDF bridge responded, but it is not ready for translation yet.
         ocr: Running PaddleOCR and translating the PDF.
         translate: Translating OCR text.
         success: Translation completed.
         error: Translation failed.
         cancelled: Translation cancelled.
+      readinessStates:
+        unknown: Not checked yet. Check and start service verifies OCR, the bridge, and the selected provider.
+        checking: Checking the service, OCR runtime, and provider connection.
+        ready: The service is ready for PDF translation.
+        blocked: The service responded, but OCR runtime or provider readiness is still blocked.
+        error: The service is unavailable. Check the error message or advanced log.
   floatingButtonAndToolbar:
     title: Floating Button & Toolbar
     selectionToolbarDemoImageAlt: Selection Toolbar Demo

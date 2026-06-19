@@ -10,6 +10,7 @@
 - `README.md` / `README.zh-TW.md`: 專案用途、開發指令、外部服務邊界。
 - `docs/audit/`: Chrome extension security、privacy、permissions、release 審查文件。
 - `docs/audit/local-service-ports.md`: 本機服務 port 登記與臨時 smoke port 治理規則。
+- `docs/audit/paddleocr-runtime-separation.md`: PaddleOCR optional runtime 分隔、授權與使用者選擇權說明。
 - `extansion/`: Chrome extension 工作目錄；`pnpm build` 後此目錄根層會同步 `manifest.json` 與可載入產物。
 - `extansion/.output/chrome-mv3/`: WXT 原始 build output，供同步腳本產生 `extansion/` 根層可載入版本。
 

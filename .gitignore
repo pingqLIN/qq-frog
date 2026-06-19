@@ -59,6 +59,7 @@ extansion/assets/*-[A-Za-z0-9_]*.svg
 coverage/
 .turbo/
 .nx/
+.audit/
 .claude/worktrees/
 .del/
 

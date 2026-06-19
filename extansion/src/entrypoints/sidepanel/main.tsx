@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/base-ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/base-ui/tabs"
 import { Textarea } from "@/components/ui/base-ui/textarea"
 import { TooltipProvider } from "@/components/ui/base-ui/tooltip"
+import { PdfTranslationTool } from "@/entrypoints/options/pages/pdf-translation"
 import { ClearAiSegmentationCache } from "@/entrypoints/options/pages/video-subtitles/clear-ai-segmentation-cache"
 import { SubtitlesConfig } from "@/entrypoints/options/pages/video-subtitles/subtitles-config"
 import { SubtitlesRequestBatch } from "@/entrypoints/options/pages/video-subtitles/subtitles-request-batch"
@@ -43,6 +44,7 @@ const SIDE_PANEL_SELECTION_CHANGED_MESSAGE = "qq-frog:side-panel-selection-chang
 const SIDE_PANEL_GET_CURRENT_SELECTION_MESSAGE = "qq-frog:side-panel-get-current-selection"
 const SIDE_PANEL_TAB_TRANSLATE = "translate"
 const SIDE_PANEL_TAB_SUBTITLES = "subtitles"
+const SIDE_PANEL_TAB_PDF = "pdf"
 
 interface SidePanelSelectionMessage {
   type: typeof SIDE_PANEL_SELECTION_CHANGED_MESSAGE
@@ -57,7 +59,7 @@ interface PageSelectionSnapshot {
   url?: string
 }
 
-type SidePanelTab = typeof SIDE_PANEL_TAB_TRANSLATE | typeof SIDE_PANEL_TAB_SUBTITLES
+type SidePanelTab = typeof SIDE_PANEL_TAB_TRANSLATE | typeof SIDE_PANEL_TAB_SUBTITLES | typeof SIDE_PANEL_TAB_PDF
 
 function HydrateAtoms({
   initialValues,
@@ -311,6 +313,44 @@ function SidePanelVideoSubtitlesTab() {
   )
 }
 
+function SidePanelPdfTranslationTab() {
+  const openFullSettings = () => {
+    void browser.tabs.create({
+      url: browser.runtime.getURL("/options.html#/pdf-translation"),
+    })
+  }
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold">
+            {i18n.t("options.pdfTranslation.title")}
+          </h2>
+          <p className="text-muted-foreground text-xs">
+            {i18n.t("options.pdfTranslation.tool.description")}
+          </p>
+        </div>
+        <Button variant="outline" size="icon-sm" onClick={openFullSettings} title={i18n.t("popup.options")}>
+          <Icon icon="tabler:external-link" className="size-4" />
+        </Button>
+      </div>
+
+      <div className={cn(
+        "space-y-0 *:border-b [&>*:last-child]:border-b-0",
+        "[&_section]:py-4 [&_section]:gap-y-3",
+        "[&_section>div:first-child]:basis-auto [&_section>div:first-child]:shrink",
+        "[&_section_h2]:text-sm [&_section_h2]:leading-snug",
+        "[&_section_[data-slot=card]]:rounded-lg [&_section_[data-slot=card]]:py-3",
+        "[&_section_[data-slot=field]]:gap-2",
+      )}
+      >
+        <PdfTranslationTool />
+      </div>
+    </div>
+  )
+}
+
 function SidePanelShell() {
   const [activeTab, setActiveTab] = useAutoSidePanelTab()
 
@@ -331,12 +371,18 @@ function SidePanelShell() {
           <TabsTrigger value={SIDE_PANEL_TAB_SUBTITLES} className={cn("min-w-0")}>
             {i18n.t("options.videoSubtitles.title")}
           </TabsTrigger>
+          <TabsTrigger value={SIDE_PANEL_TAB_PDF} className={cn("min-w-0")}>
+            {i18n.t("options.pdfTranslation.title")}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value={SIDE_PANEL_TAB_TRANSLATE} className="min-h-0">
           <SidePanelTranslationTab />
         </TabsContent>
         <TabsContent value={SIDE_PANEL_TAB_SUBTITLES} className="min-h-0">
           <SidePanelVideoSubtitlesTab />
+        </TabsContent>
+        <TabsContent value={SIDE_PANEL_TAB_PDF} className="min-h-0">
+          <SidePanelPdfTranslationTab />
         </TabsContent>
       </Tabs>
     </main>

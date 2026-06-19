@@ -192,6 +192,7 @@ interface WSTranslateTask {
 }
 
 type BridgeAgentStatus = "disconnected" | "connecting" | "connected" | "error"
+type BridgeReadiness = "unknown" | "checking" | "ready" | "blocked" | "error"
 
 const PDF_TRANSLATION_PROGRESS: Record<PdfTranslationStage, number> = {
   idle: 0,
@@ -202,7 +203,7 @@ const PDF_TRANSLATION_PROGRESS: Record<PdfTranslationStage, number> = {
   error: 100,
 }
 
-function PdfTranslationTool() {
+export function PdfTranslationTool() {
   const [pdfTranslationConfig] = useAtom(configFieldsAtomMap.pdfTranslation)
   const [file, setFile] = useState<File | null>(null)
   const [targetLanguage, setTargetLanguage] = useState("Traditional Chinese")
@@ -212,6 +213,7 @@ function PdfTranslationTool() {
   const [healthSummary, setHealthSummary] = useState("")
   const [nativeHostSummary, setNativeHostSummary] = useState("")
   const [isNativeHostRunning, setIsNativeHostRunning] = useState(false)
+  const [bridgeReadiness, setBridgeReadiness] = useState<BridgeReadiness>("unknown")
   const [bridgeAgentStatus, setBridgeAgentStatus] = useState<BridgeAgentStatus>("disconnected")
   const [promptApiSummary, setPromptApiSummary] = useState("")
   const [activeTaskIds, setActiveTaskIds] = useState<string[]>([])
@@ -289,7 +291,7 @@ function PdfTranslationTool() {
     return promptApi
   }
 
-  const connectBridgeAgent = async () => {
+  const connectBridgeAgent = async (throwOnError = false) => {
     try {
       disconnectBridgeAgent()
 
@@ -301,24 +303,42 @@ function PdfTranslationTool() {
       const socket = new WebSocket(wsUrl)
       bridgeSocketRef.current = socket
 
-      socket.onopen = () => {
-        setBridgeAgentStatus("connected")
-        appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.connected"))
-      }
+      await new Promise<void>((resolve, reject) => {
+        let opened = false
+        const timeout = window.setTimeout(() => {
+          if (!opened)
+            socket.close()
+          reject(new Error(i18n.t("options.pdfTranslation.bridgeAgent.socketError")))
+        }, BRIDGE_HEALTH_TIMEOUT_MS)
 
-      socket.onclose = () => {
-        if (bridgeSocketRef.current === socket) {
-          bridgeSocketRef.current = null
-          setBridgeAgentStatus("disconnected")
-          setActiveTaskIds([])
+        socket.onopen = () => {
+          opened = true
+          window.clearTimeout(timeout)
+          setBridgeAgentStatus("connected")
+          appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.connected"))
+          resolve()
         }
-        appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.disconnected"))
-      }
 
-      socket.onerror = () => {
-        setBridgeAgentStatus("error")
-        appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.socketError"))
-      }
+        socket.onclose = () => {
+          window.clearTimeout(timeout)
+          if (bridgeSocketRef.current === socket) {
+            bridgeSocketRef.current = null
+            setBridgeAgentStatus("disconnected")
+            setActiveTaskIds([])
+          }
+          appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.disconnected"))
+          if (!opened)
+            reject(new Error(i18n.t("options.pdfTranslation.bridgeAgent.disconnected")))
+        }
+
+        socket.onerror = () => {
+          window.clearTimeout(timeout)
+          setBridgeAgentStatus("error")
+          appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.socketError"))
+          if (!opened)
+            reject(new Error(i18n.t("options.pdfTranslation.bridgeAgent.socketError")))
+        }
+      })
 
       socket.onmessage = (event) => {
         void handleBridgeTask(event, promptApi, socket, appendBridgeLog, setActiveTaskIds)
@@ -329,10 +349,13 @@ function PdfTranslationTool() {
       const message = getErrorMessage(error)
       setErrorMessage(message)
       appendBridgeLog(message)
+      if (throwOnError)
+        throw error
     }
   }
 
   const ensureBridgeService = async () => {
+    setBridgeReadiness("checking")
     setStage("health")
     setErrorMessage("")
     setStatusMessage(i18n.t("options.pdfTranslation.tool.status.ensureService"))
@@ -345,6 +368,9 @@ function PdfTranslationTool() {
           serviceUrl: pdfTranslationConfig.serviceUrl,
         }) as PdfBridgeNativeHostResponse
 
+        if (!status.ok)
+          throw new Error(status.message || status.error || i18n.t("options.pdfTranslation.tool.status.error"))
+
         setIsNativeHostRunning(status.status === "running")
         setNativeHostSummary(formatNativeHostSummary(status))
         appendBridgeLog(formatNativeHostSummary(status))
@@ -354,6 +380,9 @@ function PdfTranslationTool() {
             action: "start",
             serviceUrl: pdfTranslationConfig.serviceUrl,
           }) as PdfBridgeNativeHostResponse
+          if (!start.ok)
+            throw new Error(start.message || start.error || i18n.t("options.pdfTranslation.tool.status.error"))
+
           setIsNativeHostRunning(start.status === "running")
           setNativeHostSummary(formatNativeHostSummary(start))
           appendBridgeLog(formatNativeHostSummary(start))
@@ -367,16 +396,27 @@ function PdfTranslationTool() {
       const summary = formatBridgeHealthSummary(health)
       setHealthSummary(summary)
       appendBridgeLog(`${i18n.t("options.pdfTranslation.tool.healthResult")}: ${summary}`)
+      if (health.status !== "ready") {
+        setErrorMessage(summary)
+        setStatusMessage(i18n.t("options.pdfTranslation.tool.status.blocked"))
+        setBridgeReadiness("blocked")
+        setStage("error")
+        return false
+      }
       if (isChromeGeminiProvider) {
-        await connectBridgeAgent()
+        await connectBridgeAgent(true)
       }
       setStatusMessage(i18n.t("options.pdfTranslation.tool.status.ensureDone"))
+      setBridgeReadiness("ready")
       setStage("idle")
+      return true
     }
     catch (error) {
       setErrorMessage(getErrorMessage(error))
       setStatusMessage(i18n.t("options.pdfTranslation.tool.status.error"))
+      setBridgeReadiness("error")
       setStage("error")
+      return false
     }
   }
 
@@ -401,6 +441,12 @@ function PdfTranslationTool() {
       const summary = formatBridgeHealthSummary(health)
       setHealthSummary(summary)
       appendBridgeLog(`${i18n.t("options.pdfTranslation.tool.healthResult")}: ${health.status ?? "unknown"}`)
+      if (health.status === "ready" && (!isChromeGeminiProvider || bridgeAgentStatus === "connected")) {
+        setBridgeReadiness("ready")
+      }
+      else {
+        setBridgeReadiness("blocked")
+      }
       setStatusMessage(i18n.t("options.pdfTranslation.tool.status.healthDone"))
       setStage("idle")
     }
@@ -428,6 +474,12 @@ function PdfTranslationTool() {
     setMarkdown("")
 
     try {
+      if (bridgeReadiness !== "ready") {
+        const isReady = await ensureBridgeService()
+        if (!isReady)
+          return
+      }
+
       const baseUrl = trimTrailingSlash(pdfTranslationConfig.serviceUrl)
       setStage("ocr")
       setStatusMessage(i18n.t("options.pdfTranslation.tool.status.ocr"))
@@ -541,30 +593,6 @@ function PdfTranslationTool() {
             <IconActivity className="size-4" />
             {i18n.t("options.pdfTranslation.tool.ensureService")}
           </Button>
-          <Button variant="outline" onClick={() => void runNativeHostAction("status")} disabled={isRunning || !canUseNativeHost}>
-            <IconRefresh className="size-4" />
-            {i18n.t("options.pdfTranslation.nativeHost.checkStatus")}
-          </Button>
-          <Button variant="outline" onClick={() => void runNativeHostAction("start")} disabled={isRunning || isNativeHostRunning || !canUseNativeHost}>
-            <IconPower className="size-4" />
-            {i18n.t("options.pdfTranslation.nativeHost.start")}
-          </Button>
-          <Button variant="outline" onClick={() => void runNativeHostAction("stop")} disabled={isRunning || !isNativeHostRunning || !canUseNativeHost}>
-            <IconServer className="size-4" />
-            {i18n.t("options.pdfTranslation.nativeHost.stop")}
-          </Button>
-          <Button variant="outline" onClick={checkHealth} disabled={isRunning}>
-            <IconHeartbeat className="size-4" />
-            {i18n.t("options.pdfTranslation.tool.checkHealth")}
-          </Button>
-          <Button variant="outline" onClick={() => void connectBridgeAgent()} disabled={isRunning || !isChromeGeminiProvider || bridgeAgentStatus === "connected"}>
-            <IconServer className="size-4" />
-            {i18n.t("options.pdfTranslation.bridgeAgent.connect")}
-          </Button>
-          <Button variant="outline" onClick={disconnectBridgeAgent} disabled={isRunning || bridgeAgentStatus === "disconnected"}>
-            <IconX className="size-4" />
-            {i18n.t("options.pdfTranslation.bridgeAgent.disconnect")}
-          </Button>
           <Button onClick={translatePdf} disabled={!canTranslate}>
             <IconPlayerPlayFilled className="size-4" />
             {i18n.t("options.pdfTranslation.tool.translate")}
@@ -586,6 +614,13 @@ function PdfTranslationTool() {
           </span>
         </Progress>
 
+        <Alert variant={bridgeReadiness === "ready" ? "default" : bridgeReadiness === "error" ? "destructive" : "default"}>
+          <AlertTitle>{i18n.t("options.pdfTranslation.tool.readiness")}</AlertTitle>
+          <AlertDescription>
+            {i18n.t(`options.pdfTranslation.tool.readinessStates.${bridgeReadiness}`)}
+          </AlertDescription>
+        </Alert>
+
         {healthSummary && (
           <Alert>
             <AlertTitle>{i18n.t("options.pdfTranslation.tool.healthResult")}</AlertTitle>
@@ -600,27 +635,61 @@ function PdfTranslationTool() {
           </Alert>
         )}
 
-        <div className="grid gap-3 rounded-md border p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <div className="text-sm font-medium">{i18n.t("options.pdfTranslation.bridgeAgent.title")}</div>
-              <div className="text-xs text-muted-foreground">
-                {i18n.t(`options.pdfTranslation.bridgeAgent.status.${bridgeAgentStatus}`)}
-                {promptApiSummary ? ` / ${promptApiSummary}` : ""}
+        <details className="rounded-md border p-3">
+          <summary className="cursor-pointer text-sm font-medium">
+            {i18n.t("options.pdfTranslation.tool.advanced")}
+          </summary>
+          <div className="mt-3 grid gap-3">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => void runNativeHostAction("status")} disabled={isRunning || !canUseNativeHost}>
+                <IconRefresh className="size-4" />
+                {i18n.t("options.pdfTranslation.nativeHost.checkStatus")}
+              </Button>
+              <Button variant="outline" onClick={() => void runNativeHostAction("start")} disabled={isRunning || isNativeHostRunning || !canUseNativeHost}>
+                <IconPower className="size-4" />
+                {i18n.t("options.pdfTranslation.nativeHost.start")}
+              </Button>
+              <Button variant="outline" onClick={() => void runNativeHostAction("stop")} disabled={isRunning || !isNativeHostRunning || !canUseNativeHost}>
+                <IconServer className="size-4" />
+                {i18n.t("options.pdfTranslation.nativeHost.stop")}
+              </Button>
+              <Button variant="outline" onClick={checkHealth} disabled={isRunning}>
+                <IconHeartbeat className="size-4" />
+                {i18n.t("options.pdfTranslation.tool.checkHealth")}
+              </Button>
+              <Button variant="outline" onClick={() => void connectBridgeAgent()} disabled={isRunning || !isChromeGeminiProvider || bridgeAgentStatus === "connected"}>
+                <IconServer className="size-4" />
+                {i18n.t("options.pdfTranslation.bridgeAgent.connect")}
+              </Button>
+              <Button variant="outline" onClick={disconnectBridgeAgent} disabled={isRunning || bridgeAgentStatus === "disconnected"}>
+                <IconX className="size-4" />
+                {i18n.t("options.pdfTranslation.bridgeAgent.disconnect")}
+              </Button>
+            </div>
+
+            <div className="grid gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-sm font-medium">{i18n.t("options.pdfTranslation.bridgeAgent.title")}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {i18n.t(`options.pdfTranslation.bridgeAgent.status.${bridgeAgentStatus}`)}
+                    {promptApiSummary ? ` / ${promptApiSummary}` : ""}
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {i18n.t("options.pdfTranslation.bridgeAgent.queue")}
+                  :
+                  {activeTaskIds.length}
+                </div>
+              </div>
+              <div className="min-h-24 max-h-48 overflow-y-auto rounded-md bg-muted p-3 font-mono text-xs">
+                {bridgeLogs.length
+                  ? bridgeLogs.map((entry, index) => <div key={`${entry}-${index}`}>{entry}</div>)
+                  : <div className="text-muted-foreground">{i18n.t("options.pdfTranslation.bridgeAgent.emptyLog")}</div>}
               </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {i18n.t("options.pdfTranslation.bridgeAgent.queue")}
-              :
-              {activeTaskIds.length}
-            </div>
           </div>
-          <div className="min-h-32 max-h-56 overflow-y-auto rounded-md bg-muted p-3 font-mono text-xs">
-            {bridgeLogs.length
-              ? bridgeLogs.map((entry, index) => <div key={`${entry}-${index}`}>{entry}</div>)
-              : <div className="text-muted-foreground">{i18n.t("options.pdfTranslation.bridgeAgent.emptyLog")}</div>}
-          </div>
-        </div>
+        </details>
 
         {errorMessage && (
           <Alert variant="destructive">
