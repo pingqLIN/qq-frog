@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 .venv*/
 __pycache__/
+.pytest_cache/
 *.py[cod]
 bridge/native-messaging/
 bridge/logs/
