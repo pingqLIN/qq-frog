@@ -156,9 +156,6 @@ export const testSeries: TestSeriesObject = {
         enabled: false,
         disabledSelectionToolbarPatterns: [],
       },
-      betaExperience: {
-        enabled: false,
-      },
       contextMenu: {
         enabled: true,
       },
@@ -274,9 +271,6 @@ export const testSeries: TestSeriesObject = {
         model: "tts-1",
         voice: "alloy",
         speed: 1,
-      },
-      betaExperience: {
-        enabled: false,
       },
       contextMenu: {
         enabled: true,

@@ -502,9 +502,6 @@
   "sideContent": {
     "width": 420
   },
-  "betaExperience": {
-    "enabled": false
-  },
   "contextMenu": {
     "enabled": true
   },

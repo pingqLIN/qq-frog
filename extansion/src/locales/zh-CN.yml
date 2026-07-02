@@ -66,10 +66,6 @@ options:
   setAPIKeyWarning:
     please: 請在
     page: 頁設置 API Key
-  betaExperience:
-    title: Beta 體驗
-    description: 啟用實驗性功能和早期訪問新功能。這些功能可能不穩定或不完整。
-    enabled: 啟用 Beta 體驗
   apiProviders:
     title: API 提供商
     description: 配置用於翻譯和詞彙解析功能的 API 提供商。我們內置了 20 多個提供商，並支持任何 OpenAI 兼容 API 提供商。
@@ -468,8 +464,6 @@ options:
             emptyTitle: 還沒有筆記庫
             emptyDescription: 先去 localhost 創建一個筆記庫，再回來映射字段。
             openNotebaseAction: 打開筆記庫
-            betaLockedTitle: 當前賬號尚未加入 Notebase Beta
-            betaLockedDescription: 你可以繼續保留當前 action 配置，但選擇筆記庫和同步結果目前僅對部分 Beta 賬號開放。
             tableUnavailableTitle: 選中的筆記庫已不可用
             tableUnavailableDescription: 請刷新，或重新選擇一個筆記庫後再保存。
             tableUnavailableOption: 不可用
@@ -814,7 +808,6 @@ options:
     volume:
       label: 音量 (%)
       hint: 支持 -100 到 100 的整數
-    betaDisabled: 啟用測試體驗後即可自定義文本轉語音設置。
   statistics:
     title: 統計
     batchRequest:
@@ -1064,7 +1057,7 @@ action:
   saveToNotebaseSuccess: 已保存到筆記庫
   saveToNotebaseFailed: 保存到筆記庫失敗
   saveToNotebaseLoginRequired: 請先在 localhost 登錄後再保存到筆記庫
-  saveToNotebaseBetaRequired: 當前賬號尚未加入 Notebase Beta
+  saveToNotebaseAccessRequired: 當前賬號尚無法訪問筆記庫
   saveToNotebaseTableUnavailable: 選中的筆記庫已不可用
   saveToNotebaseConnectionInvalid: 當前筆記庫連接已經過期，請到 Custom AI Actions 中刷新並修復映射
   saveToNotebaseNoMappings: 至少添加一個有效映射後才能保存

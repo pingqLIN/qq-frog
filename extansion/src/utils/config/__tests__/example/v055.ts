@@ -331,9 +331,6 @@ export const testSeries: TestSeriesObject = {
           },
         },
       },
-      betaExperience: {
-        enabled: false,
-      },
       contextMenu: {
         enabled: true,
       },
@@ -503,9 +500,6 @@ export const testSeries: TestSeriesObject = {
         rate: 0,
         pitch: 0,
         volume: 0,
-      },
-      betaExperience: {
-        enabled: false,
       },
       contextMenu: {
         enabled: true,

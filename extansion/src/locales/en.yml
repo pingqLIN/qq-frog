@@ -66,10 +66,6 @@ options:
   setAPIKeyWarning:
     please: Please set API Key on
     page: page
-  betaExperience:
-    title: Beta Experience
-    description: Enable experimental features and early access to new functionality. These features may be unstable or incomplete.
-    enabled: Enable Beta Experience
   apiProviders:
     title: API Providers
     description: Configure API providers for translation and vocabulary insight. We have 20+ built-in providers and support any OpenAI-compatible API provider.
@@ -468,8 +464,6 @@ options:
             emptyTitle: No notebases yet
             emptyDescription: Create a notebase on localhost, then come back here to map fields.
             openNotebaseAction: Open Notebase
-            betaLockedTitle: This account is not in the Notebase beta
-            betaLockedDescription: You can keep this action configured, but choosing notebases and syncing results is limited to selected beta accounts for now.
             tableUnavailableTitle: Selected notebase is no longer available
             tableUnavailableDescription: Refresh or choose another notebase before saving again.
             tableUnavailableOption: unavailable
@@ -814,7 +808,6 @@ options:
     volume:
       label: Volume (%)
       hint: Accepts integer values between -100 and 100
-    betaDisabled: Enable Beta Experience to customize text-to-speech settings.
   statistics:
     title: Statistics
     batchRequest:
@@ -1064,7 +1057,7 @@ action:
   saveToNotebaseSuccess: Saved to Notebase
   saveToNotebaseFailed: Failed to save to Notebase
   saveToNotebaseLoginRequired: Log in on localhost to save to Notebase
-  saveToNotebaseBetaRequired: This account is not enrolled in the Notebase beta yet
+  saveToNotebaseAccessRequired: This account cannot access Notebase yet
   saveToNotebaseTableUnavailable: The selected Notebase is no longer available
   saveToNotebaseConnectionInvalid: This Notebase connection is out of date. Refresh it in Custom AI Actions and fix the mappings.
   saveToNotebaseNoMappings: Add at least one valid mapping before saving

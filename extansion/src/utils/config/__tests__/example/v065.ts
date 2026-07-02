@@ -354,9 +354,6 @@ export const testSeries: TestSeriesObject = {
           },
         },
       },
-      betaExperience: {
-        enabled: false,
-      },
       contextMenu: {
         enabled: true,
       },
@@ -531,9 +528,6 @@ export const testSeries: TestSeriesObject = {
             providerId: "google-default",
           },
         },
-      },
-      betaExperience: {
-        enabled: false,
       },
       contextMenu: {
         enabled: true,
@@ -713,9 +707,6 @@ export const testSeries: TestSeriesObject = {
             providerId: "google-default",
           },
         },
-      },
-      betaExperience: {
-        enabled: false,
       },
       contextMenu: {
         enabled: true,
@@ -941,9 +932,6 @@ Target language: {{targetLanguage}}`,
             providerId: "google-default",
           },
         },
-      },
-      betaExperience: {
-        enabled: false,
       },
       contextMenu: {
         enabled: true,

@@ -29,6 +29,7 @@ extansion/content-scripts/
 extansion/icon/
 extansion/background.js
 extansion/devtools.html
+extansion/pdf-result.html
 extansion/manifest.json
 extansion/offscreen.html
 extansion/options.html
@@ -68,6 +69,7 @@ tsconfig.local.json
 docs/
 !docs/
 docs/*
+!docs/README.md
 !docs/project-structure.md
 !docs/audit/
 !docs/audit/**

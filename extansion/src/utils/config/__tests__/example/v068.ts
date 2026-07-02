@@ -387,9 +387,6 @@ export const testSeries: TestSeriesObject = {
           },
         },
       },
-      betaExperience: {
-        enabled: false,
-      },
       contextMenu: {
         enabled: true,
       },
@@ -780,9 +777,6 @@ export const testSeries: TestSeriesObject = {
           },
         },
       },
-      betaExperience: {
-        enabled: false,
-      },
       contextMenu: {
         enabled: true,
       },
@@ -1165,9 +1159,6 @@ export const testSeries: TestSeriesObject = {
             enabled: true,
           },
         },
-      },
-      betaExperience: {
-        enabled: false,
       },
       contextMenu: {
         enabled: true,
@@ -1572,9 +1563,6 @@ export const testSeries: TestSeriesObject = {
             enabled: true,
           },
         },
-      },
-      betaExperience: {
-        enabled: false,
       },
       contextMenu: {
         enabled: true,
