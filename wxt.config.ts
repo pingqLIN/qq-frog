@@ -19,7 +19,9 @@ const shouldSkipEnvValidation = process.env.WXT_SKIP_ENV_VALIDATION !== "false"
 export default defineConfig({
   srcDir: "extansion/src",
   publicDir: "extansion/public",
-  outDir: "extansion/.output",
+  // Development output is intentionally separate from the verified production
+  // artifact. Production builds override this with an isolated staging path.
+  outDir: "dist/dev",
   imports: false,
   modules: ["@wxt-dev/module-react", "@wxt-dev/i18n/module"],
   manifestVersion: 3,
@@ -99,6 +101,12 @@ export default defineConfig({
     },
   },
   vite: configEnv => ({
+    build: {
+      // Extension pages run in a separate Chrome world. Eager module preloads
+      // can be rejected as cross-world resources even when the later import is
+      // valid, so the verified build contract forbids them.
+      modulePreload: false,
+    },
     plugins: [
       ...(configEnv.mode === "production"
         ? [

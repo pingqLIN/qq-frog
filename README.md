@@ -24,10 +24,19 @@ Thanks to the original Read Frog / 伴讀蛙 project and its contributors for th
 
 ```bash
 pnpm install
-pnpm dev
+pnpm build
 ```
 
-Then open `chrome://extensions`, enable **Developer mode**, and load the generated extension directory from the WXT output.
+Then open `chrome://extensions`, enable **Developer mode**, and load only:
+
+```text
+dist/chrome-mv3
+```
+
+Do not load `extansion/`, `extansion/.output/`, or `.build/`. Those paths are
+source, archived legacy output, or temporary staging areas. `pnpm build`
+publishes a new canonical artifact only after the Manifest V3, Chrome Built-in
+AI, PDF translation, local asset, and preload contracts pass.
 
 For local PDF translation, run the optional bridge service:
 
@@ -126,9 +135,14 @@ pnpm install
 SKIP_FREE_API=true pnpm test
 pnpm type-check
 pnpm build
+pnpm verify:extension
 ```
 
 `SKIP_FREE_API=true` is recommended for local agent validation because `free-api.test.ts` depends on live external translation services.
+
+`pnpm dev` writes WXT development output under `dist/dev/`. Keep the normally
+installed unpacked extension pointed at `dist/chrome-mv3`; use the development
+output only for an explicit hot-reload session.
 
 ---
 

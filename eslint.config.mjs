@@ -24,6 +24,7 @@ export default antfu({
     markdown: "prettier",
   },
   ignores: [
+    "**/.pytest_cache/**",
     "**/skills/**",
   ],
   rules: {

@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 .venv*/
+.pytest_cache/
 __pycache__/
 *.py[cod]
 bridge/native-messaging/
@@ -18,30 +19,13 @@ bridge/native-messaging/*
 bridge/logs/
 bridge/.qq-frog-pdf-bridge.pid
 .output
+.build/
+dist/
 stats.html
 stats-*.html
 stats-*.json
 .wxt
 web-ext.config.ts
-
-# Generated unpacked Chrome extension root. Source stays under extansion/src,
-# extansion/public, and extansion/assets.
-extansion/_locales/
-extansion/chunks/
-extansion/content-scripts/
-extansion/icon/
-extansion/background.js
-extansion/devtools.html
-extansion/manifest.json
-extansion/offscreen.html
-extansion/options.html
-extansion/pdf-result.html
-extansion/popup.html
-extansion/sidepanel.html
-extansion/translation-hub.html
-extansion/assets/*.css
-extansion/assets/*-[A-Za-z0-9_]*.png
-extansion/assets/*-[A-Za-z0-9_]*.svg
 
 # Editor directories and files
 .vscode/*
@@ -73,6 +57,7 @@ docs/
 !docs/
 docs/*
 !docs/project-structure.md
+!docs/project-structure.zh-tw.md
 !docs/audit/
 !docs/audit/**
 

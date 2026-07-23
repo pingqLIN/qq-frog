@@ -7,7 +7,7 @@ export default defineConfig({
   // TODO: remove any
   plugins: [WxtVitest() as any, react()],
   test: {
-    exclude: [...configDefaults.exclude, "**/.claude/**", "**/repos/**"],
+    exclude: [...configDefaults.exclude, "**/.claude/**", "**/.del/**", "**/repos/**"],
     environment: "node",
     globals: true,
     setupFiles: "vitest.setup.ts",

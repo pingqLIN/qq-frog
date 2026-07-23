@@ -1,0 +1,45 @@
+name: Extension build contract
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  windows-extension-contract:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      SKIP_FREE_API: "true"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm type-check
+
+      - name: Test required provider contract
+        run: pnpm exec vitest run extansion/src/utils/constants/__tests__/chrome-ai-provider-contract.test.ts extansion/src/utils/host/translate/api/__tests__/chrome-ai.test.ts
+
+      - name: Build canonical extension
+        run: pnpm build
+
+      - name: Verify canonical extension
+        run: pnpm verify:extension

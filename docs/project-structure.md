@@ -1,55 +1,97 @@
-# 專案資料夾結構
+# Project Structure
 
-本專案是既有 WXT / Manifest V3 擴充功能，不使用 starter 的極簡 `src/popup`、`src/options` 目錄形狀。Chrome extension 程式碼集中在 `extansion/` 目錄；以下文件作為 `$start-chrome-extension-project` 標準與目前程式碼的對照。
+This repository uses WXT and Manifest V3. It has one source boundary and one
+canonical production artifact:
 
-## 根目錄
+```text
+extansion/src + extansion/public
+              |
+              v
+      isolated WXT staging build
+              |
+              v
+ manifest + feature + asset verification
+              |
+              v
+       dist/chrome-mv3
+```
 
-- `wxt.config.ts`: Manifest V3、permissions、host permissions、build/dev 設定來源。
-- `package.json`: pnpm scripts、dependencies、Chrome extension build/test 指令。
-- `.env.example`: 本機單機版 runtime URL 範例。
-- `README.md` / `README.zh-TW.md`: 專案用途、開發指令、外部服務邊界。
-- `docs/audit/`: Chrome extension security、privacy、permissions、release 審查文件。
-- `docs/audit/local-service-ports.md`: 本機服務 port 登記與臨時 smoke port 治理規則。
-- `docs/audit/paddleocr-runtime-separation.md`: PaddleOCR optional runtime 分隔、授權與使用者選擇權說明。
-- `extansion/`: Chrome extension 工作目錄；`pnpm build` 後此目錄根層會同步 `manifest.json` 與可載入產物。
-- `extansion/.output/chrome-mv3/`: WXT 原始 build output，供同步腳本產生 `extansion/` 根層可載入版本。
+The unsuffixed English document is authoritative. See
+[`project-structure.zh-tw.md`](./project-structure.zh-tw.md) for the Traditional
+Chinese companion.
 
-## 擴充功能入口
+## Authoritative Boundaries
 
-- `extansion/src/entrypoints/background/`: background service worker 與跨頁面協調。
-- `extansion/src/entrypoints/popup/`: toolbar popup UI。
-- `extansion/src/entrypoints/options/`: 設定頁與 provider/config UI。
-- `extansion/src/entrypoints/devtools.*`: DevTools 面板入口，載入擴充設定介面。
-- `extansion/src/entrypoints/sidepanel/`: Chrome side panel 入口。
-- `extansion/src/entrypoints/translation-hub/`: 獨立翻譯工作臺。
-- `extansion/src/entrypoints/*.content/`: content scripts 與頁面內 UI。
-- `extansion/src/entrypoints/offscreen/`: offscreen document 入口。
+- `extansion/src/`: extension source code and WXT entrypoints.
+- `extansion/public/`: static files copied into the extension.
+- `extansion/src/assets/`: bundled application assets.
+- `extansion/assets/`: repository documentation and auxiliary assets; never an
+  extension output root.
+- `dist/chrome-mv3/`: the only supported production unpacked-extension path.
+- `dist/dev/`: WXT development output; never a production artifact.
+- `.build/extension/`: isolated staging builds; never load this path in Chrome.
+- `extansion/.del/`: recoverable archives of the removed legacy root build.
 
-## 共用模組
+`extansion/` is not loadable as an extension. A root-level `manifest.json`
+there indicates a legacy build and must fail review.
 
-- `extansion/src/utils/`: translation、config、storage、request、host DOM、subtitles 等共用邏輯。
-- `extansion/src/types/`: config schema 與 provider 型別。
-- `extansion/src/hooks/`: React hooks。
-- `extansion/src/components/`: 跨入口共用 UI。
-- `extansion/src/locales/`: i18n 文案。
+## Build Transaction
 
-## 靜態資源
+`pnpm build` performs a transaction:
 
-- `extansion/public/`: WXT 打包用 public assets。
-- `extansion/src/assets/`: provider icon、avatar、UI 圖示等程式內引用資產。
-- `extansion/assets/`: 專案層級素材與輔助資源。
+1. Verify source-level required-feature contracts.
+2. Build into a unique `.build/extension/<build-id>` staging directory.
+3. Verify Manifest V3, manifest references, icon dimensions, extension HTML,
+   absence of `modulepreload`, Chrome Built-in AI, and PDF result output.
+4. Write `BUILD_INFO.json` with the source Git commit and dirty-state marker.
+5. Move the previous canonical artifact to `dist/.del/`.
+6. Promote the verified staging artifact to `dist/chrome-mv3`.
+7. Move legacy root output under `extansion/.del/`.
 
-## 建置與測試
+If verification fails, the previous canonical artifact remains in place. If
+promotion fails, the previous artifact is restored.
 
-- `scripts/`: 維護與資料產生腳本。
-- `vitest.config.ts` / `vitest.setup.ts`: 測試設定。
-- `tsconfig.json`: TypeScript 設定。
-- `eslint.config.mjs`: lint 設定。
+## Required Feature Contract
 
-Chrome 開發者模式載入 unpacked extension 時，請先執行 `pnpm build`，再選 `extansion/`。
+A production build fails unless all of these remain present:
 
-## 本機單機版邊界
+- `chrome-ai` is an API provider.
+- The provider dialog contains the Chrome Built-in AI group.
+- The Prompt API adapter remains present.
+- The PDF result entrypoint remains present.
+- Compiled JavaScript contains the Chrome AI provider identifiers.
 
-- 預設 runtime URL 指向 localhost。
-- Runtime service target 僅限 localhost 或使用者明確設定的自有服務。
-- Google、Microsoft、OpenAI-compatible 與使用者自行設定的 provider 屬於保留的第三方整合。
+This turns silent feature disappearance into a build failure.
+
+## Commands
+
+```bash
+pnpm build
+pnpm verify:extension
+pnpm build:edge
+pnpm build:firefox
+pnpm zip
+```
+
+Load `dist/chrome-mv3` from `chrome://extensions`. After each successful build,
+reload that extension.
+
+## Source Areas
+
+- `extansion/src/entrypoints/background/`: Manifest V3 service worker and
+  cross-surface coordination.
+- `extansion/src/entrypoints/popup/`: toolbar popup.
+- `extansion/src/entrypoints/options/`: settings and provider UI.
+- `extansion/src/entrypoints/sidepanel/`: Chrome side panel.
+- `extansion/src/entrypoints/translation-hub/`: translation workspace.
+- `extansion/src/entrypoints/*.content/`: content scripts.
+- `extansion/src/entrypoints/offscreen/`: offscreen document.
+- `extansion/src/utils/`: translation, configuration, storage, and runtime
+  helpers.
+- `extansion/src/types/`: configuration schemas and provider types.
+
+## Commit Gate
+
+`lint-staged.config.mjs` batches file paths to stay below Windows command-line
+limits. Large restorations therefore use the same lint gate as normal commits
+instead of bypassing it.

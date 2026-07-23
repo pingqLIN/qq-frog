@@ -24,10 +24,19 @@ QQ Frog 是基於原始 Read Frog 瀏覽器擴充樣板，也就是「伴讀蛙�
 
 ```bash
 pnpm install
-pnpm dev
+pnpm build
 ```
 
-接著開啟 `chrome://extensions`，啟用 **Developer mode**，並載入 WXT 產生的 extension 目錄。
+接著開啟 `chrome://extensions`，啟用 **Developer mode**，而且只載入：
+
+```text
+dist/chrome-mv3
+```
+
+不要載入 `extansion/`、`extansion/.output/` 或 `.build/`。這些位置分別是
+原始碼、已封存的舊產物或暫存建置區。`pnpm build` 只有在 Manifest V3、
+Chrome 內建 AI、PDF 翻譯、本機資產與 preload 契約全部通過後，才會發布
+新的 canonical artifact。
 
 若要使用本機 PDF 翻譯，啟動可選的 bridge service：
 
@@ -126,9 +135,14 @@ pnpm install
 SKIP_FREE_API=true pnpm test
 pnpm type-check
 pnpm build
+pnpm verify:extension
 ```
 
 本機 agent 驗證建議設定 `SKIP_FREE_API=true`，因為 `free-api.test.ts` 依賴即時外部翻譯服務。
+
+`pnpm dev` 會把 WXT 開發產物寫入 `dist/dev/`。平常安裝的 unpacked
+extension 應持續指向 `dist/chrome-mv3`；只有明確進行 hot reload 開發時，
+才載入開發產物。
 
 ---
 
