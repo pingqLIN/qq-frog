@@ -1,0 +1,9 @@
+{
+  "name": "com.qq_frog.pdf_bridge",
+  "description": "QQ Frog local PDF bridge launcher",
+  "path": "<QQ_FROG_BRIDGE_NATIVE_HOST_CMD>",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://<QQ_FROG_EXTENSION_ID>/"
+  ]
+}

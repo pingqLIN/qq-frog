@@ -1,4 +1,5 @@
 export { aiTranslate } from "./ai"
+export { chromeAIGenerateText, chromeAITranslate } from "./chrome-ai"
 export { deeplTranslate } from "./deepl"
 export { deeplxTranslate } from "./deeplx"
 export { googleTranslate } from "./google"

@@ -14,6 +14,7 @@ import { cleanupAllAiSegmentationCache, cleanupAllSummaryCache, cleanupAllTransl
 import { setupIframeInjection } from "./iframe-injection"
 import { setupLLMGenerateTextMessageHandlers } from "./llm-generate-text"
 import { initMockData } from "./mock-data"
+import { setupPdfTabSessionTracker } from "./pdf-tab-session"
 import { proxyFetch } from "./proxy-fetch"
 import { setupSidePanelMessageHandler } from "./side-panel"
 import { setUpSubtitlesTranslationQueue, setUpWebPageTranslationQueue } from "./translation-queues"
@@ -48,16 +49,24 @@ export default defineBackground({
       }
       catch (error) {
         logger.error("[Background] PDF bridge native host failed", error)
+        const messageText = error instanceof Error ? error.message : String(error)
         const response: PdfBridgeNativeHostResponse = {
           ok: false,
           status: "error",
-          message: error instanceof Error ? error.message : String(error),
+          message: messageText,
+          hint: getPdfBridgeNativeHostHint(messageText, browser.runtime.id),
+          extensionId: browser.runtime.id,
         }
         return response
       }
     })
 
     setupSidePanelMessageHandler({
+      extensionBrowser: browser,
+      logger,
+      registerMessageHandler: onMessage,
+    })
+    setupPdfTabSessionTracker({
       extensionBrowser: browser,
       logger,
       registerMessageHandler: onMessage,
@@ -108,3 +117,17 @@ export default defineBackground({
     setupIframeInjection()
   },
 })
+
+function getPdfBridgeNativeHostHint(message: string, extensionId: string) {
+  const normalizedMessage = message.toLowerCase()
+  if (
+    normalizedMessage.includes("native messaging")
+    || normalizedMessage.includes("host")
+    || normalizedMessage.includes("forbidden")
+    || normalizedMessage.includes("not found")
+  ) {
+    return `Native Messaging host may be missing or registered for a different extension ID. Current extension ID: ${extensionId}. From the repo bridge folder, run: .\\repair_native_host_windows.ps1 -ExtensionId ${extensionId} -Browser Chrome`
+  }
+
+  return null
+}

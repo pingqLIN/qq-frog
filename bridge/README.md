@@ -79,10 +79,10 @@ python server.py
 或使用 uvicorn 直接啟動：
 
 ```bash
-uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+uvicorn server:app --host 127.0.0.1 --port 8001 --reload
 ```
 
-啟動後，Server 會在 `http://localhost:8001` 提供服務。若使用 `--host 0.0.0.0`，同一內網的其他裝置也可透過 `http://<bridge-host-lan-ip>:8001` 存取。
+啟動後，Server 會在 `http://localhost:8001` 提供服務。`python server.py` 與 Native Messaging host 預設只綁定本機介面。
 
 ### 3. 在 Chrome 中啟用 Extension Bridge
 
@@ -107,7 +107,7 @@ cd Q:\Projects\qq-frog\bridge
 http://<bridge-host-lan-ip>:8001
 ```
 
-此模式下 extension 會直接 fetch 內網 bridge URL，不需要 Native Messaging host。
+此模式下 extension 會直接 fetch 內網 bridge URL，不需要 Native Messaging host。請只在可信任內網使用，並用防火牆限制存取範圍；bridge endpoints 目前不提供登入驗證。CORS 預設允許本機 Web UI 與 Chrome extension origin；若要允許其他瀏覽器來源跨來源存取，可設定 `QQ_FROG_BRIDGE_CORS_ORIGINS` 為逗號分隔的 origin 清單；測試環境才建議使用 `QQ_FROG_BRIDGE_CORS_ORIGINS=*`。
 
 ### 4. 允許 Extension 啟動本機 Bridge Server
 
@@ -115,17 +115,23 @@ Chrome extension 不能直接啟動本機程式；若要從 QQ Frog Options 的 
 
 Native Messaging 只適合同一台電腦上的 localhost bridge。若你已經把 bridge server 放在內網 Web 位置，請直接使用上面的內網 URL 模式。
 
-1. 到 `chrome://extensions` 開啟 QQ Frog 詳細資訊，複製真實 extension ID（32 個字元）。不要照抄 `<QQ_FROG_EXTENSION_ID>` placeholder。
-2. 在 PowerShell 執行：
+1. 在 PowerShell 執行自動修復。它會從 Chrome profile 找出目前載入 `Q:\Projects\qq-frog\extansion` 的 QQ Frog extension ID，並重建 Native Messaging manifest：
 
 ```powershell
 cd Q:\Projects\qq-frog\bridge
-.\install_native_host_windows.ps1 -ExtensionId "<QQ_FROG_EXTENSION_ID>"
+.\repair_native_host_windows.ps1 -Browser Chrome
+```
+
+2. 若自動偵測不到，請到 `chrome://extensions` 開啟 QQ Frog 詳細資訊，複製真實 extension ID（32 個字元），再手動指定。不要照抄 `<QQ_FROG_EXTENSION_ID>` placeholder：
+
+```powershell
+cd Q:\Projects\qq-frog\bridge
+.\repair_native_host_windows.ps1 -ExtensionId "<REAL_QQ_FROG_EXTENSION_ID>" -Browser Chrome
 ```
 
 3. 回到 QQ Frog Options → **PDF Translation**，按 **Bridge status** 或 **Start bridge**。
 
-Native host 名稱固定為 `com.qq_frog.pdf_bridge`。它只會啟動本 repo 的 `bridge/server.py`，並只接受 localhost bridge URL。若要指定 Python，可先設定 `QQ_FROG_PYTHON` 環境變數；未設定時會優先使用 repo 根目錄的 `.venv-paddleocr`。
+Native host 名稱固定為 `com.qq_frog.pdf_bridge`。真正給 Chrome 使用的 `bridge/native-messaging/com.qq_frog.pdf_bridge.json` 是本機生成檔，不進 Git；repo 只追蹤 `*.template.json`，避免 placeholder ID 被誤註冊。它只會啟動本 repo 的 `bridge/server.py`，預設綁定 `127.0.0.1`，並只接受 localhost bridge URL。若要指定 Python，可先設定 `QQ_FROG_PYTHON` 環境變數；未設定時會優先使用 repo 根目錄的 `.venv-paddleocr`。Native host 的 Stop bridge 只會停止它自己以 JSON PID 記錄啟動、且命令列仍指向本 repo `bridge/server.py` 的程序。
 
 ### 5. 執行 PDF 翻譯
 

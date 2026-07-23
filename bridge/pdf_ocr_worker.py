@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import traceback
 from pathlib import Path
 
-from pdf_ocr import run_pdf_ocr, run_pdf_page_ocr
+from pdf_ocr import configure_paddle_runtime_paths, run_pdf_ocr, run_pdf_page_ocr
 
 
 def main() -> int:
@@ -22,6 +23,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
+        os.chdir(configure_paddle_runtime_paths())
         pdf_path = Path(args.pdf_path)
         result = run_pdf_page_ocr(pdf_path, page_index=args.page_index) if args.page_index is not None else run_pdf_ocr(pdf_path)
         print(json.dumps({"ok": True, "result": result.model_dump()}), flush=True)

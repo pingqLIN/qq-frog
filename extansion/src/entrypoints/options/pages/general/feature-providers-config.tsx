@@ -4,7 +4,7 @@ import { useAtomValue, useSetAtom } from "jotai"
 import { useMemo } from "react"
 import ProviderSelector from "@/components/llm-providers/provider-selector"
 import { Field, FieldLabel } from "@/components/ui/base-ui/field"
-import { isAPIProviderConfig, isLLMProviderConfig, isPureAPIProvider } from "@/types/config/provider"
+import { isAPIProviderConfig, isChromeAIProvider, isLLMProviderConfig, isPureAPIProvider } from "@/types/config/provider"
 import { configAtom, configFieldsAtomMap, writeConfigAtom } from "@/utils/atoms/config"
 import { featureProviderConfigAtom } from "@/utils/atoms/provider"
 import { filterEnabledProvidersConfig, getProviderConfigById } from "@/utils/config/helpers"
@@ -17,7 +17,9 @@ import { SetApiKeyWarning } from "../../components/set-api-key-warning"
 function needsApiKeyWarning(providerConfig: ProviderConfig | null): boolean {
   return !!providerConfig
     && isAPIProviderConfig(providerConfig)
+    && !isChromeAIProvider(providerConfig.provider)
     && !isPureAPIProvider(providerConfig.provider)
+    && "apiKey" in providerConfig
     && !providerConfig.apiKey
 }
 

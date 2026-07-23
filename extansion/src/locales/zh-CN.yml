@@ -66,6 +66,10 @@ options:
   setAPIKeyWarning:
     please: 請在
     page: 頁設置 API Key
+  betaExperience:
+    title: Beta 體驗
+    description: 啟用實驗性功能和早期訪問新功能。這些功能可能不穩定或不完整。
+    enabled: 啟用 Beta 體驗
   apiProviders:
     title: API 提供商
     description: 配置用於翻譯和詞彙解析功能的 API 提供商。我們內置了 20 多個提供商，並支持任何 OpenAI 兼容 API 提供商。
@@ -78,6 +82,9 @@ options:
         builtInProviders:
           title: 內置 LLM 提供商
           description: 內置的大語言模型提供商，無需填寫大部分配置比如 Base URL
+        chromeBuiltInProviders:
+          title: Chrome 內建 AI
+          description: 由 Gemini Nano 提供的 Chrome 本機 AI 翻譯，不需要 API Key。
         openaiCompatibleProviders:
           title: OpenAI 兼容自定義提供商
           description: 如果找不到你想要的 AI 提供商，請選擇 Custom Provider 來配置任何 OpenAI 接口兼容的提供商，比如智譜
@@ -215,14 +222,14 @@ options:
       description: 影響自動翻譯語言檢測、跳過語言檢測和朗讀語音選擇的準確性。
       mode:
         basic: 基礎
-        llm: LLM
+        llm: AI
       provider:
         label: 檢測提供商
         placeholder: 選擇提供商
       status:
-        noProviders: 請先配置 LLM 提供商
-        basicRecommend: 建議啟用 LLM
-        llmEnabled: LLM 檢測已啟用
+        noProviders: 請先啟用 AI 提供商
+        basicRecommend: 建議啟用 AI 檢測
+        llmEnabled: AI 檢測已啟用
   siteControl:
     title: 站點控制
     mode:
@@ -273,12 +280,18 @@ options:
       serviceUrl: Bridge 服務 URL
       serviceUrlDescription: QQ Frog PDF 翻譯 bridge 的 base URL。可使用此電腦的 localhost，或 http://192.168.1.10:8001 這類內網 URL。
       provider: 翻譯提供商
+      providerRouteTitle: Provider 路由規則
       outputMode: 輸出模式
       providers:
         chromeGemini: Chrome 內建 Gemini
         lmStudio: LM Studio
         openai: OpenAI
         gemini: Gemini API
+      providerRoutes:
+        chromeGemini: Chrome 內建 Gemini 會透過 Chrome Prompt API / Gemini Nano 代理執行本機翻譯；選它時不需要也不能再同時開另一個雲端翻譯提供商。
+        lmStudio: LM Studio 會走本機 OpenAI-compatible API；請先在 LM Studio 啟動本機模型服務。
+        openai: OpenAI 會由 bridge 調用 OpenAI API；需要在 bridge 執行環境設定 OPENAI_API_KEY。
+        gemini: Gemini API 會由 bridge 調用 Google Gemini API；需要在 bridge 執行環境設定 GEMINI_API_KEY。
       outputModes:
         bilingualMarkdown: 雙語 Markdown
         textLayer: 文字層
@@ -287,6 +300,9 @@ options:
       checkStatus: Bridge 狀態
       start: 啟動 bridge
       stop: 停止 bridge
+      installTitle: Native host 修復
+      extensionId: 目前 Extension ID：$1
+      installDescription: 若 Bridge 狀態或啟動 bridge 無法連到 native host，請在 bridge 文件夾執行：
       status:
         status: 正在檢查 native bridge 狀態。
         start: 正在啟動本機 PDF bridge。
@@ -295,16 +311,23 @@ options:
         error: Native bridge 指令失敗。
     bridgeAgent:
       title: Chrome Gemini 代理執行日誌
+      exclusiveDescription: Chrome Gemini 代理只服務 Chrome 內建 Gemini provider。若改用 LM Studio、OpenAI 或 Gemini API，代理連線會停用，翻譯會直接走所選 provider。
       connect: 連線代理
       disconnect: 中斷代理
       queue: 任務佇列
       emptyLog: 尚無代理執行日誌。
       promptApi: Prompt API
+      promptApiChecking: 正在檢查 Prompt API adapter。
+      promptApiFound: 已檢測到 Prompt API
       promptApiUnavailable: 此 Chrome 環境不支援 Prompt API，或 Gemini Nano 尚未就緒。
       connecting: 正在連線至 Bridge WebSocket
+      socketOpening: 已創建 WebSocket 對象，正在等待 open event。
       connected: Bridge WebSocket 已連線，正在偵聽翻譯任務。
       disconnected: Bridge WebSocket 已中斷。
       socketError: Bridge WebSocket 發生錯誤。
+      refreshRuntime: Runtime 狀態
+      runtimeStatus: Runtime
+      currentProcess: 目前進程
       lanMode: 內網 URL 模式不透過 Native Messaging 啟動服務，僅檢查目前 URL。
       taskReceived: 收到翻譯任務
       taskSucceeded: 翻譯任務完成
@@ -326,14 +349,26 @@ options:
       translate: 翻譯 PDF
       cancel: 取消
       downloadMarkdown: 下載 Markdown
+      outputLocationTitle: 翻譯文件位置
+      outputLocationPending: 目前尚未寫入任何文件。翻譯完成後，Markdown 會先保留在此頁面的預覽區。
+      outputLocationReady: 結果已在預覽區。按「下載 Markdown」後，Chrome 會將文件存到瀏覽器默認下載文件夾，文件名為 $1。
+      outputLocationDownloaded: 最後一次已要求下載：$1。若 Chrome 詢問保存位置，請以瀏覽器下載提示為準。
       healthResult: 服務狀態
       errorTitle: PDF 翻譯失敗
       preview: PDF 翻譯 Markdown 預覽
       emptyTranslation: PDF 翻譯 bridge 回傳空白結果。
       connectionFailedHint: 無法連線到 PDF bridge 服務。請確認 Chrome 可以連到目前設定的 bridge 服務 URL；此電腦模式請啟動 localhost:8001 或安裝 Native Messaging host，內網模式請填 bridge 主機的內網 URL。
+      autoLoadFailed: 無法載入目前分頁的 PDF：$1
+      autoLoadAccessHint: Chrome 無法讀取這個 PDF URL。本機文件請到 chrome://extensions 允許 QQ Frog 訪問文件網址，或改用手動選擇 PDF。
+      autoLoadTimeout: 從目前分頁載入 PDF 超時。請改用手動選擇 PDF，或嘗試較小的文件。
+      autoLoadTooLarge: 這份 PDF 超過自動載入上限（$1）。請改用手動選擇 PDF 繼續。
+      autoLoadNotPdf: 目前分頁沒有返回 PDF 文件。請改用手動選擇 PDF 繼續。
+      resultOpenFailed: 翻譯已完成，但無法打開結果分頁：$1
       status:
         idle: 選擇 PDF 後開始。
         ready: PDF 已就緒。
+        autoLoading: 正在載入目前分頁的 PDF。
+        autoReady: 已載入目前分頁的 PDF：$1
         health: 正在檢查本機 PDF 服務。
         healthDone: 服務檢查完成。
         ensureService: 正在檢查並啟動 PDF bridge 服務。
@@ -344,12 +379,21 @@ options:
         success: 翻譯完成。
         error: 翻譯失敗。
         cancelled: 翻譯已取消。
+        downloaded: 已要求下載：$1
       readinessStates:
         unknown: 尚未檢查。按「檢查並啟動服務」會確認 OCR、bridge 與目前 provider 是否真的可用。
         checking: 正在檢查服務、OCR runtime 與 provider 連線。
         ready: 服務已可用，可以開始 PDF 翻譯。
         blocked: 服務已回應，但 OCR runtime 或 provider 仍未就緒。
         error: 服務不可用，請查看錯誤訊息或進階日誌。
+    result:
+      title: PDF 翻譯結果
+      openSource: 打開原始 PDF
+      downloadMarkdown: 下載 Markdown
+      loadingTitle: 正在載入結果
+      loadingDescription: 正在從此瀏覽器工作階段讀取 PDF 翻譯結果。
+      missingTitle: 找不到翻譯結果
+      missingDescription: Chrome 可能已重新啟動，或 session storage 已被清除，因此結果已失效。
   floatingButtonAndToolbar:
     title: 懸浮按鈕和工具欄
     selectionToolbarDemoImageAlt: 選擇工具欄演示
@@ -416,6 +460,18 @@ options:
         edit: 編輯 AI 指令
         empty: 暫無自定義 AI 指令
         noEnabledLlmProvider: 請先啟用至少一個 LLM 提供商後再創建自定義 AI 指令
+        aiGenerator:
+          title: 由 AI 替你生成指令
+          description: 描述你想要的功能，AI 會改寫成可重複使用的 prompt，加入合適的佔位符，並草擬輸出字段。
+          inputLabel: 想要的功能
+          inputPlaceholder: 例如：幫我摘要選中的論文段落、解釋關鍵術語，並用目標語言給出簡短結論。
+          inputHint: 生成器可使用選中文本、周圍段落、目標語言、網頁標題與網頁正文佔位符。
+          provider: 生成用提供商
+          generate: 生成指令
+          generating: 生成中...
+          applyToCurrent: 應用到當前指令
+          createAction: 創建指令
+          invalidResponse: AI 返回的指令草稿格式無效。
         table:
           name: 名稱
           provider: 提供商
@@ -464,6 +520,8 @@ options:
             emptyTitle: 還沒有筆記庫
             emptyDescription: 先去 localhost 創建一個筆記庫，再回來映射字段。
             openNotebaseAction: 打開筆記庫
+            betaLockedTitle: 當前賬號尚未加入 Notebase Beta
+            betaLockedDescription: 你可以繼續保留當前 action 配置，但選擇筆記庫和同步結果目前僅對部分 Beta 賬號開放。
             tableUnavailableTitle: 選中的筆記庫已不可用
             tableUnavailableDescription: 請刷新，或重新選擇一個筆記庫後再保存。
             tableUnavailableOption: 不可用
@@ -808,6 +866,7 @@ options:
     volume:
       label: 音量 (%)
       hint: 支持 -100 到 100 的整數
+    betaDisabled: 啟用測試體驗後即可自定義文本轉語音設置。
   statistics:
     title: 統計
     batchRequest:
@@ -1036,7 +1095,7 @@ noAPIKeyConfig:
     optionsPage: 選項
     page: 頁
 languageDetection:
-  llmFailed: LLM 語言檢測失敗，已回退到基礎檢測
+  llmFailed: AI 語言檢測失敗，已回退到基礎檢測
 translation:
   sameLanguage: 源語言和目標語言必須不同
   autoModeSameLanguage: 檢測到的語言 '$1' 與目標語言相同
@@ -1057,7 +1116,7 @@ action:
   saveToNotebaseSuccess: 已保存到筆記庫
   saveToNotebaseFailed: 保存到筆記庫失敗
   saveToNotebaseLoginRequired: 請先在 localhost 登錄後再保存到筆記庫
-  saveToNotebaseAccessRequired: 當前賬號尚無法訪問筆記庫
+  saveToNotebaseBetaRequired: 當前賬號尚未加入 Notebase Beta
   saveToNotebaseTableUnavailable: 選中的筆記庫已不可用
   saveToNotebaseConnectionInvalid: 當前筆記庫連接已經過期，請到 Custom AI Actions 中刷新並修復映射
   saveToNotebaseNoMappings: 至少添加一個有效映射後才能保存

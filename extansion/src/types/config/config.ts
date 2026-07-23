@@ -10,7 +10,7 @@ import { MIN_SIDE_CONTENT_WIDTH } from "@/utils/constants/side"
 import { floatingButtonSchema } from "./floating-button"
 import { languageDetectionConfigSchema } from "./language-detection"
 import { pdfTranslationConfigSchema } from "./pdf-translation"
-import { isLLMProvider, NON_API_TRANSLATE_PROVIDERS_MAP, providersConfigSchema } from "./provider"
+import { isChromeAIProvider, isLLMProvider, NON_API_TRANSLATE_PROVIDERS_MAP, providersConfigSchema } from "./provider"
 import { selectionToolbarCustomActionsSchema } from "./selection-toolbar"
 import { videoSubtitlesSchema } from "./subtitles"
 import { translateConfigSchema } from "./translate"
@@ -48,6 +48,11 @@ const selectionToolbarSchema = z.object({
 // side content schema
 const sideContentSchema = z.object({
   width: z.number().min(MIN_SIDE_CONTENT_WIDTH),
+})
+
+// beta experience schema
+const betaExperienceSchema = z.object({
+  enabled: z.boolean(),
 })
 
 // context menu schema
@@ -92,6 +97,7 @@ export const configSchema = z.object({
   floatingButton: floatingButtonSchema,
   selectionToolbar: selectionToolbarSchema,
   sideContent: sideContentSchema,
+  betaExperience: betaExperienceSchema,
   contextMenu: contextMenuSchema,
   inputTranslation: inputTranslationSchema,
   videoSubtitles: videoSubtitlesSchema,
@@ -138,7 +144,7 @@ export const configSchema = z.object({
     }
   }
 
-  // Validate languageDetection: when mode is "llm", providerId must be a valid enabled LLM provider
+  // Validate languageDetection: when mode is "llm", providerId must be a valid enabled detection provider.
   if (data.languageDetection.mode === "llm") {
     const ldProviderId = data.languageDetection.providerId
     if (!ldProviderId) {
@@ -158,10 +164,10 @@ export const configSchema = z.object({
         })
       }
       else {
-        if (!isLLMProvider(ldProvider.provider)) {
+        if (!isLLMProvider(ldProvider.provider) && !isChromeAIProvider(ldProvider.provider)) {
           ctx.addIssue({
             code: "custom",
-            message: `Language detection provider "${ldProviderId}" is not an LLM provider.`,
+            message: `Language detection provider "${ldProviderId}" is not a language detection provider.`,
             path: ["languageDetection", "providerId"],
           })
         }

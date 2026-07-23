@@ -92,7 +92,9 @@ function ProviderHeadersFieldHarness({ initialConfig }: { initialConfig: APIProv
   return (
     <>
       <ProviderHeadersField form={form} />
-      <output aria-label="persisted-headers">{JSON.stringify(providerConfig.headers ?? null)}</output>
+      <output aria-label="persisted-headers">
+        {JSON.stringify("headers" in providerConfig ? providerConfig.headers ?? null : null)}
+      </output>
     </>
   )
 }
@@ -118,7 +120,9 @@ function ProviderHeadersFieldSwitchHarness() {
       </button>
       <ProviderHeadersField form={form} />
       <output aria-label="persisted-provider-id">{providerConfig.id}</output>
-      <output aria-label="persisted-headers">{JSON.stringify(providerConfig.headers ?? null)}</output>
+      <output aria-label="persisted-headers">
+        {JSON.stringify("headers" in providerConfig ? providerConfig.headers ?? null : null)}
+      </output>
     </>
   )
 }

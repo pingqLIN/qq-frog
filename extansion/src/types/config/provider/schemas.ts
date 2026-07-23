@@ -152,6 +152,10 @@ const llmProviderConfigSchemaList = [
 ] as const
 
 const apiProviderConfigSchemaList = [
+  baseProviderConfigSchema.extend({
+    provider: z.literal("chrome-ai"),
+    bridgeUrl: z.string().optional(),
+  }),
   ...llmProviderConfigSchemaList,
   baseAPIProviderConfigSchema.extend({
     provider: z.literal("deeplx"),
@@ -168,12 +172,6 @@ export const providerConfigSchemaList = [
   }),
   baseProviderConfigSchema.extend({
     provider: z.literal("microsoft-translate"),
-  }),
-  // chrome-ai：Chrome 內建 Gemini Nano，不需要 apiKey 或 baseURL。
-  // bridgeUrl 指向本機 PDF 翻譯 bridge/service 的 WebSocket 端點。
-  baseProviderConfigSchema.extend({
-    provider: z.literal("chrome-ai"),
-    bridgeUrl: z.string().optional(), // 預設 ws://localhost:8001/ws
   }),
 ] as const
 
@@ -215,6 +213,8 @@ export type PureProviderConfig = Extract<ProviderConfig, { provider: PureAPIProv
 export type APIProviderConfig = Extract<ProviderConfig, { provider: APIProviderTypes }>
 export type PureAPIProviderConfig = Extract<ProviderConfig, { provider: PureAPIProviderTypes }>
 export type LLMProviderConfig = Extract<ProviderConfig, { provider: LLMProviderTypes }>
+export type ChromeAIProviderConfig = Extract<ProviderConfig, { provider: "chrome-ai" }>
+export type LanguageDetectionProviderConfig = LLMProviderConfig | ChromeAIProviderConfig
 export type TranslateProviderConfig = Extract<ProviderConfig, { provider: TranslateProviderTypes }>
 export type NonCustomLLMProviderConfig = Extract<ProviderConfig, { provider: NonCustomLLMProviderTypes }>
 export type CustomLLMProviderConfig = Extract<ProviderConfig, { provider: CustomLLMProviderTypes }>

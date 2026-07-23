@@ -1,6 +1,8 @@
 import type {
   APIProviderConfig,
+  ChromeAIProviderConfig,
   CustomLLMProviderConfig,
+  LanguageDetectionProviderConfig,
   LLMProviderConfig,
   NonAPIProviderConfig,
   NonCustomLLMProviderConfig,
@@ -10,6 +12,7 @@ import type {
 } from "./schemas"
 import {
   isAPIProvider,
+  isChromeAIProvider,
   isCustomLLMProvider,
   isLLMProvider,
   isNonAPIProvider,
@@ -29,6 +32,14 @@ export function isTranslateProviderConfig(config: ProviderConfig): config is Tra
 
 export function isLLMProviderConfig(config: ProviderConfig): config is LLMProviderConfig {
   return isLLMProvider(config.provider)
+}
+
+export function isChromeAIProviderConfig(config: ProviderConfig): config is ChromeAIProviderConfig {
+  return isChromeAIProvider(config.provider)
+}
+
+export function isLanguageDetectionProviderConfig(config: ProviderConfig): config is LanguageDetectionProviderConfig {
+  return isLLMProviderConfig(config) || isChromeAIProviderConfig(config)
 }
 
 export function isCustomLLMProviderConfig(config: ProviderConfig): config is CustomLLMProviderConfig {

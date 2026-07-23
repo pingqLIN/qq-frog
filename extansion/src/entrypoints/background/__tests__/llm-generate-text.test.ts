@@ -1,9 +1,21 @@
+import { storage } from "#imports"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const onMessageMock = vi.fn()
-const getModelByIdMock = vi.fn()
-const generateTextMock = vi.fn()
-const loggerErrorMock = vi.fn()
+const {
+  chromeAIGenerateTextMock,
+  generateTextMock,
+  getModelByIdMock,
+  loggerErrorMock,
+  onMessageMock,
+  storageGetItemMock,
+} = vi.hoisted(() => ({
+  chromeAIGenerateTextMock: vi.fn(),
+  generateTextMock: vi.fn(),
+  getModelByIdMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
+  onMessageMock: vi.fn(),
+  storageGetItemMock: vi.fn(),
+}))
 
 vi.mock("@/utils/message", () => ({
   onMessage: onMessageMock,
@@ -11,6 +23,10 @@ vi.mock("@/utils/message", () => ({
 
 vi.mock("@/utils/providers/model", () => ({
   getModelById: getModelByIdMock,
+}))
+
+vi.mock("@/utils/host/translate/api/chrome-ai", () => ({
+  chromeAIGenerateText: chromeAIGenerateTextMock,
 }))
 
 vi.mock("ai", () => ({
@@ -34,7 +50,14 @@ function getRegisteredMessageHandler(name: string) {
 describe("llm-generate-text", () => {
   beforeEach(() => {
     vi.resetModules()
-    vi.clearAllMocks()
+    onMessageMock.mockReset()
+    getModelByIdMock.mockReset()
+    generateTextMock.mockReset()
+    chromeAIGenerateTextMock.mockReset()
+    loggerErrorMock.mockReset()
+    storageGetItemMock.mockReset()
+    ;(storage.getItem as unknown as ReturnType<typeof vi.fn>) = storageGetItemMock
+    storageGetItemMock.mockResolvedValue(undefined)
   })
 
   it("runs generateText with resolved model in background", async () => {
@@ -59,6 +82,34 @@ describe("llm-generate-text", () => {
       maxRetries: 0,
     })
     expect(result).toEqual({ text: "eng" })
+  })
+
+  it("routes Chrome built-in AI providers through the Prompt API adapter", async () => {
+    storageGetItemMock.mockResolvedValue({
+      providersConfig: [
+        {
+          id: "chrome-ai-default",
+          enabled: true,
+          name: "Chrome AI (Gemini Nano)",
+          provider: "chrome-ai",
+        },
+      ],
+    })
+    chromeAIGenerateTextMock.mockResolvedValue("cmn")
+
+    const { runGenerateTextInBackground } = await import("../llm-generate-text")
+    const result = await runGenerateTextInBackground({
+      providerId: "chrome-ai-default",
+      system: "language detection system prompt",
+      prompt: "你好世界",
+      maxRetries: 0,
+    })
+
+    expect(storageGetItemMock).toHaveBeenCalledWith("local:config")
+    expect(chromeAIGenerateTextMock).toHaveBeenCalledWith("language detection system prompt", "你好世界")
+    expect(getModelByIdMock).not.toHaveBeenCalled()
+    expect(generateTextMock).not.toHaveBeenCalled()
+    expect(result).toEqual({ text: "cmn" })
   })
 
   it("registers backgroundGenerateText message handler", async () => {

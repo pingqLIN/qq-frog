@@ -19,6 +19,8 @@ from pydantic import BaseModel, Field
 
 SUPPORTED_PADDLE_PYTHON_MIN = (3, 9)
 SUPPORTED_PADDLE_PYTHON_MAX = (3, 13)
+BRIDGE_DIR = Path(__file__).resolve().parent
+PADDLE_RUNTIME_DIR = BRIDGE_DIR / "logs" / "paddle-runtime"
 
 
 class DependencyStatus(BaseModel):
@@ -96,6 +98,24 @@ def assert_pdf_ocr_ready() -> None:
             "PDF OCR runtime is not ready. Missing dependencies: "
             f"{', '.join(missing)}. Install PaddlePaddle for this platform, then install paddleocr and pypdfium2."
         )
+
+
+def configure_paddle_runtime_paths() -> Path:
+    """Keep Paddle/PaddleX runtime files away from drive roots and protected paths."""
+    PADDLE_RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    (PADDLE_RUNTIME_DIR / "temp").mkdir(parents=True, exist_ok=True)
+    os.environ["FLAGS_log_dir"] = str(PADDLE_RUNTIME_DIR)
+    os.environ["GLOG_log_dir"] = str(PADDLE_RUNTIME_DIR)
+    os.environ["HOME"] = str(PADDLE_RUNTIME_DIR / "home")
+    os.environ["XDG_CACHE_HOME"] = str(PADDLE_RUNTIME_DIR / "xdg-cache")
+    os.environ["AISTUDIO_CACHE_HOME"] = str(PADDLE_RUNTIME_DIR / "aistudio-cache")
+    os.environ["TEMP"] = str(PADDLE_RUNTIME_DIR / "temp")
+    os.environ["TMP"] = str(PADDLE_RUNTIME_DIR / "temp")
+    os.environ["PADDLE_HOME"] = str(PADDLE_RUNTIME_DIR / "paddle-home")
+    os.environ["PADDLEOCR_HOME"] = str(PADDLE_RUNTIME_DIR / "paddleocr-home")
+    os.environ["PADDLE_PDX_HOME"] = str(PADDLE_RUNTIME_DIR / "paddlex-home")
+    os.environ["PADDLE_PDX_CACHE_HOME"] = str(PADDLE_RUNTIME_DIR / "paddlex-cache")
+    return PADDLE_RUNTIME_DIR
 
 
 def _normalize_bbox(raw_bbox: Any) -> OcrBoundingBox | None:
@@ -257,6 +277,7 @@ def _resolve_page_indices(pdf_path: Path, page_indices: Iterable[int] | None) ->
 
 
 def _create_paddle_ocr() -> Any:
+    configure_paddle_runtime_paths()
     os.environ.setdefault("PADDLE_PDX_ENABLE_MKLDNN_BYDEFAULT", "0")
 
     from paddleocr import PaddleOCR

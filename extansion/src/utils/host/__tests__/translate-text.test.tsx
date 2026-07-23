@@ -24,6 +24,10 @@ vi.mock("@/utils/host/translate/api/google", () => ({
   googleTranslate: vi.fn(),
 }))
 
+vi.mock("@/utils/host/translate/api/chrome-ai", () => ({
+  chromeAITranslate: vi.fn(),
+}))
+
 vi.mock("@/utils/prompts/translate", () => ({
   getTranslatePrompt: vi.fn(),
 }))
@@ -43,6 +47,7 @@ vi.mock("@/utils/host/translate/webpage-summary", () => ({
 let mockSendMessage: any
 let mockMicrosoftTranslate: any
 let mockGoogleTranslate: any
+let mockChromeAITranslate: any
 let mockGetConfigFromStorage: any
 let mockGetTranslatePrompt: any
 let mockGetOrCreateWebPageContext: any
@@ -57,6 +62,7 @@ describe("translate-text", () => {
     mockSendMessage = vi.mocked((await import("@/utils/message")).sendMessage)
     mockMicrosoftTranslate = vi.mocked((await import("@/utils/host/translate/api/microsoft")).microsoftTranslate)
     mockGoogleTranslate = vi.mocked((await import("@/utils/host/translate/api/google")).googleTranslate)
+    mockChromeAITranslate = vi.mocked((await import("@/utils/host/translate/api/chrome-ai")).chromeAITranslate)
     mockGetConfigFromStorage = vi.mocked((await import("@/utils/config/storage")).getLocalConfig)
     mockGetTranslatePrompt = vi.mocked((await import("@/utils/prompts/translate")).getTranslatePrompt)
     mockGetOrCreateWebPageContext = vi.mocked((await import("@/utils/host/translate/webpage-context")).getOrCreateWebPageContext)
@@ -368,6 +374,27 @@ describe("translate-text", () => {
 
       expect(result).toBe("L'Iran chiama \"Dichiarazione\" AT&T <span>")
       expect(mockGoogleTranslate).toHaveBeenCalledWith("test input", "en", "zh")
+    })
+
+    it("routes chrome-ai through the Chrome built-in AI adapter", async () => {
+      const chromeAIProviderConfig = {
+        id: "chrome-ai-default",
+        enabled: true,
+        name: "Chrome AI (Gemini Nano)",
+        provider: "chrome-ai" as const,
+        bridgeUrl: "ws://localhost:8001/ws",
+      }
+      mockChromeAITranslate.mockResolvedValue("你好")
+
+      const result = await executeTranslate("test input", langConfig, chromeAIProviderConfig, getTranslatePrompt)
+
+      expect(result).toBe("你好")
+      expect(mockChromeAITranslate).toHaveBeenCalledWith(
+        "test input",
+        "Simplified Mandarin Chinese",
+        getTranslatePrompt,
+        undefined,
+      )
     })
   })
 })

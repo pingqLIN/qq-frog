@@ -66,6 +66,10 @@ options:
   setAPIKeyWarning:
     please: Please set API Key on
     page: page
+  betaExperience:
+    title: Beta Experience
+    description: Enable experimental features and early access to new functionality. These features may be unstable or incomplete.
+    enabled: Enable Beta Experience
   apiProviders:
     title: API Providers
     description: Configure API providers for translation and vocabulary insight. We have 20+ built-in providers and support any OpenAI-compatible API provider.
@@ -78,6 +82,9 @@ options:
         builtInProviders:
           title: Built-in LLM Providers
           description: Built-in large language model providers, no need to fill in most configurations like Base URL
+        chromeBuiltInProviders:
+          title: Chrome Built-in AI
+          description: Local Chrome AI providers powered by Gemini Nano. No API key is required.
         openaiCompatibleProviders:
           title: OpenAI Compatible Custom Providers
           description: If you can't find your desired AI provider, select Custom Provider to configure any OpenAI-compatible provider, such as Zhipu AI
@@ -215,14 +222,14 @@ options:
       description: Affects auto-translate language detection, skip-language detection, and Speaking voice selection accuracy.
       mode:
         basic: Basic
-        llm: LLM
+        llm: AI
       provider:
         label: Detection Provider
         placeholder: Select a provider
       status:
-        noProviders: Configure an LLM provider first
-        basicRecommend: Recommend enabling LLM
-        llmEnabled: LLM detection enabled
+        noProviders: Enable an AI provider first
+        basicRecommend: Recommend enabling AI detection
+        llmEnabled: AI detection enabled
   siteControl:
     title: Site Control
     mode:
@@ -273,12 +280,18 @@ options:
       serviceUrl: Bridge service URL
       serviceUrlDescription: The QQ Frog PDF translation bridge base URL. Use localhost for this computer, or a LAN URL such as http://192.168.1.10:8001.
       provider: Translation provider
+      providerRouteTitle: Provider routing rule
       outputMode: Output mode
       providers:
         chromeGemini: Chrome built-in Gemini
         lmStudio: LM Studio
         openai: OpenAI
         gemini: Gemini API
+      providerRoutes:
+        chromeGemini: Chrome built-in Gemini translates locally through the Chrome Prompt API / Gemini Nano agent. When selected, no separate cloud translation provider is active at the same time.
+        lmStudio: LM Studio uses the local OpenAI-compatible API. Start the local model service in LM Studio first.
+        openai: OpenAI is called by the bridge through the OpenAI API. Set OPENAI_API_KEY in the bridge runtime.
+        gemini: Gemini API is called by the bridge through Google's Gemini API. Set GEMINI_API_KEY in the bridge runtime.
       outputModes:
         bilingualMarkdown: Bilingual Markdown
         textLayer: Text layer
@@ -287,6 +300,9 @@ options:
       checkStatus: Bridge status
       start: Start bridge
       stop: Stop bridge
+      installTitle: Native host repair
+      extensionId: "Current extension ID: $1"
+      installDescription: "If Bridge status or Start bridge cannot reach the native host, run this from the bridge folder:"
       status:
         status: Checking native bridge status.
         start: Starting local PDF bridge.
@@ -295,16 +311,23 @@ options:
         error: Native bridge command failed.
     bridgeAgent:
       title: Chrome Gemini agent log
+      exclusiveDescription: The Chrome Gemini agent is only used by the Chrome built-in Gemini provider. LM Studio, OpenAI, and Gemini API bypass this agent and use the selected provider route directly.
       connect: Connect agent
       disconnect: Disconnect agent
       queue: Task queue
       emptyLog: No agent log yet.
       promptApi: Prompt API
+      promptApiChecking: Checking Prompt API adapters.
+      promptApiFound: Prompt API detected
       promptApiUnavailable: This Chrome environment does not support Prompt API, or Gemini Nano is not ready.
       connecting: Connecting to Bridge WebSocket
+      socketOpening: WebSocket object created; waiting for open event.
       connected: Bridge WebSocket connected and listening for translation tasks.
       disconnected: Bridge WebSocket disconnected.
       socketError: Bridge WebSocket error.
+      refreshRuntime: Runtime status
+      runtimeStatus: Runtime
+      currentProcess: Current process
       lanMode: LAN URL mode does not start the service through Native Messaging; it only checks the configured URL.
       taskReceived: Received translation task
       taskSucceeded: Translation task completed
@@ -326,14 +349,26 @@ options:
       translate: Translate PDF
       cancel: Cancel
       downloadMarkdown: Download Markdown
+      outputLocationTitle: Translated file location
+      outputLocationPending: No file has been written yet. The translated Markdown stays in this page after translation finishes.
+      outputLocationReady: "Result is ready in the preview. Click Download Markdown to let Chrome save it to your browser's default downloads folder as $1."
+      outputLocationDownloaded: "Last download requested: $1. Check Chrome downloads if the browser asks where to save it."
       healthResult: Service status
       errorTitle: PDF translation failed
       preview: PDF translation Markdown preview
       emptyTranslation: The PDF translation bridge returned an empty result.
       connectionFailedHint: Failed to connect to the PDF bridge service. Confirm the configured bridge service URL is reachable from Chrome. For this computer, start localhost:8001 or install the Native Messaging host. For LAN mode, use the bridge machine's intranet URL.
+      autoLoadFailed: "Could not load the PDF from the current tab: $1"
+      autoLoadAccessHint: Chrome could not read the PDF URL. For local files, allow file URL access for QQ Frog in chrome://extensions, or choose the PDF manually.
+      autoLoadTimeout: Loading the PDF from the current tab timed out. Choose the PDF manually or try a smaller file.
+      autoLoadTooLarge: The PDF is larger than the auto-load limit ($1). Choose it manually to continue.
+      autoLoadNotPdf: The current tab did not return a PDF file. Choose the PDF manually to continue.
+      resultOpenFailed: "Translation finished, but the result tab could not be opened: $1"
       status:
         idle: Choose a PDF to start.
         ready: PDF ready.
+        autoLoading: Loading PDF from the current tab.
+        autoReady: "Loaded PDF from current tab: $1"
         health: Checking local PDF service.
         healthDone: Service check completed.
         ensureService: Checking and starting the PDF bridge service.
@@ -344,12 +379,21 @@ options:
         success: Translation completed.
         error: Translation failed.
         cancelled: Translation cancelled.
+        downloaded: "Download requested: $1"
       readinessStates:
         unknown: Not checked yet. Check and start service verifies OCR, the bridge, and the selected provider.
         checking: Checking the service, OCR runtime, and provider connection.
         ready: The service is ready for PDF translation.
         blocked: The service responded, but OCR runtime or provider readiness is still blocked.
         error: The service is unavailable. Check the error message or advanced log.
+    result:
+      title: PDF translation result
+      openSource: Open source PDF
+      downloadMarkdown: Download Markdown
+      loadingTitle: Loading result
+      loadingDescription: Reading the translated PDF result from this browser session.
+      missingTitle: Translation result not found
+      missingDescription: This result may have expired because Chrome was restarted or session storage was cleared.
   floatingButtonAndToolbar:
     title: Floating Button & Toolbar
     selectionToolbarDemoImageAlt: Selection Toolbar Demo
@@ -416,6 +460,18 @@ options:
         edit: Edit AI Action
         empty: No custom AI actions yet
         noEnabledLlmProvider: Enable at least one LLM provider before creating custom AI actions
+        aiGenerator:
+          title: Let AI generate the instruction
+          description: Describe what you want this action to do. AI will rewrite it into reusable prompts, choose suitable placeholders, and draft output fields.
+          inputLabel: Desired feature
+          inputPlaceholder: For example, summarize selected academic text, explain key terms, and return a concise takeaway in my target language.
+          inputHint: The generator can use selected text, surrounding paragraphs, target language, page title, and page content placeholders.
+          provider: Generator provider
+          generate: Generate instruction
+          generating: Generating...
+          applyToCurrent: Apply to current action
+          createAction: Create action
+          invalidResponse: AI returned an invalid instruction draft.
         table:
           name: Name
           provider: Provider
@@ -464,6 +520,8 @@ options:
             emptyTitle: No notebases yet
             emptyDescription: Create a notebase on localhost, then come back here to map fields.
             openNotebaseAction: Open Notebase
+            betaLockedTitle: This account is not in the Notebase beta
+            betaLockedDescription: You can keep this action configured, but choosing notebases and syncing results is limited to selected beta accounts for now.
             tableUnavailableTitle: Selected notebase is no longer available
             tableUnavailableDescription: Refresh or choose another notebase before saving again.
             tableUnavailableOption: unavailable
@@ -808,6 +866,7 @@ options:
     volume:
       label: Volume (%)
       hint: Accepts integer values between -100 and 100
+    betaDisabled: Enable Beta Experience to customize text-to-speech settings.
   statistics:
     title: Statistics
     batchRequest:
@@ -1036,7 +1095,7 @@ noAPIKeyConfig:
     optionsPage: options
     page: page
 languageDetection:
-  llmFailed: LLM language detection failed, fell back to basic detection
+  llmFailed: AI language detection failed, fell back to basic detection
 translation:
   sameLanguage: Source and target languages must be different
   autoModeSameLanguage: Detected language '$1' is the same as target language
@@ -1057,7 +1116,7 @@ action:
   saveToNotebaseSuccess: Saved to Notebase
   saveToNotebaseFailed: Failed to save to Notebase
   saveToNotebaseLoginRequired: Log in on localhost to save to Notebase
-  saveToNotebaseAccessRequired: This account cannot access Notebase yet
+  saveToNotebaseBetaRequired: This account is not enrolled in the Notebase beta yet
   saveToNotebaseTableUnavailable: The selected Notebase is no longer available
   saveToNotebaseConnectionInvalid: This Notebase connection is out of date. Refresh it in Custom AI Actions and fix the mappings.
   saveToNotebaseNoMappings: Add at least one valid mapping before saving

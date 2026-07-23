@@ -99,9 +99,13 @@ function TranslateModelSelectorHarness({
       </form.AppField>
       <TranslateModelSelector form={form} />
       <output aria-label="form-name">{formValues.name}</output>
-      <output aria-label="form-provider-options">{JSON.stringify(formValues.providerOptions ?? null)}</output>
+      <output aria-label="form-provider-options">
+        {JSON.stringify("providerOptions" in formValues ? formValues.providerOptions ?? null : null)}
+      </output>
       <output aria-label="persisted-name">{providerConfig.name}</output>
-      <output aria-label="persisted-provider-options">{JSON.stringify(providerConfig.providerOptions ?? null)}</output>
+      <output aria-label="persisted-provider-options">
+        {JSON.stringify("providerOptions" in providerConfig ? providerConfig.providerOptions ?? null : null)}
+      </output>
       <output aria-label="submit-count">{String(submitCount)}</output>
     </form.AppForm>
   )

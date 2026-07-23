@@ -45,8 +45,8 @@ export function isNonCustomLLMProvider(provider: string): provider is NonCustomL
   return NON_CUSTOM_LLM_PROVIDER_TYPES.includes(provider)
 }
 
-export const API_PROVIDER_TYPES = ["siliconflow", "openai-compatible", "openai", "deepseek", "google", "anthropic", "xai", "deeplx", "deepl", "bedrock", "groq", "deepinfra", "mistral", "togetherai", "cohere", "fireworks", "cerebras", "replicate", "perplexity", "vercel", "openrouter", "ollama", "volcengine", "minimax", "alibaba", "moonshotai", "huggingface"] as const satisfies Readonly<
-  (keyof typeof LLM_PROVIDER_MODELS | "deeplx" | "deepl")[]
+export const API_PROVIDER_TYPES = ["chrome-ai", "siliconflow", "openai-compatible", "openai", "deepseek", "google", "anthropic", "xai", "deeplx", "deepl", "bedrock", "groq", "deepinfra", "mistral", "togetherai", "cohere", "fireworks", "cerebras", "replicate", "perplexity", "vercel", "openrouter", "ollama", "volcengine", "minimax", "alibaba", "moonshotai", "huggingface"] as const satisfies Readonly<
+  (keyof typeof LLM_PROVIDER_MODELS | "chrome-ai" | "deeplx" | "deepl")[]
 >
 export type APIProviderTypes = typeof API_PROVIDER_TYPES[number]
 export function isAPIProvider(provider: string): provider is APIProviderTypes {

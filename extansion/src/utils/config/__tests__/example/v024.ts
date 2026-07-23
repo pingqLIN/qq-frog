@@ -2,7 +2,7 @@ import type { TestSeriesObject } from "./types"
 
 export const testSeries: TestSeriesObject = {
   "complex-config-from-v020": {
-    description: "Retired feature configuration remains absent",
+    description: "Add beta experience configuration",
     config: {
       language: {
         detectedCode: "spa",
@@ -148,10 +148,13 @@ Translate to {{targetLang}}:
         width: 700,
       },
       selectionToolbar: { enabled: false },
+      betaExperience: {
+        enabled: false,
+      },
     },
   },
   "config-from-v022": {
-    description: "Retired feature configuration remains absent",
+    description: "Add beta experience configuration with disabled state",
     config: {
       floatingButton: {
         disabledFloatingButtonPatterns: [],
@@ -284,6 +287,9 @@ Translate to {{targetLang}}:
           rate: 2,
         },
         translationNodeStyle: "default",
+      },
+      betaExperience: {
+        enabled: false,
       },
     },
   },

@@ -34,7 +34,7 @@ function parseHeadersJson(input: string): { valid: true, value: Record<string, u
   }
 }
 
-function toJson(headers: APIProviderConfig["headers"]) {
+function toJson(headers: Record<string, string> | undefined) {
   return headers ? JSON.stringify(headers, null, 2) : ""
 }
 

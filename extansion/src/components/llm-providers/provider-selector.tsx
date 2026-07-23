@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/base-ui/select"
-import { isLLMProviderConfig, isPureTranslateProviderConfig } from "@/types/config/provider"
+import { isChromeAIProvider, isLLMProviderConfig, isPureTranslateProviderConfig } from "@/types/config/provider"
 import { PROVIDER_ITEMS } from "@/utils/constants/providers"
 import { i18n } from "@/utils/i18n"
 import { useTheme } from "../providers/theme-provider"
@@ -81,7 +81,9 @@ function TranslateGroupedSelect({
   selectContentProps?: Pick<ComponentProps<typeof SelectContent>, "container" | "positionerClassName">
   theme: Theme
 }) {
-  const llmProviders = providers.filter(isLLMProviderConfig)
+  const llmProviders = providers.filter(provider =>
+    isLLMProviderConfig(provider) || isChromeAIProvider(provider.provider),
+  )
   const pureTranslateProviders = providers.filter(isPureTranslateProviderConfig)
 
   return (
@@ -102,22 +104,26 @@ function TranslateGroupedSelect({
         </SelectValue>
       </SelectTrigger>
       <SelectContent className="min-w-fit" {...selectContentProps}>
-        <SelectGroup>
-          <SelectLabel>{i18n.t("translateService.aiTranslator")}</SelectLabel>
-          {llmProviders.map(provider => (
-            <SelectItem key={provider.id} value={provider}>
-              <ProviderIcon logo={PROVIDER_ITEMS[provider.provider].logo(theme)} name={provider.name} size="sm" />
-            </SelectItem>
-          ))}
-        </SelectGroup>
-        <SelectGroup>
-          <SelectLabel>{i18n.t("translateService.normalTranslator")}</SelectLabel>
-          {pureTranslateProviders.map(provider => (
-            <SelectItem key={provider.id} value={provider}>
-              <ProviderIcon logo={PROVIDER_ITEMS[provider.provider].logo(theme)} name={provider.name} size="sm" />
-            </SelectItem>
-          ))}
-        </SelectGroup>
+        {llmProviders.length > 0 && (
+          <SelectGroup>
+            <SelectLabel>{i18n.t("translateService.aiTranslator")}</SelectLabel>
+            {llmProviders.map(provider => (
+              <SelectItem key={provider.id} value={provider}>
+                <ProviderIcon logo={PROVIDER_ITEMS[provider.provider].logo(theme)} name={provider.name} size="sm" />
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        )}
+        {pureTranslateProviders.length > 0 && (
+          <SelectGroup>
+            <SelectLabel>{i18n.t("translateService.normalTranslator")}</SelectLabel>
+            {pureTranslateProviders.map(provider => (
+              <SelectItem key={provider.id} value={provider}>
+                <ProviderIcon logo={PROVIDER_ITEMS[provider.provider].logo(theme)} name={provider.name} size="sm" />
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        )}
       </SelectContent>
     </Select>
   )

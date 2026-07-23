@@ -12,7 +12,7 @@ export const BaseURLField = withForm({
     const providerConfig = useStore(form.store, state => state.values)
     const providerType = providerConfig.provider
 
-    if (providerType === "deepl") {
+    if (providerType === "chrome-ai" || providerType === "deepl") {
       return null
     }
 

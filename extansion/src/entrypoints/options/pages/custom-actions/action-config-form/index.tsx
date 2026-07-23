@@ -53,6 +53,7 @@ export function CustomActionConfigForm() {
 
 function CustomActionConfigEditor({ selectedAction }: { selectedAction: SelectionToolbarCustomAction }) {
   const [selectionToolbarConfig, setSelectionToolbarConfig] = useAtom(configFieldsAtomMap.selectionToolbar)
+  const betaExperienceConfig = useAtomValue(configFieldsAtomMap.betaExperience)
   const [, setSelectedCustomActionId] = useAtom(selectedCustomActionIdAtom)
 
   const customActions = selectionToolbarConfig.customActions ?? []
@@ -134,7 +135,7 @@ function CustomActionConfigEditor({ selectedAction }: { selectedAction: Selectio
 
           <OutputSchemaField form={form} />
 
-          <NotebaseConnectionField form={form} />
+          {betaExperienceConfig.enabled && <NotebaseConnectionField form={form} />}
         </div>
         <div className="flex justify-end mt-8">
           <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

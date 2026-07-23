@@ -18,6 +18,7 @@ import type {
   TTSPlaybackStartResponse,
   TTSPlaybackStopRequest,
 } from "@/types/tts-playback"
+import type { PdfTabSession } from "@/utils/pdf-tab-session"
 import type { EdgeTTSVoice } from "@/utils/server/edge-tts/types"
 import { defineExtensionMessaging } from "@webext-core/messaging"
 
@@ -30,6 +31,7 @@ interface ProtocolMap {
   getInitialConfig: () => Config | null
   // local PDF bridge
   pdfBridgeNativeHost: (data: PdfBridgeNativeHostRequest) => Promise<PdfBridgeNativeHostResponse>
+  getActivePdfTabSession: (data?: { tabId?: number, windowId?: number }) => Promise<PdfTabSession | null>
   // translation state
   getEnablePageTranslationByTabId: (data: { tabId: number }) => boolean | undefined
   getEnablePageTranslationFromContentScript: () => Promise<boolean>
@@ -94,6 +96,8 @@ export interface PdfBridgeNativeHostResponse {
   pid?: number | null
   health?: unknown
   error?: string | null
+  hint?: string | null
+  extensionId?: string | null
   logPath?: string
 }
 

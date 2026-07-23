@@ -21,7 +21,7 @@ function parseJson(input: string): { valid: true, value: Record<string, unknown>
   }
 }
 
-function toJson(options: APIProviderConfig["providerOptions"]) {
+function toJson(options: Record<string, unknown> | undefined) {
   return options ? JSON.stringify(options, null, 2) : ""
 }
 

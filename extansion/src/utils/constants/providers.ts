@@ -308,7 +308,7 @@ export const DEFAULT_PROVIDER_CONFIG = {
   "chrome-ai": {
     id: "chrome-ai-default",
     name: PROVIDER_ITEMS["chrome-ai"].name,
-    description: "使用 Chrome 內建 Gemini Nano 進行本機 PDF 翻譯，需連線至 QQ Frog local PDF translation bridge",
+    description: "使用 Chrome 內建 Gemini Nano / Prompt API 進行本機翻譯，不需要 API Key",
     enabled: false, // 預設關閉，需要手動啟用
     provider: "chrome-ai",
     bridgeUrl: "ws://localhost:8001/ws",
@@ -548,6 +548,7 @@ export function sanitizeProviderConfigForAppDefault<T extends ProviderConfig>(pr
 export const DEFAULT_PROVIDER_CONFIG_LIST: ProvidersConfig = [
   DEFAULT_PROVIDER_CONFIG["microsoft-translate"],
   DEFAULT_PROVIDER_CONFIG["google-translate"],
+  DEFAULT_PROVIDER_CONFIG["chrome-ai"],
   DEFAULT_PROVIDER_CONFIG.openai,
   // DEFAULT_PROVIDER_CONFIG.deepseek,
   DEFAULT_PROVIDER_CONFIG.google,
@@ -594,6 +595,10 @@ export const API_PROVIDER_ITEMS = pick(
 )
 
 export const PROVIDER_GROUPS = {
+  chromeBuiltInProviders: {
+    types: ["chrome-ai"],
+    tutorialSlug: "chrome-built-in-ai",
+  },
   builtInProviders: {
     types: NON_CUSTOM_LLM_PROVIDER_TYPES,
     tutorialSlug: "built-in-providers",

@@ -152,6 +152,9 @@ export const testSeries: TestSeriesObject = {
         enabled: false,
         disabledSelectionToolbarPatterns: [],
       },
+      betaExperience: {
+        enabled: false,
+      },
     },
   },
   "config-with-no-default-openai-model": {
@@ -261,6 +264,9 @@ export const testSeries: TestSeriesObject = {
         model: "tts-1",
         voice: "alloy",
         speed: 1,
+      },
+      betaExperience: {
+        enabled: false,
       },
     },
   },

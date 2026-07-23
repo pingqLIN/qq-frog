@@ -152,6 +152,9 @@ Translate to {{targetLang}}:
         width: 700,
       },
       selectionToolbar: { enabled: false },
+      betaExperience: {
+        enabled: false,
+      },
     },
   },
   "config-with-no-default-openai-model": {
@@ -254,6 +257,9 @@ Translate to {{targetLang}}:
           maxItemsPerBatch: 4,
         },
         translationNodeStyle: "default",
+      },
+      betaExperience: {
+        enabled: false,
       },
     },
   },

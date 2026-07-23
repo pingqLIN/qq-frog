@@ -158,6 +158,9 @@ Translate to {{targetLang}}:
         width: 700,
       },
       selectionToolbar: { enabled: false },
+      betaExperience: {
+        enabled: false,
+      },
     },
   },
   "config-with-no-default-openai-model": {
@@ -266,6 +269,9 @@ Translate to {{targetLang}}:
         model: "tts-1",
         voice: "alloy",
         speed: 1,
+      },
+      betaExperience: {
+        enabled: false,
       },
     },
   },

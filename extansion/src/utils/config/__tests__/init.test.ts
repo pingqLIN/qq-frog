@@ -1,5 +1,6 @@
 import type { Config } from "@/types/config/config"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { isAPIProviderConfig } from "@/types/config/provider"
 import { CONFIG_SCHEMA_VERSION, DEFAULT_CONFIG } from "@/utils/constants/config"
 
 const {
@@ -48,6 +49,24 @@ vi.mock("@/utils/logger", () => ({
 
 function buildStableConfig(): Config {
   const config = structuredClone(DEFAULT_CONFIG)
+  // In DEV mode, beta experience is enabled. Keep it true so no extra write is introduced.
+  config.betaExperience.enabled = true
+  config.providersConfig = config.providersConfig.map((providerConfig) => {
+    if (!isAPIProviderConfig(providerConfig)) {
+      return providerConfig
+    }
+
+    const apiKeyEnvName = `WXT_${providerConfig.provider.toUpperCase()}_API_KEY`
+    const envApiKey = import.meta.env[apiKeyEnvName] as string | undefined
+    if (!envApiKey) {
+      return providerConfig
+    }
+
+    return {
+      ...providerConfig,
+      apiKey: envApiKey,
+    }
+  })
   return config
 }
 
@@ -119,6 +138,39 @@ describe("initializeConfig", () => {
     expect(setMetaMock).toHaveBeenCalledWith("local:config", {
       schemaVersion: CONFIG_SCHEMA_VERSION,
       lastModifiedAt: 888,
+    })
+  })
+
+  it("backfills Chrome built-in AI provider when current-version config is missing it", async () => {
+    const config = buildStableConfig()
+    config.providersConfig = config.providersConfig.filter(providerConfig => providerConfig.provider !== "chrome-ai")
+
+    getItemMock.mockResolvedValueOnce(config)
+    getMetaMock.mockResolvedValueOnce({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      lastModifiedAt: 456,
+    })
+
+    const { initializeConfig } = await import("../init")
+    await initializeConfig()
+
+    expect(runMigrationMock).not.toHaveBeenCalled()
+    expect(setItemMock).toHaveBeenCalledTimes(1)
+    expect(setItemMock).toHaveBeenCalledWith(
+      "local:config",
+      expect.objectContaining({
+        providersConfig: expect.arrayContaining([
+          expect.objectContaining({
+            id: "chrome-ai-default",
+            provider: "chrome-ai",
+          }),
+        ]),
+      }),
+    )
+    expect(setMetaMock).toHaveBeenCalledTimes(1)
+    expect(setMetaMock).toHaveBeenCalledWith("local:config", {
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      lastModifiedAt: 456,
     })
   })
 

@@ -18,6 +18,14 @@
       "provider": "google-translate"
     },
     {
+      "id": "chrome-ai-default",
+      "name": "Chrome AI (Gemini Nano)",
+      "description": "使用 Chrome 內建 Gemini Nano / Prompt API 進行本機翻譯，不需要 API Key",
+      "enabled": false,
+      "provider": "chrome-ai",
+      "bridgeUrl": "ws://localhost:8001/ws"
+    },
+    {
       "id": "openai-default",
       "name": "OpenAI",
       "description": "一般翻譯",
@@ -501,6 +509,9 @@
   },
   "sideContent": {
     "width": 420
+  },
+  "betaExperience": {
+    "enabled": false
   },
   "contextMenu": {
     "enabled": true

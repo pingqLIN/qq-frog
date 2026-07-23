@@ -10,9 +10,11 @@ lerna-debug.log*
 node_modules
 .venv*/
 __pycache__/
-.pytest_cache/
 *.py[cod]
 bridge/native-messaging/
+!bridge/native-messaging/
+bridge/native-messaging/*
+!bridge/native-messaging/*.template.json
 bridge/logs/
 bridge/.qq-frog-pdf-bridge.pid
 .output
@@ -30,10 +32,10 @@ extansion/content-scripts/
 extansion/icon/
 extansion/background.js
 extansion/devtools.html
-extansion/pdf-result.html
 extansion/manifest.json
 extansion/offscreen.html
 extansion/options.html
+extansion/pdf-result.html
 extansion/popup.html
 extansion/sidepanel.html
 extansion/translation-hub.html
@@ -70,7 +72,6 @@ tsconfig.local.json
 docs/
 !docs/
 docs/*
-!docs/README.md
 !docs/project-structure.md
 !docs/audit/
 !docs/audit/**

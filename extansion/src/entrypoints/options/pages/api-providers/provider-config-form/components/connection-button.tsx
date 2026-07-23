@@ -38,7 +38,8 @@ const ConnectionTestResultIconMap = {
 }
 
 export function ConnectionTestButton({ providerConfig }: { providerConfig: APIProviderConfig }) {
-  const { apiKey, provider } = providerConfig
+  const { provider } = providerConfig
+  const apiKey = "apiKey" in providerConfig ? providerConfig.apiKey : undefined
   const baseURL = "baseURL" in providerConfig ? providerConfig.baseURL : undefined
   const providerSpecificSettings = "providerSpecificSettings" in providerConfig
     ? providerConfig.providerSpecificSettings
@@ -71,7 +72,7 @@ export function ConnectionTestButton({ providerConfig }: { providerConfig: APIPr
         size="xs"
         variant="outline"
         onClick={handleTestConnection}
-        disabled={mutation.isPending || (!apiKey && provider !== "deeplx" && provider !== "ollama")}
+        disabled={mutation.isPending || (!apiKey && provider !== "chrome-ai" && provider !== "deeplx" && provider !== "ollama")}
       >
         {mutation.isPending
           ? (

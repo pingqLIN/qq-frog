@@ -51,6 +51,7 @@ export default defineConfig({
     ],
     host_permissions: [
       "*://*/*", // Required for scripting.executeScript in any frame
+      "file:///*",
     ],
     ...(process.env.WXT_GOOGLE_CLIENT_ID && {
       oauth2: {

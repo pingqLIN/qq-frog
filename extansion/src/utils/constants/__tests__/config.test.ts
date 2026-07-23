@@ -10,6 +10,7 @@ describe("default config", () => {
     expect(DEFAULT_CONFIG.providersConfig.map(provider => provider.id)).toEqual([
       "microsoft-translate-default",
       "google-translate-default",
+      "chrome-ai-default",
       "openai-default",
       "google-default",
       "deeplx-default",

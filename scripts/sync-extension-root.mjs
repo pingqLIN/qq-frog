@@ -16,6 +16,7 @@ const rootGeneratedEntries = [
   "manifest.json",
   "offscreen.html",
   "options.html",
+  "pdf-result.html",
   "popup.html",
   "sidepanel.html",
   "translation-hub.html",

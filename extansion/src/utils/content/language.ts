@@ -1,9 +1,9 @@
 import type { LangCodeISO6393 } from "@read-frog/definitions"
 import type { BackgroundGenerateTextPayload } from "@/types/background-generate-text"
-import type { LLMProviderConfig } from "@/types/config/provider"
+import type { LanguageDetectionProviderConfig } from "@/types/config/provider"
 import { franc } from "franc"
 import { toast } from "sonner"
-import { isLLMProviderConfig } from "@/types/config/provider"
+import { isLanguageDetectionProviderConfig, isLLMProviderConfig } from "@/types/config/provider"
 import { getProviderConfigById } from "@/utils/config/helpers"
 import { getLocalConfig } from "@/utils/config/storage"
 import { i18n } from "@/utils/i18n"
@@ -25,8 +25,8 @@ export interface DetectLanguageOptions {
   minLength?: number
   /** Enable LLM detection */
   enableLLM?: boolean
-  /** LLM provider config for detection (non-LLM providers not supported) */
-  providerConfig?: LLMProviderConfig
+  /** Provider config for enhanced detection (LLM providers or Chrome built-in AI) */
+  providerConfig?: LanguageDetectionProviderConfig
   /** Max text length for LLM detection (default: 500) */
   maxLengthForLLM?: number
 }
@@ -105,7 +105,7 @@ export async function detectLanguage(
  */
 export async function detectLanguageWithLLM(
   text: string,
-  providerConfig?: LLMProviderConfig,
+  providerConfig?: LanguageDetectionProviderConfig,
 ): Promise<LangCodeISO6393 | "und" | null> {
   const MAX_ATTEMPTS = 3 // 1 original + 2 retries
 
@@ -115,7 +115,7 @@ export async function detectLanguageWithLLM(
   }
 
   // Get provider config - use passed or fall back to global
-  let config: LLMProviderConfig | undefined = providerConfig
+  let config: LanguageDetectionProviderConfig | undefined = providerConfig
 
   if (!config) {
     try {
@@ -133,8 +133,8 @@ export async function detectLanguageWithLLM(
         globalConfig.providersConfig,
         ldProviderId,
       )
-      if (!globalProvider || !isLLMProviderConfig(globalProvider)) {
-        logger.info("No LLM provider configured for page translation")
+      if (!globalProvider || !isLanguageDetectionProviderConfig(globalProvider)) {
+        logger.info("No enhanced provider configured for language detection")
         return null
       }
       config = globalProvider
@@ -146,16 +146,18 @@ export async function detectLanguageWithLLM(
   }
 
   try {
-    const { model: providerModel, provider, providerOptions: userProviderOptions, temperature } = config
-    const modelName = resolveModelId(providerModel)
-    const providerOptions = getProviderOptionsWithOverride(modelName ?? "", provider, userProviderOptions)
     const payload: BackgroundGenerateTextPayload = {
       providerId: config.id,
       system: getLanguageDetectionSystemPrompt(),
       prompt: text,
-      temperature,
-      providerOptions,
       maxRetries: 0,
+    }
+
+    if (isLLMProviderConfig(config)) {
+      const { model: providerModel, provider, providerOptions: userProviderOptions, temperature } = config
+      const modelName = resolveModelId(providerModel)
+      payload.temperature = temperature
+      payload.providerOptions = getProviderOptionsWithOverride(modelName ?? "", provider, userProviderOptions)
     }
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {

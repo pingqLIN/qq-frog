@@ -2,6 +2,7 @@ import type { Config } from "@/types/config/config"
 import type { ConfigMeta } from "@/types/config/meta"
 import { storage } from "#imports"
 import { configSchema } from "@/types/config/config"
+import { isAPIProviderConfig } from "@/types/config/provider"
 import { CONFIG_SCHEMA_VERSION, CONFIG_STORAGE_KEY, DEFAULT_CONFIG } from "../constants/config"
 import { logger } from "../logger"
 import { runMigration } from "./migration"
@@ -50,6 +51,20 @@ export async function initializeConfig() {
     didConfigChange = true
   }
 
+  const chromeAIProviderResult = ensureChromeAIProvider(config)
+  config = chromeAIProviderResult.config
+  didConfigChange = didConfigChange || chromeAIProviderResult.changed
+
+  if (import.meta.env.DEV) {
+    const apiKeyResult = applyAPIKeysFromEnv(config)
+    config = apiKeyResult.config
+    didConfigChange = didConfigChange || apiKeyResult.changed
+
+    const betaResult = applyDevBetaExperience(config)
+    config = betaResult.config
+    didConfigChange = didConfigChange || betaResult.changed
+  }
+
   const didMetaNeedUpdate
     = configMeta?.schemaVersion !== currentVersion
       || configMeta?.lastModifiedAt === undefined
@@ -63,5 +78,79 @@ export async function initializeConfig() {
       schemaVersion: currentVersion,
       lastModifiedAt: configMeta?.lastModifiedAt ?? Date.now(),
     })
+  }
+}
+
+function ensureChromeAIProvider(config: Config): { config: Config, changed: boolean } {
+  if (config.providersConfig.some(providerConfig => providerConfig.provider === "chrome-ai")) {
+    return { config, changed: false }
+  }
+
+  const chromeAIProvider = DEFAULT_CONFIG.providersConfig.find(providerConfig => providerConfig.provider === "chrome-ai")
+  if (!chromeAIProvider) {
+    return { config, changed: false }
+  }
+
+  const providersConfig = config.providersConfig.length > 0
+    ? [config.providersConfig[0], structuredClone(chromeAIProvider), ...config.providersConfig.slice(1)]
+    : [structuredClone(chromeAIProvider)]
+
+  return {
+    config: {
+      ...config,
+      providersConfig,
+    },
+    changed: true,
+  }
+}
+
+function applyAPIKeysFromEnv(config: Config): { config: Config, changed: boolean } {
+  let changed = false
+
+  const providersConfig = config.providersConfig.map((providerConfig) => {
+    if (!isAPIProviderConfig(providerConfig) || !("apiKey" in providerConfig)) {
+      return providerConfig
+    }
+
+    const apiKeyEnvName = `WXT_${providerConfig.provider.toUpperCase()}_API_KEY`
+    const envApiKey = import.meta.env[apiKeyEnvName] as string | undefined
+    if (!envApiKey || providerConfig.apiKey === envApiKey) {
+      return providerConfig
+    }
+
+    changed = true
+    return {
+      ...providerConfig,
+      apiKey: envApiKey,
+    }
+  })
+
+  if (!changed) {
+    return { config, changed: false }
+  }
+
+  return {
+    config: {
+      ...config,
+      providersConfig,
+    },
+    changed: true,
+  }
+}
+
+function applyDevBetaExperience(config: Config): { config: Config, changed: boolean } {
+  if (config.betaExperience.enabled) {
+    return { config, changed: false }
+  }
+
+  return {
+    config: {
+      ...config,
+      betaExperience: {
+        ...config.betaExperience,
+        enabled: true,
+      },
+    },
+    changed: true,
   }
 }

@@ -249,7 +249,9 @@ export function initChromeAIBridge() {
     if (!config)
       return
     const chromeAIProvider = config.providersConfig.find((p: any) => p.provider === "chrome-ai")
-    const enabled = chromeAIProvider?.enabled ?? false
+    const enabled = (chromeAIProvider?.enabled ?? false)
+      && config.pdfTranslation.enabled
+      && config.pdfTranslation.provider === "chrome-gemini"
     const bridgeUrl = (chromeAIProvider as any)?.bridgeUrl || "ws://localhost:8001/ws"
 
     if (enabled) {
@@ -270,7 +272,7 @@ export function initChromeAIBridge() {
     }
     else {
       if (activeBridge) {
-        logger.info("[ChromeAIBridge] chrome-ai 已停用，中斷連線")
+        logger.info("[ChromeAIBridge] chrome-ai bridge 未啟用，中斷連線")
         activeBridge.disconnect()
         activeBridge = null
       }

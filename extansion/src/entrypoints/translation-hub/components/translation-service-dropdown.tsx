@@ -13,8 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/base-ui/select"
+import { isChromeAIProvider, isLLMProviderConfig } from "@/types/config/provider"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
-import { filterEnabledProvidersConfig, getLLMProvidersConfig, getNonAPIProvidersConfig, getPureAPIProvidersConfig, getTranslateProvidersConfig } from "@/utils/config/helpers"
+import { filterEnabledProvidersConfig, getNonAPIProvidersConfig, getPureAPIProvidersConfig, getTranslateProvidersConfig } from "@/utils/config/helpers"
 import { PROVIDER_ITEMS } from "@/utils/constants/providers"
 import { i18n } from "@/utils/i18n"
 import { selectedProviderIdsAtom } from "../atoms"
@@ -37,8 +38,11 @@ export function TranslationServiceDropdown() {
     }
   }
 
-  const aiProviders = getLLMProvidersConfig(filteredProvidersConfig)
+  const aiProviders = filteredProvidersConfig.filter(provider =>
+    isLLMProviderConfig(provider) || isChromeAIProvider(provider.provider),
+  )
   const nonAPIProviders = getNonAPIProvidersConfig(filteredProvidersConfig)
+    .filter(provider => !isChromeAIProvider(provider.provider))
   const pureAPIProviders = getPureAPIProvidersConfig(filteredProvidersConfig)
 
   return (

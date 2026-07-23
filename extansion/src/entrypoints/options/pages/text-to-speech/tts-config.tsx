@@ -5,6 +5,7 @@ import { IconLoader2, IconPlayerPlayFilled } from "@tabler/icons-react"
 import { useAtom } from "jotai"
 import { useState } from "react"
 import { LanguageCombobox } from "@/components/language-combobox"
+import { Badge } from "@/components/ui/base-ui/badge"
 import { Button } from "@/components/ui/base-ui/button"
 import {
   Field,
@@ -55,7 +56,13 @@ export function TtsConfig() {
   return (
     <ConfigCard
       id="tts-config"
-      title={i18n.t("options.tts.title")}
+      title={(
+        <>
+          {i18n.t("options.tts.title")}
+          {" "}
+          <Badge variant="secondary" className="align-middle">Public Beta</Badge>
+        </>
+      )}
       description={i18n.t("options.tts.description")}
     >
       <FieldGroup>

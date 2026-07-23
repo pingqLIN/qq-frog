@@ -8,15 +8,13 @@
 
 Traditional Chinese documentation is available in [README.zh-TW.md](./README.zh-TW.md).
 
-[Quick Start](#quick-start) · [Installation](#installation) · [Features](#features) · [PDF Translation](#pdf-translation) · [Development](#development) · [Documentation](#documentation) · [繁體中文](./README.zh-TW.md)
+[Quick Start](#quick-start) · [Features](#features) · [PDF Translation](#pdf-translation) · [Development](#development) · [Documentation](#documentation) · [繁體中文](./README.zh-TW.md)
 
 ---
 
 ## Overview
 
-QQ Frog is an independent, local-first fork based on the original Read Frog browser extension template, known in Chinese as 伴讀蛙.
-
-This repository is prepared as a public project. The codebase focuses on local workflow defaults and publishes only configurable, non-sensitive behavior.
+QQ Frog is a personal backup fork based on the original Read Frog browser extension template, known in Chinese as 伴讀蛙. This repository exists for self-use, local experimentation, and preserving a standalone configuration that matches the maintainer's own browsing and translation workflow.
 
 Thanks to the original Read Frog / 伴讀蛙 project and its contributors for the extension foundation, product idea, and implementation patterns this fork builds on.
 
@@ -25,24 +23,24 @@ Thanks to the original Read Frog / 伴讀蛙 project and its contributors for th
 ## Quick Start
 
 ```bash
-pnpm install --frozen-lockfile
+pnpm install
 pnpm dev
 ```
 
-Then open `chrome://extensions`, enable **Developer mode**, and load the `extansion/` directory.
+Then open `chrome://extensions`, enable **Developer mode**, and load the generated extension directory from the WXT output.
 
-> For production-style packaging and full setup details, see [INSTALL.md](./INSTALL.md).
+For local PDF translation, run the optional bridge service:
 
-## Installation
-
-```bash
-pnpm install --frozen-lockfile
-pnpm build
+```powershell
+cd bridge
+py -3.11 -m venv ..\.venv-paddleocr
+..\.venv-paddleocr\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+..\.venv-paddleocr\Scripts\python.exe -m pip install paddlepaddle -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
+..\.venv-paddleocr\Scripts\python.exe -m pip install -r requirements-paddleocr.txt
+..\.venv-paddleocr\Scripts\python.exe -m uvicorn server:app --host 127.0.0.1 --port 8001
 ```
 
-- Load the `extansion/` directory from `chrome://extensions` (Developer mode).
-- For packaged browser store output, run `pnpm zip`, `pnpm zip:firefox`, or `pnpm zip:edge`.
-- Optional PDF bridge setup and Native Messaging instructions are documented in [INSTALL.md](./INSTALL.md) and [INSTALL.zh-TW.md](./INSTALL.zh-TW.md).
+> Note: do not copy placeholder extension IDs when installing the Native Messaging host. Prefer `.\bridge\repair_native_host_windows.ps1 -Browser Chrome`; it detects the real extension ID from the Chrome profile. If auto-detection fails, use the real ID shown in `chrome://extensions`.
 
 ---
 
@@ -149,10 +147,7 @@ pnpm build
 
 - [Interface tour](./docs/interface-tour.md)
 - [Project structure](./docs/project-structure.md)
-- [Documentation index](./docs/README.md)
 - [PDF bridge guide](./bridge/README.md)
-- [Installation guide](./INSTALL.md)
-- [Installation guide (Traditional Chinese)](./INSTALL.zh-TW.md)
 - [PaddleOCR runtime separation](./docs/audit/paddleocr-runtime-separation.md)
 - [Security review](./docs/audit/security-review.md)
 - [Privacy review](./docs/audit/privacy-review.md)
@@ -177,4 +172,4 @@ This repository is developed with AI assistance and human review.
 
 This fork is distributed under the GNU General Public License v3.0 only. See [LICENSE](./LICENSE).
 
-Modified from the original Read Frog / 伴讀蛙 browser extension template.
+Modified from the original Read Frog / 伴讀蛙 browser extension template. Changes in this repository are made for a lightweight personal backup and local self-use version in 2026.

@@ -1,5 +1,7 @@
 import type { ChangeEvent } from "react"
 import type { PdfTranslationOutputMode, PdfTranslationProvider } from "@/types/config/pdf-translation"
+import type { PdfTabSourceKind } from "@/utils/pdf-tab-session"
+import { browser } from "#imports"
 import { IconActivity, IconDownload, IconHeartbeat, IconPlayerPlayFilled, IconPower, IconRefresh, IconServer, IconUpload, IconX } from "@tabler/icons-react"
 import { deepmerge } from "deepmerge-ts"
 import { saveAs } from "file-saver"
@@ -22,19 +24,13 @@ import {
 } from "@/components/ui/base-ui/select"
 import { Switch } from "@/components/ui/base-ui/switch"
 import { Textarea } from "@/components/ui/base-ui/textarea"
-import { PDF_TRANSLATION_OUTPUT_MODES, PDF_TRANSLATION_PROVIDERS } from "@/types/config/pdf-translation"
+import { PDF_TRANSLATION_OUTPUT_MODES, PDF_TRANSLATION_PROVIDER_RULES, PDF_TRANSLATION_PROVIDERS } from "@/types/config/pdf-translation"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { i18n } from "@/utils/i18n"
 import { sendMessage } from "@/utils/message"
+import { createPdfTranslationResultId, savePdfTranslationResult } from "@/utils/pdf-tab-session"
 import { ConfigCard } from "../../components/config-card"
 import { PageLayout } from "../../components/page-layout"
-
-const PDF_TRANSLATION_PROVIDER_I18N_KEYS: Record<PdfTranslationProvider, string> = {
-  "chrome-gemini": "chromeGemini",
-  "lm-studio": "lmStudio",
-  "openai": "openai",
-  "gemini": "gemini",
-}
 
 const PDF_TRANSLATION_OUTPUT_MODE_I18N_KEYS: Record<PdfTranslationOutputMode, string> = {
   "bilingual-markdown": "bilingualMarkdown",
@@ -44,6 +40,8 @@ const PDF_TRANSLATION_OUTPUT_MODE_I18N_KEYS: Record<PdfTranslationOutputMode, st
 const BRIDGE_HEALTH_TIMEOUT_MS = 5000
 const PDF_OCR_TIMEOUT_MS = 15 * 60 * 1000
 const PDF_TRANSLATE_TIMEOUT_MS = 15 * 60 * 1000
+const PDF_SOURCE_LOAD_TIMEOUT_MS = 30 * 1000
+const PDF_SOURCE_LOAD_MAX_BYTES = 50 * 1024 * 1024
 
 export function PdfTranslationPage() {
   return (
@@ -115,20 +113,29 @@ function PdfTranslationConfig() {
           <Select value={pdfTranslationConfig.provider} onValueChange={handleProviderChange}>
             <SelectTrigger className="w-56">
               <SelectValue render={<span />}>
-                {i18n.t(`options.pdfTranslation.config.providers.${PDF_TRANSLATION_PROVIDER_I18N_KEYS[pdfTranslationConfig.provider]}`)}
+                {getPdfTranslationProviderLabel(pdfTranslationConfig.provider)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
                 {PDF_TRANSLATION_PROVIDERS.map(provider => (
                   <SelectItem key={provider} value={provider}>
-                    {i18n.t(`options.pdfTranslation.config.providers.${PDF_TRANSLATION_PROVIDER_I18N_KEYS[provider]}`)}
+                    {getPdfTranslationProviderLabel(provider)}
                   </SelectItem>
                 ))}
               </SelectGroup>
             </SelectContent>
           </Select>
         </Field>
+
+        <Alert>
+          <AlertTitle>{i18n.t("options.pdfTranslation.config.providerRouteTitle")}</AlertTitle>
+          <AlertDescription>
+            {i18n.t(
+              `options.pdfTranslation.config.providerRoutes.${PDF_TRANSLATION_PROVIDER_RULES[pdfTranslationConfig.provider].i18nKey}`,
+            )}
+          </AlertDescription>
+        </Alert>
 
         <Field orientation="horizontal">
           <FieldContent className="self-center">
@@ -165,6 +172,13 @@ interface PdfHealthResponse {
   warnings?: string[]
 }
 
+interface BridgeRuntimeHealthResponse {
+  status?: string
+  extension_connected?: boolean
+  pending_tasks?: number
+  pdf_ocr?: PdfHealthResponse
+}
+
 interface PdfTranslateResponse {
   markdown?: string
 }
@@ -177,12 +191,35 @@ interface PdfBridgeNativeHostResponse {
   message: string
   pid?: number | null
   error?: string | null
+  hint?: string | null
+  extensionId?: string | null
   logPath?: string
 }
 
 interface PromptApiAdapter {
   name: string
   model: any
+}
+
+export interface PdfTranslationInitialSource {
+  kind: "tab-url"
+  tabId: number
+  sourceUrl: string
+  sourceKind: PdfTabSourceKind
+  title?: string
+}
+
+export interface PdfTranslationResultBehavior {
+  kind: "replace-source-tab"
+  tabId: number
+  sessionId: string
+  sourceUrl: string
+  sourceTitle?: string
+}
+
+interface PdfTranslationToolProps {
+  initialSource?: PdfTranslationInitialSource | null
+  resultBehavior?: PdfTranslationResultBehavior
 }
 
 interface WSTranslateTask {
@@ -203,7 +240,10 @@ const PDF_TRANSLATION_PROGRESS: Record<PdfTranslationStage, number> = {
   error: 100,
 }
 
-export function PdfTranslationTool() {
+export function PdfTranslationTool({
+  initialSource = null,
+  resultBehavior,
+}: PdfTranslationToolProps = {}) {
   const [pdfTranslationConfig] = useAtom(configFieldsAtomMap.pdfTranslation)
   const [file, setFile] = useState<File | null>(null)
   const [targetLanguage, setTargetLanguage] = useState("Traditional Chinese")
@@ -212,6 +252,7 @@ export function PdfTranslationTool() {
   const [errorMessage, setErrorMessage] = useState("")
   const [healthSummary, setHealthSummary] = useState("")
   const [nativeHostSummary, setNativeHostSummary] = useState("")
+  const [bridgeRuntimeSummary, setBridgeRuntimeSummary] = useState("")
   const [isNativeHostRunning, setIsNativeHostRunning] = useState(false)
   const [bridgeReadiness, setBridgeReadiness] = useState<BridgeReadiness>("unknown")
   const [bridgeAgentStatus, setBridgeAgentStatus] = useState<BridgeAgentStatus>("disconnected")
@@ -219,13 +260,19 @@ export function PdfTranslationTool() {
   const [activeTaskIds, setActiveTaskIds] = useState<string[]>([])
   const [bridgeLogs, setBridgeLogs] = useState<string[]>([])
   const [markdown, setMarkdown] = useState("")
+  const [lastDownloadedFileName, setLastDownloadedFileName] = useState("")
   const abortControllerRef = useRef<AbortController | null>(null)
   const bridgeSocketRef = useRef<WebSocket | null>(null)
+  const attemptedInitialSourceKeyRef = useRef("")
 
   const isRunning = stage === "health" || stage === "ocr" || stage === "translate"
   const canTranslate = Boolean(file) && !isRunning
   const canUseNativeHost = isLocalBridgeServiceUrl(pdfTranslationConfig.serviceUrl)
-  const isChromeGeminiProvider = pdfTranslationConfig.provider === "chrome-gemini"
+  const providerRule = PDF_TRANSLATION_PROVIDER_RULES[pdfTranslationConfig.provider]
+  const isChromeGeminiProvider = providerRule.requiresBridgeAgent
+  const downloadFileName = getDownloadFileName(file)
+  const extensionId = browser.runtime.id
+  const nativeHostRepairCommand = `.\\repair_native_host_windows.ps1 -ExtensionId ${extensionId} -Browser Chrome`
 
   const appendBridgeLog = useCallback((message: string) => {
     const time = new Date().toLocaleTimeString("zh-TW", { hour12: false })
@@ -246,6 +293,62 @@ export function PdfTranslationTool() {
     return () => disconnectBridgeAgent()
   }, [disconnectBridgeAgent])
 
+  useEffect(() => {
+    if (!initialSource) {
+      attemptedInitialSourceKeyRef.current = ""
+      return
+    }
+
+    if (isRunning)
+      return
+
+    const sourceKey = getPdfInitialSourceKey(initialSource)
+    if (attemptedInitialSourceKeyRef.current === sourceKey)
+      return
+
+    attemptedInitialSourceKeyRef.current = sourceKey
+    const controller = new AbortController()
+    let cancelled = false
+
+    async function loadInitialSource() {
+      if (!initialSource)
+        return
+
+      setErrorMessage("")
+      setStatusMessage(i18n.t("options.pdfTranslation.tool.status.autoLoading"))
+
+      const timeoutId = window.setTimeout(() => controller.abort(), PDF_SOURCE_LOAD_TIMEOUT_MS)
+      try {
+        const loadedFile = await fetchPdfSourceAsFile(initialSource, controller.signal)
+        if (cancelled)
+          return
+
+        setFile(loadedFile)
+        setMarkdown("")
+        setLastDownloadedFileName("")
+        setStatusMessage(i18n.t("options.pdfTranslation.tool.status.autoReady", [loadedFile.name]))
+      }
+      catch (error) {
+        if (cancelled)
+          return
+
+        setFile(null)
+        setErrorMessage(i18n.t("options.pdfTranslation.tool.autoLoadFailed", [getPdfSourceLoadErrorMessage(error)]))
+        setStatusMessage(i18n.t("options.pdfTranslation.tool.status.idle"))
+      }
+      finally {
+        window.clearTimeout(timeoutId)
+      }
+    }
+
+    void loadInitialSource()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [initialSource, isRunning])
+
   const runNativeHostAction = async (action: "status" | "start" | "stop") => {
     setStage("health")
     setErrorMessage("")
@@ -259,6 +362,12 @@ export function PdfTranslationTool() {
 
       setIsNativeHostRunning(response.status === "running")
       setNativeHostSummary(formatNativeHostSummary(response))
+      if (!response.ok) {
+        setErrorMessage(formatNativeHostFailure(response))
+        setStatusMessage(i18n.t("options.pdfTranslation.nativeHost.status.error"))
+        setStage("error")
+        return
+      }
       setStatusMessage(i18n.t("options.pdfTranslation.nativeHost.status.done"))
       setStage("idle")
     }
@@ -271,6 +380,7 @@ export function PdfTranslationTool() {
   }
 
   const checkPromptApi = async () => {
+    appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.promptApiChecking"))
     const promptApi = getPromptApi()
     if (!promptApi) {
       const message = i18n.t("options.pdfTranslation.bridgeAgent.promptApiUnavailable")
@@ -282,7 +392,7 @@ export function PdfTranslationTool() {
     const availability = await getPromptAvailability(promptApi)
     const summary = `${promptApi.name}: ${availability}`
     setPromptApiSummary(summary)
-    appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.promptApi")} ${summary}`)
+    appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.promptApiFound")} ${summary}`)
 
     if (isPromptUnavailable(availability)) {
       throw new Error(i18n.t("options.pdfTranslation.bridgeAgent.promptApiUnavailable"))
@@ -302,6 +412,7 @@ export function PdfTranslationTool() {
 
       const socket = new WebSocket(wsUrl)
       bridgeSocketRef.current = socket
+      appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.socketOpening"))
 
       await new Promise<void>((resolve, reject) => {
         let opened = false
@@ -354,6 +465,44 @@ export function PdfTranslationTool() {
     }
   }
 
+  async function checkRealBridgeStatus(signal?: AbortSignal) {
+    const health = await fetchBridgeHealth(pdfTranslationConfig.serviceUrl, signal, BRIDGE_HEALTH_TIMEOUT_MS)
+    const summary = formatBridgeHealthSummary(health)
+    setHealthSummary(summary)
+    appendBridgeLog(`${i18n.t("options.pdfTranslation.tool.healthResult")}: ${summary}`)
+
+    let runtime: BridgeRuntimeHealthResponse | null = null
+    try {
+      runtime = await fetchBridgeRuntimeHealth(pdfTranslationConfig.serviceUrl, signal, BRIDGE_HEALTH_TIMEOUT_MS)
+      const runtimeSummary = formatBridgeRuntimeSummary(runtime)
+      setBridgeRuntimeSummary(runtimeSummary)
+      appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.runtimeStatus")}: ${runtimeSummary}`)
+    }
+    catch (error) {
+      const message = getErrorMessage(error)
+      setBridgeRuntimeSummary(message)
+      appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.runtimeStatus")}: ${message}`)
+    }
+
+    const hasChromeGeminiAgent = !isChromeGeminiProvider
+      || runtime?.extension_connected === true
+      || bridgeAgentStatus === "connected"
+
+    return {
+      health,
+      runtime,
+      summary,
+      ready: health.status === "ready" && hasChromeGeminiAgent,
+      needsChromeGeminiAgent: health.status === "ready" && isChromeGeminiProvider && !hasChromeGeminiAgent,
+    }
+  }
+
+  function markBridgeReady() {
+    setStatusMessage(i18n.t("options.pdfTranslation.tool.status.ensureDone"))
+    setBridgeReadiness("ready")
+    setStage("idle")
+  }
+
   const ensureBridgeService = async () => {
     setBridgeReadiness("checking")
     setStage("health")
@@ -362,6 +511,26 @@ export function PdfTranslationTool() {
     appendBridgeLog(i18n.t("options.pdfTranslation.tool.status.ensureService"))
 
     try {
+      try {
+        const currentStatus = await checkRealBridgeStatus()
+        if (currentStatus.ready) {
+          markBridgeReady()
+          return true
+        }
+
+        if (currentStatus.needsChromeGeminiAgent) {
+          await connectBridgeAgent(true)
+          const connectedStatus = await checkRealBridgeStatus()
+          if (connectedStatus.ready) {
+            markBridgeReady()
+            return true
+          }
+        }
+      }
+      catch (error) {
+        appendBridgeLog(getErrorMessage(error))
+      }
+
       if (canUseNativeHost) {
         const status = await sendMessage("pdfBridgeNativeHost", {
           action: "status",
@@ -392,23 +561,23 @@ export function PdfTranslationTool() {
         appendBridgeLog(i18n.t("options.pdfTranslation.bridgeAgent.lanMode"))
       }
 
-      const health = await fetchBridgeHealth(pdfTranslationConfig.serviceUrl, undefined, BRIDGE_HEALTH_TIMEOUT_MS)
-      const summary = formatBridgeHealthSummary(health)
-      setHealthSummary(summary)
-      appendBridgeLog(`${i18n.t("options.pdfTranslation.tool.healthResult")}: ${summary}`)
-      if (health.status !== "ready") {
-        setErrorMessage(summary)
+      const serviceStatus = await checkRealBridgeStatus()
+      if (serviceStatus.needsChromeGeminiAgent) {
+        await connectBridgeAgent(true)
+      }
+      const finalStatus = serviceStatus.needsChromeGeminiAgent
+        ? await checkRealBridgeStatus()
+        : serviceStatus
+
+      if (!finalStatus.ready) {
+        setErrorMessage(finalStatus.summary)
         setStatusMessage(i18n.t("options.pdfTranslation.tool.status.blocked"))
         setBridgeReadiness("blocked")
         setStage("error")
         return false
       }
-      if (isChromeGeminiProvider) {
-        await connectBridgeAgent(true)
-      }
-      setStatusMessage(i18n.t("options.pdfTranslation.tool.status.ensureDone"))
-      setBridgeReadiness("ready")
-      setStage("idle")
+
+      markBridgeReady()
       return true
     }
     catch (error) {
@@ -425,6 +594,7 @@ export function PdfTranslationTool() {
     setFile(selectedFile)
     setErrorMessage("")
     setMarkdown("")
+    setLastDownloadedFileName("")
     setStatusMessage(selectedFile ? i18n.t("options.pdfTranslation.tool.status.ready") : i18n.t("options.pdfTranslation.tool.status.idle"))
   }
 
@@ -437,16 +607,8 @@ export function PdfTranslationTool() {
     abortControllerRef.current = controller
 
     try {
-      const health = await fetchBridgeHealth(pdfTranslationConfig.serviceUrl, controller.signal, BRIDGE_HEALTH_TIMEOUT_MS)
-      const summary = formatBridgeHealthSummary(health)
-      setHealthSummary(summary)
-      appendBridgeLog(`${i18n.t("options.pdfTranslation.tool.healthResult")}: ${health.status ?? "unknown"}`)
-      if (health.status === "ready" && (!isChromeGeminiProvider || bridgeAgentStatus === "connected")) {
-        setBridgeReadiness("ready")
-      }
-      else {
-        setBridgeReadiness("blocked")
-      }
+      const serviceStatus = await checkRealBridgeStatus(controller.signal)
+      setBridgeReadiness(serviceStatus.ready ? "ready" : "blocked")
       setStatusMessage(i18n.t("options.pdfTranslation.tool.status.healthDone"))
       setStage("idle")
     }
@@ -472,6 +634,7 @@ export function PdfTranslationTool() {
     abortControllerRef.current = controller
     setErrorMessage("")
     setMarkdown("")
+    setLastDownloadedFileName("")
 
     try {
       if (bridgeReadiness !== "ready") {
@@ -504,7 +667,7 @@ export function PdfTranslationTool() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: pdfTranslationConfig.provider,
+          model: providerRule.model,
           target_language: targetLanguage,
           output_mode: pdfTranslationConfig.outputMode,
           ocr: ocrResult,
@@ -519,6 +682,18 @@ export function PdfTranslationTool() {
       setMarkdown(translateResult.markdown)
       setStage("success")
       setStatusMessage(i18n.t("options.pdfTranslation.tool.status.success"))
+      try {
+        await openTranslationResult({
+          file,
+          markdown: translateResult.markdown,
+          resultBehavior,
+          targetLanguage,
+          downloadFileName,
+        })
+      }
+      catch (error) {
+        setErrorMessage(i18n.t("options.pdfTranslation.tool.resultOpenFailed", [getErrorMessage(error)]))
+      }
     }
     catch (error) {
       if (isAbortError(error)) {
@@ -539,11 +714,26 @@ export function PdfTranslationTool() {
     abortControllerRef.current?.abort()
   }
 
+  async function refreshBridgeRuntime(signal?: AbortSignal) {
+    try {
+      const runtime = await fetchBridgeRuntimeHealth(pdfTranslationConfig.serviceUrl, signal, BRIDGE_HEALTH_TIMEOUT_MS)
+      const summary = formatBridgeRuntimeSummary(runtime)
+      setBridgeRuntimeSummary(summary)
+      appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.runtimeStatus")}: ${summary}`)
+    }
+    catch (error) {
+      const message = getErrorMessage(error)
+      setBridgeRuntimeSummary(message)
+      appendBridgeLog(`${i18n.t("options.pdfTranslation.bridgeAgent.runtimeStatus")}: ${message}`)
+    }
+  }
+
   const downloadMarkdown = () => {
     if (!markdown)
       return
-    const baseName = file ? sanitizeFilename(file.name.replace(/\.pdf$/i, "")) : "qq-frog-pdf-translation"
-    saveAs(new Blob([markdown], { type: "text/markdown;charset=utf-8" }), `${baseName}.translated.md`)
+    saveAs(new Blob([markdown], { type: "text/markdown;charset=utf-8" }), downloadFileName)
+    setLastDownloadedFileName(downloadFileName)
+    setStatusMessage(i18n.t("options.pdfTranslation.tool.status.downloaded", [downloadFileName]))
   }
 
   return (
@@ -635,6 +825,38 @@ export function PdfTranslationTool() {
           </Alert>
         )}
 
+        <Alert>
+          <AlertTitle>{i18n.t("options.pdfTranslation.nativeHost.installTitle")}</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <div>{i18n.t("options.pdfTranslation.nativeHost.extensionId", [extensionId])}</div>
+            <div>{i18n.t("options.pdfTranslation.nativeHost.installDescription")}</div>
+            <code className="block overflow-x-auto rounded bg-muted px-2 py-1 text-xs">
+              {nativeHostRepairCommand}
+            </code>
+          </AlertDescription>
+        </Alert>
+
+        <Alert>
+          <AlertTitle>{i18n.t("options.pdfTranslation.tool.outputLocationTitle")}</AlertTitle>
+          <AlertDescription className="space-y-1">
+            <div>
+              {markdown
+                ? i18n.t("options.pdfTranslation.tool.outputLocationReady", [downloadFileName])
+                : i18n.t("options.pdfTranslation.tool.outputLocationPending")}
+            </div>
+            {lastDownloadedFileName && (
+              <div>{i18n.t("options.pdfTranslation.tool.outputLocationDownloaded", [lastDownloadedFileName])}</div>
+            )}
+          </AlertDescription>
+        </Alert>
+
+        {isChromeGeminiProvider && (
+          <Alert>
+            <AlertTitle>{i18n.t("options.pdfTranslation.bridgeAgent.title")}</AlertTitle>
+            <AlertDescription>{i18n.t("options.pdfTranslation.bridgeAgent.exclusiveDescription")}</AlertDescription>
+          </Alert>
+        )}
+
         <details className="rounded-md border p-3">
           <summary className="cursor-pointer text-sm font-medium">
             {i18n.t("options.pdfTranslation.tool.advanced")}
@@ -657,6 +879,10 @@ export function PdfTranslationTool() {
                 <IconHeartbeat className="size-4" />
                 {i18n.t("options.pdfTranslation.tool.checkHealth")}
               </Button>
+              <Button variant="outline" onClick={() => void refreshBridgeRuntime()} disabled={isRunning}>
+                <IconActivity className="size-4" />
+                {i18n.t("options.pdfTranslation.bridgeAgent.refreshRuntime")}
+              </Button>
               <Button variant="outline" onClick={() => void connectBridgeAgent()} disabled={isRunning || !isChromeGeminiProvider || bridgeAgentStatus === "connected"}>
                 <IconServer className="size-4" />
                 {i18n.t("options.pdfTranslation.bridgeAgent.connect")}
@@ -675,6 +901,20 @@ export function PdfTranslationTool() {
                     {i18n.t(`options.pdfTranslation.bridgeAgent.status.${bridgeAgentStatus}`)}
                     {promptApiSummary ? ` / ${promptApiSummary}` : ""}
                   </div>
+                  <div className="text-xs text-muted-foreground">
+                    {i18n.t("options.pdfTranslation.bridgeAgent.currentProcess")}
+                    :
+                    {" "}
+                    {formatBridgeAgentProcess(bridgeAgentStatus, activeTaskIds)}
+                  </div>
+                  {bridgeRuntimeSummary && (
+                    <div className="text-xs text-muted-foreground">
+                      {i18n.t("options.pdfTranslation.bridgeAgent.runtimeStatus")}
+                      :
+                      {" "}
+                      {bridgeRuntimeSummary}
+                    </div>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {i18n.t("options.pdfTranslation.bridgeAgent.queue")}
@@ -684,7 +924,7 @@ export function PdfTranslationTool() {
               </div>
               <div className="min-h-24 max-h-48 overflow-y-auto rounded-md bg-muted p-3 font-mono text-xs">
                 {bridgeLogs.length
-                  ? bridgeLogs.map((entry, index) => <div key={`${entry}-${index}`}>{entry}</div>)
+                  ? bridgeLogs.map(entry => <div key={entry}>{entry}</div>)
                   : <div className="text-muted-foreground">{i18n.t("options.pdfTranslation.bridgeAgent.emptyLog")}</div>}
               </div>
             </div>
@@ -745,8 +985,144 @@ async function fetchJson<T>(url: string, init?: RequestInit, timeoutMs = PDF_TRA
   }
 }
 
+function getPdfTranslationProviderLabel(provider: PdfTranslationProvider) {
+  return i18n.t(`options.pdfTranslation.config.providers.${PDF_TRANSLATION_PROVIDER_RULES[provider].i18nKey}`)
+}
+
+function getPdfInitialSourceKey(source: PdfTranslationInitialSource) {
+  return `${source.kind}:${source.tabId}:${source.sourceUrl}`
+}
+
+async function fetchPdfSourceAsFile(source: PdfTranslationInitialSource, signal: AbortSignal) {
+  if (source.sourceUrl.startsWith("file:") && !await isFileSchemeAccessAllowed())
+    throw new Error(i18n.t("options.pdfTranslation.tool.autoLoadAccessHint"))
+
+  const response = await fetch(source.sourceUrl, {
+    credentials: "include",
+    signal,
+  })
+  if (!response.ok)
+    throw new Error(`${response.status} ${response.statusText}`)
+
+  const contentLength = getContentLength(response)
+  if (contentLength !== null && contentLength > PDF_SOURCE_LOAD_MAX_BYTES) {
+    throw new Error(i18n.t("options.pdfTranslation.tool.autoLoadTooLarge", [
+      formatBytes(PDF_SOURCE_LOAD_MAX_BYTES),
+    ]))
+  }
+
+  const blob = await response.blob()
+  if (blob.size > PDF_SOURCE_LOAD_MAX_BYTES) {
+    throw new Error(i18n.t("options.pdfTranslation.tool.autoLoadTooLarge", [
+      formatBytes(PDF_SOURCE_LOAD_MAX_BYTES),
+    ]))
+  }
+
+  if (!await isPdfBlob(response, blob))
+    throw new Error(i18n.t("options.pdfTranslation.tool.autoLoadNotPdf"))
+
+  return new File([blob], getPdfSourceFileName(source), {
+    type: blob.type || "application/pdf",
+  })
+}
+
+async function isFileSchemeAccessAllowed() {
+  const extensionApi = (browser as any).extension ?? (globalThis as any).chrome?.extension
+  if (typeof extensionApi?.isAllowedFileSchemeAccess !== "function")
+    return false
+
+  try {
+    const directResult = extensionApi.isAllowedFileSchemeAccess()
+    if (directResult && typeof directResult.then === "function")
+      return await directResult
+
+    if (typeof directResult === "boolean")
+      return directResult
+  }
+  catch {}
+
+  return await new Promise<boolean>((resolve) => {
+    extensionApi.isAllowedFileSchemeAccess((allowed: boolean) => resolve(allowed))
+  })
+}
+
+function getContentLength(response: Response) {
+  const rawLength = response.headers.get("content-length")
+  if (!rawLength)
+    return null
+
+  const parsed = Number.parseInt(rawLength, 10)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+async function isPdfBlob(response: Response, blob: Blob) {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? ""
+  if (contentType.includes("application/pdf"))
+    return true
+
+  const header = await blob.slice(0, 5).text()
+  return header.startsWith("%PDF")
+}
+
+function getPdfSourceFileName(source: Pick<PdfTranslationInitialSource, "sourceUrl" | "title">) {
+  const title = source.title?.trim()
+  if (title && title.toLowerCase().endsWith(".pdf"))
+    return sanitizeFilename(title)
+
+  try {
+    const url = new URL(source.sourceUrl)
+    const lastPathPart = decodeURIComponent(url.pathname.split("/").filter(Boolean).at(-1) ?? "")
+    if (lastPathPart)
+      return sanitizeFilename(lastPathPart.toLowerCase().endsWith(".pdf") ? lastPathPart : `${lastPathPart}.pdf`)
+  }
+  catch {}
+
+  return "qq-frog-source.pdf"
+}
+
+async function openTranslationResult({
+  file,
+  markdown,
+  resultBehavior,
+  targetLanguage,
+  downloadFileName,
+}: {
+  file: File | null
+  markdown: string
+  resultBehavior?: PdfTranslationResultBehavior
+  targetLanguage: string
+  downloadFileName: string
+}) {
+  if (resultBehavior?.kind !== "replace-source-tab")
+    return
+
+  const resultId = createPdfTranslationResultId()
+  await savePdfTranslationResult({
+    id: resultId,
+    sessionId: resultBehavior.sessionId,
+    sourceUrl: resultBehavior.sourceUrl,
+    sourceTitle: resultBehavior.sourceTitle,
+    sourceFileName: file?.name ?? getPdfSourceFileName({
+      sourceUrl: resultBehavior.sourceUrl,
+      title: resultBehavior.sourceTitle,
+    }),
+    downloadFileName,
+    targetLanguage,
+    markdown,
+    createdAt: Date.now(),
+  })
+
+  await browser.tabs.update(resultBehavior.tabId, {
+    url: getExtensionPageUrl(`/pdf-result.html?id=${encodeURIComponent(resultId)}`),
+  })
+}
+
 async function fetchBridgeHealth(serviceUrl: string, signal?: AbortSignal, timeoutMs = BRIDGE_HEALTH_TIMEOUT_MS) {
   return await fetchJson<PdfHealthResponse>(`${trimTrailingSlash(serviceUrl)}/pdf/health`, { signal }, timeoutMs)
+}
+
+async function fetchBridgeRuntimeHealth(serviceUrl: string, signal?: AbortSignal, timeoutMs = BRIDGE_HEALTH_TIMEOUT_MS) {
+  return await fetchJson<BridgeRuntimeHealthResponse>(`${trimTrailingSlash(serviceUrl)}/health`, { signal }, timeoutMs)
 }
 
 function formatBridgeHealthSummary(health: PdfHealthResponse) {
@@ -755,6 +1131,27 @@ function formatBridgeHealthSummary(health: PdfHealthResponse) {
     : ""
   const warnings = health.warnings?.length ? ` ${health.warnings.join(" ")}` : ""
   return `${health.status ?? "unknown"}${health.python_version ? ` / Python ${health.python_version}` : ""}${dependencies ? ` / ${dependencies}` : ""}${warnings}`
+}
+
+function formatBridgeRuntimeSummary(runtime: BridgeRuntimeHealthResponse) {
+  return [
+    `server=${runtime.status ?? "unknown"}`,
+    `extension=${runtime.extension_connected ? "connected" : "disconnected"}`,
+    `pending=${runtime.pending_tasks ?? "unknown"}`,
+    `ocr=${runtime.pdf_ocr?.status ?? "unknown"}`,
+  ].join(" / ")
+}
+
+function formatBridgeAgentProcess(status: BridgeAgentStatus, activeTaskIds: string[]) {
+  if (activeTaskIds.length > 0)
+    return `processing ${activeTaskIds.map(taskId => taskId.slice(0, 8)).join(", ")}`
+  if (status === "connected")
+    return "idle/listening"
+  if (status === "connecting")
+    return "connecting"
+  if (status === "error")
+    return "error"
+  return "disconnected"
 }
 
 function toBridgeWebSocketUrl(serviceUrl: string) {
@@ -894,14 +1291,28 @@ function sanitizeFilename(value: string) {
   return withoutControlCharacters.replace(/[<>:"/\\|?*]/g, "_") || "qq-frog-pdf-translation"
 }
 
+function formatBytes(value: number) {
+  return `${Math.round(value / 1024 / 1024)} MB`
+}
+
+function getDownloadFileName(file: File | null) {
+  const baseName = file ? sanitizeFilename(file.name.replace(/\.pdf$/i, "")) : "qq-frog-pdf-translation"
+  return `${baseName}.translated.md`
+}
+
 function formatNativeHostSummary(response: PdfBridgeNativeHostResponse) {
   const details = [
     response.message,
+    response.hint ? `Hint: ${response.hint}` : "",
     response.pid ? `PID: ${response.pid}` : "",
     response.error ? `Error: ${response.error}` : "",
     response.logPath ? `Log: ${response.logPath}` : "",
   ].filter(Boolean)
   return details.join(" ")
+}
+
+function formatNativeHostFailure(response: PdfBridgeNativeHostResponse) {
+  return [response.message, response.hint].filter(Boolean).join(" ")
 }
 
 function isAbortError(error: unknown) {
@@ -914,4 +1325,18 @@ function getErrorMessage(error: unknown) {
   if (error instanceof Error)
     return error.message
   return String(error)
+}
+
+function getPdfSourceLoadErrorMessage(error: unknown) {
+  if (isAbortError(error))
+    return i18n.t("options.pdfTranslation.tool.autoLoadTimeout")
+
+  if (error instanceof TypeError && error.message === "Failed to fetch")
+    return i18n.t("options.pdfTranslation.tool.autoLoadAccessHint")
+
+  return getErrorMessage(error)
+}
+
+function getExtensionPageUrl(path: string) {
+  return browser.runtime.getURL(path as any)
 }

@@ -4,6 +4,7 @@ import type { ProviderConfig } from "@/types/config/provider"
 import { ISO6393_TO_6391, LANG_CODE_TO_EN_NAME } from "@read-frog/definitions"
 import { isLLMProviderConfig, isNonAPIProvider, isPureAPIProvider } from "@/types/config/provider"
 import { aiTranslate } from "./api/ai"
+import { chromeAITranslate } from "./api/chrome-ai"
 import { deeplTranslate } from "./api/deepl"
 import { deeplxTranslate } from "./api/deeplx"
 import { googleTranslate } from "./api/google"
@@ -43,7 +44,8 @@ export async function executeTranslate<TContext>(
       translatedText = await microsoftTranslate(preparedText, sourceLang, targetLang)
     }
     else if (provider === "chrome-ai") {
-      throw new Error("chrome-ai provider 僅供 QQ Frog PDF 翻譯 bridge 使用")
+      const targetLangName = LANG_CODE_TO_EN_NAME[langConfig.targetCode]
+      translatedText = await chromeAITranslate(preparedText, targetLangName, promptResolver, options)
     }
   }
   else if (isPureAPIProvider(provider)) {

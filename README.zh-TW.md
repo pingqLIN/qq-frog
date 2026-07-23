@@ -8,13 +8,13 @@
 
 英文主文件請見 [README.md](./README.md)。
 
-[快速開始](#快速開始) · [安裝](#安裝) · [功能](#功能) · [PDF 翻譯](#pdf-翻譯) · [開發](#開發) · [文件](#文件) · [English](./README.md)
+[快速開始](#快速開始) · [功能](#功能) · [PDF 翻譯](#pdf-翻譯) · [開發](#開發) · [文件](#文件) · [English](./README.md)
 
 ---
 
 ## 概覽
 
-QQ Frog 是基於原始 Read Frog 瀏覽器擴充樣板，也就是「伴讀蛙」所建立的單機優先 fork。本專案面向公開使用，著重提供可重現的本機設定流程與可追溯的文件。
+QQ Frog 是基於原始 Read Frog 瀏覽器擴充樣板，也就是「伴讀蛙」所建立的個人備份 fork。本專案主要用於自用備份、本機實驗，以及保留符合維護者自身瀏覽與翻譯流程的單機設定。
 
 感謝原始 Read Frog / 伴讀蛙專案與貢獻者提供擴充功能基礎、產品想法與實作模式，讓此 fork 能在其成果上延伸。
 
@@ -23,24 +23,24 @@ QQ Frog 是基於原始 Read Frog 瀏覽器擴充樣板，也就是「伴讀蛙�
 ## 快速開始
 
 ```bash
-pnpm install --frozen-lockfile
+pnpm install
 pnpm dev
 ```
 
-接著開啟 `chrome://extensions`，啟用 **Developer mode**，並載入 `extansion/` 目錄。
+接著開啟 `chrome://extensions`，啟用 **Developer mode**，並載入 WXT 產生的 extension 目錄。
 
-> 注意：正式套件建置與完整安裝流程請見 [INSTALL.zh-TW.md](./INSTALL.zh-TW.md)。
+若要使用本機 PDF 翻譯，啟動可選的 bridge service：
 
-## 安裝
-
-```bash
-pnpm install --frozen-lockfile
-pnpm build
+```powershell
+cd bridge
+py -3.11 -m venv ..\.venv-paddleocr
+..\.venv-paddleocr\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+..\.venv-paddleocr\Scripts\python.exe -m pip install paddlepaddle -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
+..\.venv-paddleocr\Scripts\python.exe -m pip install -r requirements-paddleocr.txt
+..\.venv-paddleocr\Scripts\python.exe -m uvicorn server:app --host 127.0.0.1 --port 8001
 ```
 
-- 從 `chrome://extensions` 載入 `extansion/` 目錄（需啟用 Developer mode）。
-- 需要打包版本時，執行 `pnpm zip`（Chrome）、`pnpm zip:firefox`（Firefox）或 `pnpm zip:edge`（Edge）。
-- 本機 PDF 翻譯與 Native Messaging 的完整設定，請見 [INSTALL.md](./INSTALL.md) 與 [INSTALL.zh-TW.md](./INSTALL.zh-TW.md)。
+> 注意：安裝 Native Messaging host 時不要照抄 placeholder extension ID。優先使用 `.\bridge\repair_native_host_windows.ps1 -Browser Chrome`，它會從 Chrome profile 偵測真實 extension ID；若自動偵測失敗，再使用 `chrome://extensions` 顯示的真實 ID。
 
 ---
 
@@ -147,10 +147,7 @@ pnpm build
 
 - [介面導覽](./docs/interface-tour.zh-tw.md)
 - [專案資料夾結構](./docs/project-structure.md)
-- [文件目錄](./docs/README.md)
 - [PDF bridge guide](./bridge/README.md)
-- [安裝教學](./INSTALL.zh-TW.md)
-- [Installation guide](./INSTALL.md)
 - [PaddleOCR runtime 分隔說明](./docs/audit/paddleocr-runtime-separation.md)
 - [Security review](./docs/audit/security-review.md)
 - [Privacy review](./docs/audit/privacy-review.md)
@@ -175,4 +172,4 @@ pnpm build
 
 此 fork 以 GNU General Public License v3.0 only 授權散布。請見 [LICENSE](./LICENSE)。
 
-本專案修改自原始 Read Frog / 伴讀蛙瀏覽器擴充樣板。
+本專案修改自原始 Read Frog / 伴讀蛙瀏覽器擴充樣板。此 repository 內的修改是 2026 年為輕量化個人備份與本機自用版本所做。

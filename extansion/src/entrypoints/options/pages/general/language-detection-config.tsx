@@ -9,7 +9,7 @@ import {
 import { Label } from "@/components/ui/base-ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/base-ui/radio-group"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
-import { getEnabledLLMProvidersConfig, resolveLanguageDetectionConfigForModeChange } from "@/utils/config/helpers"
+import { getEnabledLanguageDetectionProvidersConfig, resolveLanguageDetectionConfigForModeChange } from "@/utils/config/helpers"
 import { i18n } from "@/utils/i18n"
 import { ConfigCard } from "../../components/config-card"
 
@@ -17,12 +17,12 @@ export default function LanguageDetectionConfig() {
   const [languageDetection, setLanguageDetection] = useAtom(configFieldsAtomMap.languageDetection)
   const providersConfig = useAtomValue(configFieldsAtomMap.providersConfig)
 
-  const enabledLLMProviders = useMemo(
-    () => getEnabledLLMProvidersConfig(providersConfig),
+  const enabledLanguageDetectionProviders = useMemo(
+    () => getEnabledLanguageDetectionProvidersConfig(providersConfig),
     [providersConfig],
   )
 
-  const hasLLMProviders = enabledLLMProviders.length > 0
+  const hasLLMProviders = enabledLanguageDetectionProviders.length > 0
   const isLLMMode = languageDetection.mode === "llm"
 
   const statusIndicator = useMemo(() => {
@@ -85,7 +85,7 @@ export default function LanguageDetectionConfig() {
               {i18n.t("options.general.languageDetection.provider.label")}
             </FieldLabel>
             <ProviderSelector
-              providers={enabledLLMProviders}
+              providers={enabledLanguageDetectionProviders}
               value={languageDetection.providerId ?? ""}
               onChange={providerId => void setLanguageDetection({ providerId })}
               placeholder={i18n.t("options.general.languageDetection.provider.placeholder")}

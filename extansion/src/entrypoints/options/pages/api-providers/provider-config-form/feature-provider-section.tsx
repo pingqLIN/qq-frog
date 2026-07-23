@@ -5,7 +5,7 @@ import { useAtomValue, useSetAtom } from "jotai"
 import { useState } from "react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/base-ui/collapsible"
 import { Switch } from "@/components/ui/base-ui/switch"
-import { isLLMProvider } from "@/types/config/provider"
+import { isChromeAIProvider, isLLMProvider } from "@/types/config/provider"
 import { configAtom, writeConfigAtom } from "@/utils/atoms/config"
 import { buildFeatureProviderPatch, FEATURE_KEYS, FEATURE_PROVIDER_DEFS, getFeatureLabelI18nKey } from "@/utils/constants/feature-providers"
 import { i18n } from "@/utils/i18n"
@@ -23,7 +23,7 @@ export const FeatureProviderSection = withForm({
 
     const compatibleFeatures = FEATURE_KEYS
       .filter(featureKey => FEATURE_PROVIDER_DEFS[featureKey].isProvider(providerType))
-    const supportsLanguageDetection = isLLMProvider(providerType)
+    const supportsLanguageDetection = isLLMProvider(providerType) || isChromeAIProvider(providerType)
 
     const customActions = isLLMProvider(providerType)
       ? config.selectionToolbar.customActions

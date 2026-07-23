@@ -301,6 +301,32 @@ describe("feature providers", () => {
 
       expect(result).toBeNull()
     })
+
+    it("can assign Chrome built-in AI when no enabled hosted llm provider is available", () => {
+      const result = resolveLanguageDetectionConfigForModeChange(
+        DEFAULT_CONFIG.languageDetection,
+        "llm",
+        [
+          {
+            ...getProviderById("openai-default"),
+            enabled: false,
+          },
+          {
+            ...getProviderById("google-default"),
+            enabled: false,
+          },
+          {
+            ...getProviderById("chrome-ai-default"),
+            enabled: true,
+          },
+        ],
+      )
+
+      expect(result).toEqual({
+        mode: "llm",
+        providerId: "chrome-ai-default",
+      })
+    })
   })
 
   describe("computeLanguageDetectionFallbackAfterDeletion", () => {
@@ -326,6 +352,37 @@ describe("feature providers", () => {
       )
 
       expect(result).toBe("google-default")
+    })
+
+    it("falls back to Chrome built-in AI for language detection", () => {
+      const config = {
+        ...DEFAULT_CONFIG,
+        languageDetection: {
+          mode: "llm" as const,
+          providerId: "deleted-provider",
+        },
+      }
+
+      const result = computeLanguageDetectionFallbackAfterDeletion(
+        "deleted-provider",
+        config,
+        [
+          {
+            ...getProviderById("openai-default"),
+            enabled: false,
+          },
+          {
+            ...getProviderById("google-default"),
+            enabled: false,
+          },
+          {
+            ...getProviderById("chrome-ai-default"),
+            enabled: true,
+          },
+        ],
+      )
+
+      expect(result).toBe("chrome-ai-default")
     })
   })
 })

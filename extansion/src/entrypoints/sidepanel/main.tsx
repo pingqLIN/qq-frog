@@ -1,6 +1,7 @@
 import "@/utils/zod-config"
 import type { Config } from "@/types/config/config"
 import type { ThemeMode } from "@/types/config/theme"
+import type { PdfTabSession } from "@/utils/pdf-tab-session"
 import { browser } from "#imports"
 import { Icon } from "@iconify/react"
 import { QueryClientProvider } from "@tanstack/react-query"
@@ -27,6 +28,7 @@ import { getLocalConfig } from "@/utils/config/storage"
 import { APP_NAME } from "@/utils/constants/app"
 import { DEFAULT_CONFIG } from "@/utils/constants/config"
 import { i18n } from "@/utils/i18n"
+import { sendMessage } from "@/utils/message"
 import { renderPersistentReactRoot } from "@/utils/react-root"
 import { cn } from "@/utils/styles/utils"
 import { queryClient } from "@/utils/tanstack-query"
@@ -236,12 +238,29 @@ function isVideoSubtitlesUrl(url: string | undefined) {
 
 function useAutoSidePanelTab() {
   const [activeTab, setActiveTab] = React.useState<SidePanelTab>(SIDE_PANEL_TAB_TRANSLATE)
+  const [activePdfSession, setActivePdfSession] = React.useState<PdfTabSession | null>(null)
 
   const refreshActiveTab = React.useCallback(async () => {
     const [tab] = await browser.tabs.query({
       active: true,
       currentWindow: true,
     })
+
+    const pdfSession = await sendMessage("getActivePdfTabSession", {
+      tabId: tab?.id,
+      windowId: tab?.windowId,
+    }).catch(() => null)
+    const isCurrentPdfSession = Boolean(
+      pdfSession
+      && typeof tab?.id === "number"
+      && pdfSession.tabId === tab.id,
+    )
+
+    setActivePdfSession(isCurrentPdfSession ? pdfSession : null)
+    if (isCurrentPdfSession) {
+      setActiveTab(SIDE_PANEL_TAB_PDF)
+      return
+    }
 
     if (isVideoSubtitlesUrl(tab?.url))
       setActiveTab(SIDE_PANEL_TAB_SUBTITLES)
@@ -254,8 +273,8 @@ function useAutoSidePanelTab() {
       void refreshActiveTab()
     }
     const handleUpdated = (_tabId: number, changeInfo: { url?: string }) => {
-      if (isVideoSubtitlesUrl(changeInfo.url))
-        setActiveTab(SIDE_PANEL_TAB_SUBTITLES)
+      if (changeInfo.url)
+        void refreshActiveTab()
     }
 
     browser.tabs.onActivated.addListener(handleActivated)
@@ -267,7 +286,7 @@ function useAutoSidePanelTab() {
     }
   }, [refreshActiveTab])
 
-  return [activeTab, setActiveTab] as const
+  return [activeTab, setActiveTab, activePdfSession] as const
 }
 
 function SidePanelVideoSubtitlesTab() {
@@ -313,7 +332,7 @@ function SidePanelVideoSubtitlesTab() {
   )
 }
 
-function SidePanelPdfTranslationTab() {
+function SidePanelPdfTranslationTab({ activePdfSession }: { activePdfSession: PdfTabSession | null }) {
   const openFullSettings = () => {
     void browser.tabs.create({
       url: browser.runtime.getURL("/options.html#/pdf-translation"),
@@ -345,14 +364,33 @@ function SidePanelPdfTranslationTab() {
         "[&_section_[data-slot=field]]:gap-2",
       )}
       >
-        <PdfTranslationTool />
+        <PdfTranslationTool
+          initialSource={activePdfSession
+            ? {
+                kind: "tab-url",
+                tabId: activePdfSession.tabId,
+                sourceUrl: activePdfSession.sourceUrl,
+                sourceKind: activePdfSession.sourceKind,
+                title: activePdfSession.title,
+              }
+            : null}
+          resultBehavior={activePdfSession
+            ? {
+                kind: "replace-source-tab",
+                tabId: activePdfSession.tabId,
+                sessionId: activePdfSession.sessionId,
+                sourceUrl: activePdfSession.sourceUrl,
+                sourceTitle: activePdfSession.title,
+              }
+            : undefined}
+        />
       </div>
     </div>
   )
 }
 
 function SidePanelShell() {
-  const [activeTab, setActiveTab] = useAutoSidePanelTab()
+  const [activeTab, setActiveTab, activePdfSession] = useAutoSidePanelTab()
 
   return (
     <main className="bg-background text-foreground flex h-screen min-h-0 flex-col">
@@ -382,7 +420,7 @@ function SidePanelShell() {
           <SidePanelVideoSubtitlesTab />
         </TabsContent>
         <TabsContent value={SIDE_PANEL_TAB_PDF} className="min-h-0">
-          <SidePanelPdfTranslationTab />
+          <SidePanelPdfTranslationTab activePdfSession={activePdfSession} />
         </TabsContent>
       </Tabs>
     </main>
