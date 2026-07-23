@@ -1,4 +1,5 @@
 import type { TranslatePromptObj } from "@/types/config/translate"
+import { saveAs } from "file-saver"
 import { APP_NAME } from "@/utils/constants/app"
 
 export type PromptConfig = Omit<TranslatePromptObj, "id">
@@ -14,10 +15,9 @@ export function checkPromptConfig(list: PromptConfig[]) {
   return list.every(item => item.name && item.prompt)
 }
 
-export async function downloadJSONFile(data: object) {
+export function downloadJSONFile(data: object) {
   const json = JSON.stringify(data, null, 2)
   const blob = new Blob([json], { type: "text/json" })
-  const { saveAs } = await import("file-saver")
   saveAs(blob, `${PROMPTS_FILE}.json`)
 }
 

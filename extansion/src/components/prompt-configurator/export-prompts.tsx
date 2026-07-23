@@ -22,8 +22,8 @@ export function ExportPrompts() {
 
   return (
     <Button
-      onClick={async () => {
-        await downloadJSONFile(sortOutDownloadPrompts)
+      onClick={() => {
+        downloadJSONFile(sortOutDownloadPrompts)
         setIsExportMode(false)
         setSelectedPrompts([])
       }}

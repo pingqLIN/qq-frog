@@ -98,12 +98,6 @@ export default defineConfig({
     },
   },
   vite: configEnv => ({
-    // Chrome extension pages can preload a chunk from a different execution
-    // world than the module import that consumes it. Load chunks normally to
-    // keep the extension resource request in one world.
-    build: {
-      modulePreload: false,
-    },
     plugins: [
       ...(configEnv.mode === "production"
         ? [

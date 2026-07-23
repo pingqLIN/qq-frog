@@ -1,6 +1,7 @@
 import type { Config } from "@/types/config/config"
 import { useMutation } from "@tanstack/react-query"
 import { kebabCase } from "case-anything"
+import { saveAs } from "file-saver"
 import { toast } from "sonner"
 import { getObjectWithoutAPIKeys } from "@/utils/config/api"
 import { APP_NAME } from "@/utils/constants/app"
@@ -26,7 +27,6 @@ export function useExportConfig({ config, schemaVersion, onSuccess }: UseExportC
         schemaVersion,
       }, null, 2)
       const blob = new Blob([json], { type: "text/json" })
-      const { saveAs } = await import("file-saver")
       saveAs(blob, `${kebabCase(APP_NAME)}-config-v${schemaVersion}.json`)
     },
     onSuccess: () => {
