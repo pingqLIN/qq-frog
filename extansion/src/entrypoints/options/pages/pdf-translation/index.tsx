@@ -2,7 +2,6 @@ import type { ChangeEvent } from "react"
 import type { PdfTranslationOutputMode, PdfTranslationProvider } from "@/types/config/pdf-translation"
 import { IconActivity, IconDownload, IconHeartbeat, IconPlayerPlayFilled, IconPower, IconRefresh, IconServer, IconUpload, IconX } from "@tabler/icons-react"
 import { deepmerge } from "deepmerge-ts"
-import { saveAs } from "file-saver"
 import { useAtom } from "jotai"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { HelpTooltip } from "@/components/help-tooltip"
@@ -539,10 +538,11 @@ export function PdfTranslationTool() {
     abortControllerRef.current?.abort()
   }
 
-  const downloadMarkdown = () => {
+  const downloadMarkdown = async () => {
     if (!markdown)
       return
     const baseName = file ? sanitizeFilename(file.name.replace(/\.pdf$/i, "")) : "qq-frog-pdf-translation"
+    const { saveAs } = await import("file-saver")
     saveAs(new Blob([markdown], { type: "text/markdown;charset=utf-8" }), `${baseName}.translated.md`)
   }
 

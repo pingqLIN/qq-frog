@@ -13,6 +13,7 @@ interface ChromeMessage { message?: string }
 type ChromeMessages = Record<string, ChromeMessage>
 type LocaleChangeListener = () => void
 type I18nSubstitution = string | number
+type GetNativeMessage = (messageName: string, substitutions?: string | string[]) => string
 
 const DEFAULT_APP_LOCALE: AppLocale = "system"
 const DEFAULT_RUNTIME_LOCALE: RuntimeLocale = "en"
@@ -150,9 +151,11 @@ export const i18n = {
 
     const messageName = key.replaceAll(".", "_")
     const customMessage = activeMessages?.[messageName]?.message
+    const getNativeMessage = browser.i18n.getMessage as GetNativeMessage
+    const nativeMessage = getNativeMessage(messageName, substitutions?.map(String))
     const message = customMessage
       ? formatMessage(customMessage, substitutions)
-      : browserI18n.t(key as never, substitutions as never, count as never)
+      : nativeMessage || key
 
     if (count == null)
       return message

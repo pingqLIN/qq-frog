@@ -1,5 +1,4 @@
 import type { SubtitlesFragment } from "@/utils/subtitles/types"
-import { saveAs } from "file-saver"
 
 const INVALID_FILENAME_CHARS_PATTERN = /[<>:"/\\|?*]/g
 const TRAILING_FILENAME_CHARS_PATTERN = /[. ]+$/g
@@ -99,5 +98,6 @@ export async function downloadSubtitlesAsSrt({
   const blob = new Blob([srt], { type: "application/x-subrip;charset=utf-8" })
   const filename = buildSubtitlesSrtFilename({ pageTitle, videoId })
 
+  const { saveAs } = await import("file-saver")
   saveAs(blob, filename)
 }
